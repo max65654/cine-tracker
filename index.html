@@ -2010,6 +2010,49 @@ body.dark .subr-details summary{color:#C9A8FF;}
 .wh-row{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 4px}.wh-chip{font-size:.78rem;padding:4px 10px;border-radius:999px;background:rgba(128,128,128,.12);border:1px solid rgba(128,128,128,.22)}.wh-btn{cursor:pointer}.wh-btn:hover{border-color:var(--violet,#8b5cf6)}.wh-sting{background:rgba(255,196,0,.14);border-color:rgba(255,196,0,.45)}.wh-stop{width:100%;font-size:.85rem;padding:8px 12px;border-radius:12px;background:rgba(139,92,246,.12);border:1px solid rgba(139,92,246,.35)}.wh-x{background:none;border:none;cursor:pointer;opacity:.6;color:inherit}.wh-edit input{padding:2px 6px;border-radius:6px;border:1px solid rgba(128,128,128,.4);background:transparent;color:inherit}.wh-edit button{padding:2px 8px;border-radius:6px;border:none;background:var(--violet,#8b5cf6);color:#fff;cursor:pointer}
 .duo-head{text-align:center;margin:4px 0 12px;font-size:.95rem}.duo-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}.duo-card{position:relative;background:var(--card-bg);border:1px solid var(--border);border-radius:14px;overflow:hidden;display:flex;flex-direction:column}.duo-card.best{box-shadow:0 0 0 2px var(--sun)}.duo-card img{width:100%;aspect-ratio:2/3;object-fit:cover;background:#0002}.duo-b{padding:8px 10px;font-size:.82rem;display:flex;flex-direction:column;gap:6px;flex:1}.duo-why{color:var(--muted);font-size:.74rem;line-height:1.35}.duo-add{margin-top:auto;border:none;border-radius:8px;padding:6px;background:var(--raspberry);color:#fff;cursor:pointer;font-weight:600}.duo-ok{margin-top:auto;color:var(--mint);font-size:.78rem;font-weight:600}.duo-best{position:absolute;top:8px;left:8px;background:var(--sun);color:#2B2238;font-size:.7rem;font-weight:700;padding:3px 8px;border-radius:999px}
 .rd-top{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}.rd-stat{background:var(--card-bg);border:1px solid var(--border);border-radius:12px;padding:10px;text-align:center}.rd-stat b{display:block;font-size:1.25rem}.rd-stat span{font-size:.72rem;color:var(--muted)}.rd-worst{display:grid;grid-template-columns:70px 1fr;gap:12px;align-items:center;background:linear-gradient(135deg,rgba(255,77,109,.14),rgba(255,210,63,.12));border:1px solid rgba(255,77,109,.35);border-radius:14px;padding:12px;margin-bottom:12px}.rd-wlbl{grid-column:1/-1;font-weight:700}.rd-worst img{width:70px;border-radius:8px}.rd-vs{margin:4px 0;font-size:.9rem}.rd-hint{font-size:.78rem;color:var(--muted)}.rd-sort{display:flex;gap:6px;margin-bottom:8px}.rd-sort button{border:1px solid var(--border);background:none;color:inherit;border-radius:999px;padding:4px 12px;cursor:pointer;font-size:.8rem}.rd-sort button.on{background:var(--violet);color:#fff;border-color:transparent}.rd-row{display:grid;grid-template-columns:1fr 70px 70px;gap:6px;align-items:center;padding:6px 4px;border-bottom:1px solid var(--border);font-size:.85rem;text-align:center}.rd-row.rd-h{font-weight:700;font-size:.75rem;color:var(--muted)}.rd-t{display:flex;align-items:center;gap:8px;text-align:left}.rd-t img{width:28px;height:42px;object-fit:cover;border-radius:4px}.rd-win{color:var(--mint);font-weight:700}
+.saga-prog{display:flex;align-items:center;gap:10px;margin:6px 0 10px;font-size:.8rem;font-weight:600}.saga-prog-bar{flex:1;height:8px;border-radius:99px;background:var(--border);overflow:hidden}.saga-prog-bar i{display:block;height:100%;background:linear-gradient(90deg,var(--mint),var(--violet))}.saga-miss-h{font-weight:700;font-size:.86rem;margin:6px 0}.saga-miss{display:flex;gap:10px;overflow-x:auto;padding-bottom:8px;margin-bottom:12px}.saga-miss-c{flex:0 0 112px;display:flex;flex-direction:column;gap:3px;font-size:.74rem}.saga-miss-c img{width:112px;height:168px;object-fit:cover;border-radius:10px;background:#0002}.saga-miss-c small{color:var(--muted)}.saga-miss-c button{border:none;border-radius:8px;padding:5px;background:var(--raspberry);color:#fff;cursor:pointer;font-weight:600;font-size:.72rem}
+/* ===== 📱 TÉLÉPHONE : tout se resserre ===== */
+@media(max-width:760px){
+  header{padding:10px 12px!important;gap:8px!important;flex-direction:column!important;align-items:stretch!important;}
+  html,body{max-width:100%;overflow-x:hidden;}
+  header,header .header-right,header .brand{max-width:100vw;min-width:0;box-sizing:border-box;width:100%!important;}
+  header nav{max-width:calc(100vw - 70px);}
+  header .brand{font-size:1.15rem!important;display:flex;align-items:center;justify-content:space-between;gap:8px;}
+  header .hdr-avatar{transform:scale(.8);transform-origin:right center;}
+  .header-right{flex-wrap:nowrap!important;gap:6px!important;min-width:0;}
+  header nav{display:flex!important;flex-wrap:nowrap!important;overflow-x:auto;scrollbar-width:none;min-width:0;flex:1;gap:6px!important;padding:2px 0 4px!important;-webkit-mask-image:linear-gradient(90deg,#000 90%,transparent);mask-image:linear-gradient(90deg,#000 90%,transparent);}
+  header nav::-webkit-scrollbar{display:none;}
+  header nav .nav-btn,header nav button{flex:0 0 auto!important;white-space:nowrap;padding:7px 12px!important;font-size:.8rem!important;display:inline-flex;flex-direction:row!important;align-items:center;gap:4px;line-height:1.1;}
+  header .icon-btn{display:none!important;}
+  header.show-icons .icon-btn{display:inline-flex!important;width:32px!important;height:32px!important;font-size:.9rem!important;flex-shrink:0;}
+  .mob-more{display:inline-flex!important;}
+  .hero{padding:14px 12px 6px!important;}
+  .hero h1{font-size:1.35rem!important;line-height:1.2;margin-bottom:6px!important;}
+  .hero>p{display:none;}
+  .stats-bar{display:flex!important;flex-wrap:nowrap!important;overflow-x:auto;gap:6px!important;scrollbar-width:none;justify-content:flex-start!important;padding-bottom:4px;}
+  .stats-bar::-webkit-scrollbar{display:none;}
+  .stat-pill{flex:0 0 auto!important;padding:6px 12px!important;min-width:0!important;border-radius:14px!important;}
+  .stat-pill .num{font-size:1.1rem!important;}
+  .stat-pill .lbl{font-size:.68rem!important;}
+  .save-status{font-size:.72rem!important;flex-wrap:wrap;justify-content:center;}
+  main{padding-left:10px!important;padding-right:10px!important;}
+  .section-title h2{font-size:1.2rem!important;}
+  .modal-box,.modal{width:100%!important;max-width:100%!important;border-radius:18px 18px 0 0!important;}
+  .modal-actions{flex-wrap:wrap;gap:6px!important;}
+  .modal-actions button{flex:1 1 44%;font-size:.8rem!important;padding:8px 6px!important;}
+  #chat-fab{right:12px;bottom:12px;width:50px;height:50px;font-size:1.4rem;}
+  #chat-pn{right:6px;left:6px;width:auto;bottom:70px;height:calc(100vh - 90px);}
+  table{max-width:100%;}
+  .cal-grid{grid-template-columns:repeat(7,minmax(0,1fr))!important;gap:2px!important;}
+  .cal-day{min-height:54px!important;padding:3px!important;border-radius:7px!important;min-width:0;}
+  .cal-day-hd{min-width:0;font-size:.62rem!important;}
+  .cal-event{font-size:.55rem!important;padding:1px 3px!important;}
+  .top10-wrap{grid-template-columns:minmax(0,1fr)!important;gap:14px!important;}.top10-wrap>*{min-width:0;}
+  .top10-pool{padding:12px!important;}
+  .pool-item{min-width:0;}
+  img{max-width:100%;}
+}
+.mob-more{display:none;border:none;background:var(--card-bg);border-radius:999px;width:34px;height:34px;flex-shrink:0;cursor:pointer;box-shadow:0 2px 8px var(--shadow);font-size:1rem;align-items:center;justify-content:center;}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 </head>
@@ -2024,7 +2067,7 @@ body.dark .subr-details summary{color:#C9A8FF;}
       <button class="nav-btn" data-view="top-custom">🏆 Mon Top</button>
       <button class="nav-btn" data-view="sagas">🎬 Sagas</button>
       <button class="nav-btn" data-view="toku">🥋 Toku</button>
-      <button class="nav-btn" data-view="marathon">🏃 Marathon</button>
+      <button class="nav-btn" data-view="marathon" style="display:none">🏃 Marathon</button>
       <button class="nav-btn" data-view="planning">🗓️ Planning séries</button>
       <button class="nav-btn" data-view="fun">🎮 Jeux</button>
       <button class="nav-btn" data-view="stats">📊 Wrapped</button>
@@ -2036,6 +2079,8 @@ body.dark .subr-details summary{color:#C9A8FF;}
       <button class="nav-btn" data-view="catalog">🗂️ Catalogue</button>
       <button class="nav-btn" data-view="books">📖 Livres</button>
     </nav>
+    <button class="mob-more" id="mob-more" title="Réglages" onclick="this.closest('header').classList.toggle('show-icons')">⚙️</button>
+    <button class="icon-btn" id="video-toggle" title="Vidéos (bandes-annonces) en fond">🎞️</button>
     <button class="icon-btn" id="sound-toggle" title="Sons d'interface">🔊</button>
     <button class="icon-btn" id="haptic-toggle" title="Vibrations (mobile)">📳</button>
     <button class="icon-btn" id="theme-toggle" title="Thème de couleurs">🎨</button>
@@ -4583,7 +4628,7 @@ function openModal(id){
     +'<div id="m-reco-'+id+'"></div>'
     +'</div>'
     +(hasTabs?'<div class="modal-tab-content" id="mt-episodes">'+buildEpTracker(item)+'</div>':'')
-    +'<div class="modal-actions">'+(item.tmdbId?'<button id="m-trailer" class="m-trailer-btn">▶️ Bande-annonce</button>':'')+'<button id="m-ost" class="m-trailer-btn">🎵 Bande originale</button><button id="m-edit">✏️ Modifier</button><button id="m-del">🗑️ Supprimer</button><button id="m-ep-full" style="display:'+(hasTabs?'block':'none')+';">📺 Épisodes plein écran</button></div>'
+    +'<div class="modal-actions">'+(item.tmdbId?'<button id="m-trailer" class="m-trailer-btn">▶️ Bande-annonce</button>':'')+'<button id="m-ost" class="m-trailer-btn">🎵 Bande originale</button>'+(window.CineChatShare?'<button id="m-chat" class="m-trailer-btn">💬 Partager au salon</button>':'')+'<button id="m-edit">✏️ Modifier</button><button id="m-del">🗑️ Supprimer</button><button id="m-ep-full" style="display:'+(hasTabs?'block':'none')+';">📺 Épisodes plein écran</button></div>'
     +'</div>';
 
   document.querySelectorAll('.modal-tab').forEach(function(t){t.addEventListener('click',function(){document.querySelectorAll('.modal-tab').forEach(function(x){x.classList.remove('active');});document.querySelectorAll('.modal-tab-content').forEach(function(x){x.classList.remove('active');});t.classList.add('active');var tc=document.getElementById('mt-'+t.dataset.tab);if(tc)tc.classList.add('active');});});
@@ -4595,6 +4640,7 @@ function openModal(id){
   if(document.getElementById('m-ep-full'))document.getElementById('m-ep-full').addEventListener('click',function(){openEpModal(id);});
   bindEpEvents(id);
   try{bindWatchHelper(item);}catch(_){}
+  var mch=document.getElementById('m-chat');if(mch)mch.addEventListener('click',function(){window.CineChatShare({k:friendKey(item)||'',t:item.title,p:item.poster||'',r:+item.rating||0});toast('💬 Partagé au salon');});
   if(item.tmdbId){loadProviders(item);loadTrivia(item);loadRecommendations(item);}
   loadHeroBackdrop(item); // image paysage qui remplit bien le cadre de la fiche
   // Bande-annonce auto dans la fiche (hébergé uniquement), façon Netflix
@@ -5905,7 +5951,7 @@ function isHosted(){return location.protocol==='http:'||location.protocol==='htt
 // Crée un lecteur en fond (muet, en boucle, lecture forcée). Renvoie le player.
 var scPlayer=null,modalPlayer=null,tpPlayer=null,scMuted=true,modalMuted=false; // banderole muette au départ (bouton pour activer) ; fiche avec son
 // Lecteur en fond. soundOn=true → son activé. mute:1 dans playerVars garantit la lecture auto.
-var ENABLE_TRAILERS=false; // false = pas de bandes-annonces auto (les bannières montrent juste les affiches). Mettre true pour réactiver les vidéos.
+var ENABLE_TRAILERS=(function(){try{return localStorage.getItem('cineBgVideo')!=='0';}catch(e){return true;}})(); // bouton 🎞️ pour couper/remettre · false = pas de bandes-annonces auto (les bannières montrent juste les affiches). Mettre true pour réactiver les vidéos.
 function makeBgPlayer(elId,key,wrapEl,soundOn){
   if(!ENABLE_TRAILERS)return null;
   return new YT.Player(elId,{videoId:key,host:'https://www.youtube.com',
@@ -5915,9 +5961,13 @@ function makeBgPlayer(elId,key,wrapEl,soundOn){
       onStateChange:function(e){
         if(e.data===1&&wrapEl){wrapEl.classList.add('playing');fitBgVideo(wrapEl);}  // PLAYING → fondu + recadrage
         if(e.data===0){try{e.target.seekTo(0);e.target.playVideo();}catch(_){}}        // ENDED → boucle manuelle (pas de boutons ⏮⏭)
-      }
+      },
+      onError:function(e){try{if(wrapEl)wrapEl.classList.remove('playing');var f=e.target.getIframe&&e.target.getIframe();if(f)f.style.display='none';}catch(_){}} // vidéo bloquée → on garde l'image
     }});
 }
+(function(){var b=document.getElementById('video-toggle');if(!b)return;function paint(){b.style.opacity=ENABLE_TRAILERS?'1':'.45';b.title=ENABLE_TRAILERS?'Vidéos en fond : activées (clic pour couper)':'Vidéos en fond : coupées (clic pour activer)';}paint();
+  b.addEventListener('click',function(){ENABLE_TRAILERS=!ENABLE_TRAILERS;try{localStorage.setItem('cineBgVideo',ENABLE_TRAILERS?'1':'0');}catch(_){}paint();toast(ENABLE_TRAILERS?'🎞️ Vidéos en fond activées':'🎞️ Vidéos en fond coupées');setTimeout(function(){location.reload();},700);});
+})();
 // Recadre la vidéo pour pousser le bouton ▶/⏸ central de YouTube HORS du cadre visible
 function fitBgVideo(wrapEl){
   if(!wrapEl)return;var f=wrapEl.querySelector('iframe');if(!f)return;
@@ -6136,13 +6186,13 @@ function drawShowcase(){
         if(!key||showcaseIdx!==myIdx||!document.getElementById('sc-yt'))return;
         whenYTReady(function(){
           if(showcaseIdx!==myIdx||!document.getElementById('sc-yt'))return;
-          try{scPlayer=makeBgPlayer('sc-yt',key,document.getElementById('sc-video-wrap'),!scMuted);observeShowcase();if(soundBtn){soundBtn.style.display='flex';soundBtn.textContent=scMuted?'🔇':'🔊';}}catch(_){}
+          try{window._scStart=Date.now();scPlayer=makeBgPlayer('sc-yt',key,document.getElementById('sc-video-wrap'),!scMuted);observeShowcase();if(soundBtn){soundBtn.style.display='flex';soundBtn.textContent=scMuted?'🔇':'🔊';}}catch(_){}
         });
       });
     }
   },170);
 }
-function restartShowcaseTimer(){if(showcaseTimer)clearInterval(showcaseTimer);if(reduceMotion||showcasePool.length<2)return;showcaseTimer=setInterval(function(){showcaseIdx=(showcaseIdx+1)%showcasePool.length;drawShowcase();},9000);}
+function restartShowcaseTimer(){if(showcaseTimer)clearInterval(showcaseTimer);if(reduceMotion||showcasePool.length<2)return;showcaseTimer=setInterval(function(){var _vw=document.getElementById('sc-video-wrap');if(_vw&&_vw.classList.contains('playing')&&Date.now()-(window._scStart||0)<45000)return;showcaseIdx=(showcaseIdx+1)%showcasePool.length;drawShowcase();},9000);}
 
 /* ====== CONFETTI ====== */function confetti(){if(typeof sfx!=='undefined')sfx.success();var c=['#FF4D6D','#FFD23F','#5B3A8C','#06D6A0'];for(var i=0;i<36;i++){var p=document.createElement('div');p.className='confetti-piece';var sz=5+Math.random()*6;p.style.cssText='width:'+sz+'px;height:'+sz+'px;left:'+Math.random()*100+'vw;background:'+c[Math.floor(Math.random()*4)]+';transform:rotate('+Math.random()*360+'deg)';document.body.appendChild(p);var dur=1600+Math.random()*1000;p.animate([{transform:p.style.transform,top:'-10px',opacity:1},{transform:'rotate('+(Math.random()*720-360)+'deg)',top:'100vh',opacity:.8}],{duration:dur,easing:'ease-in'});setTimeout(function(pp){return function(){pp.remove();};}(p),dur+50);}}
 
@@ -6245,10 +6295,11 @@ document.getElementById('create-saga-btn').addEventListener('click',function(){
   if(sagas.find(function(s){return s.name.toLowerCase()===n.toLowerCase();})){toast('Saga déjà existante !');return;}
   sagas.push({id:Date.now(),name:n,films:[]});svSG();document.getElementById('new-saga-name').value='';renderSagas();
 });
-function renderSagas(){
+function renderSagas(noAuto){
+  if(!noAuto)try{autoSagas();}catch(_){}
   var sl=document.getElementById('saga-list');
-  if(!sagas.length){sl.innerHTML='<div style="color:var(--muted);font-size:.84rem;padding:8px">Aucune saga créée.</div>';document.getElementById('saga-detail').innerHTML='<div class="empty-state"><span class="emoji">🎬</span><h3>Crée une saga</h3></div>';return;}
-  sl.innerHTML=sagas.map(function(sg){return'<div class="saga-item'+(currentSaga&&currentSaga.id===sg.id?' active-saga':'')+'" data-sgid="'+sg.id+'"><span class="saga-name">'+esc(sg.name)+'</span><span class="saga-count">'+(sg.films||[]).length+'</span></div>';}).join('');
+  if(!sagas.length){sl.innerHTML='<div style="color:var(--muted);font-size:.84rem;padding:8px">Tes sagas se créent toutes seules dès que tu as un film d\'une saga (Harry Potter, Marvel…). ⏳ Analyse en cours…</div>';document.getElementById('saga-detail').innerHTML='<div class="empty-state"><span class="emoji">🎬</span><h3>Crée une saga</h3></div>';return;}
+  sl.innerHTML=sagas.map(function(sg){return'<div class="saga-item'+(currentSaga&&currentSaga.id===sg.id?' active-saga':'')+'" data-sgid="'+sg.id+'"><span class="saga-name">'+(sg.collId?'✨ ':'')+esc(sg.name)+'</span><span class="saga-count">'+(sg.films||[]).length+'</span></div>';}).join('');
   sl.querySelectorAll('[data-sgid]').forEach(function(el){el.addEventListener('click',function(){currentSaga=sagas.find(function(s){return s.id===parseInt(el.dataset.sgid);});renderSagas();renderSagaDetail();});});
   if(currentSaga)renderSagaDetail();
 }
@@ -6262,21 +6313,92 @@ function renderSagaDetail(){
   +'<div id="saga-films-list" style="margin-bottom:12px">'
   +(filmsInSaga.length?filmsInSaga.map(function(f,idx){return'<div class="saga-film-item" data-sortid="'+f.item.id+'"><span class="drag-handle" data-draghandle title="Glisse pour réordonner">⠿</span><span class="sf-order">'+(idx+1)+'</span>'+(f.item.poster?'<img src="'+f.item.poster+'" alt="">':'<div style="width:32px;height:46px;background:var(--border);border-radius:5px;display:flex;align-items:center;justify-content:center;">'+(f.item.type==='serie'?'📺':'🎬')+'</div>')+'<div class="sf-info"><div class="sf-title">'+esc(f.item.title)+'</div><div class="sf-meta">'+(f.item.year||'—')+' · '+starsText(f.item.rating)+'</div></div><button class="sf-rm" data-sgrmfilm="'+f.item.id+'">✕</button></div>';}).join(''):'<div style="color:var(--muted);font-size:.84rem;margin-bottom:8px;">Aucun titre dans cette saga.</div>')
   +'</div>'
+  +(sg.collId?'<div id="saga-missing"></div>':'')
   +'<div style="font-family:\'Fredoka\',sans-serif;font-size:.88rem;font-weight:700;color:var(--violet);margin-bottom:8px;">+ Ajouter un titre :</div>'
   +'<div class="saga-film-pool">'+(available.length?available.map(function(item){return'<span class="spool-chip" data-sadd="'+item.id+'">'+(item.type==='serie'?'📺 ':'🎬 ')+esc(item.title)+(item.year?' ('+item.year+')':'')+'</span>';}).join(''):'<span style="color:var(--muted);font-size:.82rem;">Tous les titres sont déjà dans des sagas.</span>')+'</div>';
 
   enableDragSort(document.getElementById('saga-films-list'),function(order){
     var idOrder=order.map(Number);
     sg.films.sort(function(a,b){return idOrder.indexOf(a.id)-idOrder.indexOf(b.id);});
-    sg.films.forEach(function(f,i){f.order=i+1;});
+    sg.films.forEach(function(f,i){f.order=i+1;});sg.manualOrder=true;
     svSG();renderSagaDetail();
   });
+  var mb=document.getElementById('saga-missing');if(mb)loadSagaMissing(sg,mb);
 
   dp.querySelectorAll('[data-sgdel]').forEach(function(b){b.addEventListener('click',function(){if(!confirm('Supprimer la saga "'+sg.name+'" ?'))return;sagas=sagas.filter(function(s){return s.id!==parseInt(b.dataset.sgdel);});currentSaga=null;svSG();renderSagas();});});
   dp.querySelectorAll('[data-sadd]').forEach(function(b){b.addEventListener('click',function(){var id=parseInt(b.dataset.sadd);if(!sg.films)sg.films=[];var maxOrd=sg.films.length?Math.max.apply(null,sg.films.map(function(f){return f.order;})):0;sg.films.push({id:id,order:maxOrd+1});svSG();renderSagas();renderSagaDetail();});});
   dp.querySelectorAll('[data-sgrmfilm]').forEach(function(b){b.addEventListener('click',function(){var id=parseInt(b.dataset.sgrmfilm);sg.films=sg.films.filter(function(f){return f.id!==id;});svSG();renderSagas();renderSagaDetail();});});
   dp.querySelectorAll('[data-sgup]').forEach(function(b){b.addEventListener('click',function(){var id=parseInt(b.dataset.sgup);var i=sg.films.findIndex(function(f){return f.id===id;});if(i>0){var tmp=sg.films[i].order;sg.films[i].order=sg.films[i-1].order;sg.films[i-1].order=tmp;}svSG();renderSagaDetail();});});
   dp.querySelectorAll('[data-sgdn]').forEach(function(b){b.addEventListener('click',function(){var id=parseInt(b.dataset.sgdn);var i=sg.films.findIndex(function(f){return f.id===id;});if(i<sg.films.length-1){var tmp=sg.films[i].order;sg.films[i].order=sg.films[i+1].order;sg.films[i+1].order=tmp;}svSG();renderSagaDetail();});});
+}
+
+/* ====== 🎬 SAGAS AUTOMATIQUES ======
+   Chaque film de ta collection est rattaché à sa saga officielle (collections TMDB :
+   Harry Potter, Marvel, Star Wars, Fast & Furious…). Les sagas se créent et se remplissent
+   toutes seules, dans l'ordre de sortie ; les films qui te manquent sont proposés. */
+var _autoSagaRun=false;
+function cleanCollName(n){return String(n||'').replace(/\s*[-–:]\s*(la\s+)?(saga|collection|trilogie)\s*$/i,'').replace(/^(saga|collection)\s+/i,'').trim()||n;}
+function autoSagas(force){
+  if(_autoSagaRun)return;
+  var todo=items.filter(function(i){return i.tmdbId&&i.tmdbType==='movie'&&!i.locked&&(i.collId===undefined||force);});
+  if(!todo.length){buildAutoSagas();return;}
+  _autoSagaRun=true;var k=0,touched=false;
+  function next(){
+    if(k>=todo.length){_autoSagaRun=false;if(touched)sv();buildAutoSagas();return;}
+    var it=todo[k++];
+    fetch('https://api.themoviedb.org/3/movie/'+it.tmdbId+'?api_key='+TMDB+'&language=fr-FR').then(function(r){return r.ok?r.json():null;}).then(function(d){
+      if(!d)return;var c=d.belongs_to_collection;
+      it.collId=c?c.id:0;if(c)it.collName=cleanCollName(c.name);
+      if(d.release_date)it.releaseFull=d.release_date;
+      touched=true;
+    }).catch(function(){}).then(function(){if(k%15===0&&touched)buildAutoSagas();setTimeout(next,220);});
+  }
+  next();
+}
+function buildAutoSagas(){
+  var groups={};
+  items.forEach(function(i){if(i.collId)(groups[i.collId]=groups[i.collId]||{name:i.collName,list:[]}).list.push(i);});
+  var changed=false;
+  Object.keys(groups).forEach(function(cid){
+    var g=groups[cid];cid=parseInt(cid);
+    var sg=sagas.find(function(s){return s.collId===cid;})||sagas.find(function(s){return !s.collId&&s.name.toLowerCase()===String(g.name||'').toLowerCase();});
+    if(!sg){sg={id:Date.now()+cid,name:g.name||'Saga',films:[],collId:cid,auto:true};sagas.push(sg);changed=true;}
+    if(!sg.collId){sg.collId=cid;changed=true;}
+    if(!sg.films)sg.films=[];
+    g.list.forEach(function(i){if(!sg.films.some(function(f){return f.id===i.id;})){sg.films.push({id:i.id,order:999});changed=true;}});
+    if(!sg.manualOrder){
+      var date=function(f){var i=items.find(function(x){return x.id===f.id;});return i?(i.releaseFull||String(i.year||'9999')):'9999';};
+      var before=sg.films.map(function(f){return f.id;}).join(',');
+      sg.films.sort(function(a,b){return date(a).localeCompare(date(b));});sg.films.forEach(function(f,n){f.order=n+1;});
+      if(before!==sg.films.map(function(f){return f.id;}).join(','))changed=true;
+    }
+  });
+  sagas.forEach(function(sg){var n=(sg.films||[]).length;sg.films=(sg.films||[]).filter(function(f){return items.some(function(i){return i.id===f.id;});});if(sg.films.length!==n)changed=true;});
+  if(changed){svSG();try{if(document.getElementById('view-sagas').style.display!=='none')renderSagas(true);}catch(_){}}
+}
+setTimeout(function(){try{autoSagas();}catch(_){}},15000);
+var _collCache={};
+function loadSagaMissing(sg,box){
+  if(!sg.collId||!box)return;
+  var p=_collCache[sg.collId]||(_collCache[sg.collId]=fetch('https://api.themoviedb.org/3/collection/'+sg.collId+'?api_key='+TMDB+'&language=fr-FR').then(function(r){return r.json();}).catch(function(){return null;}));
+  p.then(function(c){
+    if(!c||!c.parts||!c.parts.length||!document.body.contains(box))return;
+    var owned={};items.forEach(function(i){if(i.tmdbType==='movie'&&i.tmdbId)owned[i.tmdbId]=i;});
+    var parts=c.parts.slice().sort(function(a,b){return (a.release_date||'9999').localeCompare(b.release_date||'9999');});
+    var seen=parts.filter(function(x){var o=owned[x.id];return o&&o.status==='termine';}).length;
+    var miss=parts.filter(function(x){return !owned[x.id];});
+    var today=todayStr();
+    box.innerHTML='<div class="saga-prog"><div class="saga-prog-bar"><i style="width:'+Math.round(seen/parts.length*100)+'%"></i></div><span>'+seen+' / '+parts.length+' vus</span></div>'
+      +(miss.length?'<div class="saga-miss-h">🧩 Il te manque '+miss.length+' film'+(miss.length>1?'s':'')+' :</div><div class="saga-miss">'+miss.map(function(x){var fut=x.release_date&&x.release_date>today;return '<div class="saga-miss-c"><img src="'+(x.poster_path?'https://image.tmdb.org/t/p/w185'+x.poster_path:'')+'" alt=""><b>'+esc(x.title)+'</b><small>'+(x.release_date?(fut?'📅 Sortie le '+new Date(x.release_date+'T12:00').toLocaleDateString('fr-FR'):x.release_date.slice(0,4)):'Date inconnue')+'</small><button data-smadd="'+x.id+'">'+(fut?'🔥 Attentes':'➕ À voir')+'</button></div>';}).join('')+'</div>':'<div class="saga-miss-h">🏆 Tu as toute la saga !</div>');
+    box.querySelectorAll('[data-smadd]').forEach(function(b){b.addEventListener('click',function(){
+      var x=parts.find(function(p){return p.id===parseInt(b.dataset.smadd);});if(!x)return;
+      var poster=x.poster_path?'https://image.tmdb.org/t/p/w500'+x.poster_path:'';
+      if(x.release_date&&x.release_date>today){try{pushWish({tmdbId:x.id,tmdbType:'movie',title:x.title,year:(x.release_date||'').slice(0,4),releaseDate:x.release_date,poster:poster,synopsis:x.overview||''});}catch(_){}b.outerHTML='<span class="duo-ok">✓ Dans tes attentes</span>';return;}
+      var nid=Date.now()+Math.floor(Math.random()*999);
+      items.unshift({id:nid,title:x.title,year:(x.release_date||'').slice(0,4),type:'film',status:'a_voir',rating:0,fav:false,tags:[],review:'',personalNotes:'',quote:'',poster:poster,director:'',cast:'',watchedDate:'',addedAt:Date.now(),synopsis:x.overview||'',seriesStatus:'',nbSeasons:0,tmdbId:x.id,tmdbType:'movie',progress:null,lastEpDate:null,runtime:0,epRuntime:0,tmdbRating:x.vote_average||0,rewatchCount:0,collId:sg.collId,collName:sg.name,releaseFull:x.release_date||''});
+      sv();buildAutoSagas();try{renderAll();}catch(_){}toast(x.title+' ajouté à À voir ✓');renderSagas(true);
+    });});
+  });
 }
 
 /* ====== CALENDRIER ====== */
@@ -10680,6 +10802,7 @@ function gameWhoSaw(){
 }
 
 /* ---------- 👥 Amis : profils de cet appareil + comptes en ligne validés ---------- */
+window.CineOpenByKey=function(k){var it=items.find(function(i){return friendKey(i)===k;});if(it)openModal(it.id);else toast('Pas (encore) dans ta collection');};
 function friendKey(i){return i.tmdbId?((i.tmdbType==='tv'?'tv':'movie')+'_'+i.tmdbId):null;}
 function getFriends(){
   var P='https://image.tmdb.org/t/p/';
@@ -12072,7 +12195,61 @@ setTimeout(function(){try{
     },
     publishNow:function(){if(me)publishPub(me.uid);}
   };
+  /* --- 💬 Salon : discuter entre comptes validés (temps réel) --- */
+  var chatMsgs=[],chatUnsub=null,chatOpen=false;
+  function chatRead(){return parseInt(rget('cineChatRead_'+(me&&me.uid))||'0')||0;}
+  function chatSetRead(t){rset('cineChatRead_'+me.uid,String(t));}
+  function chatName(){var pass={};try{pass=JSON.parse(rget('u_'+me.uid+'__cinePass')||'{}')||{};}catch(_){}return (pass&&pass.name)||(userDoc&&userDoc.name)||me.displayName||(me.email||'').split('@')[0];}
+  function startChat(){
+    if(document.getElementById('chat-fab'))return;
+    var st=document.createElement('style');st.textContent='#chat-fab{position:fixed;right:18px;bottom:18px;z-index:9980;width:56px;height:56px;border-radius:50%;border:none;background:linear-gradient(135deg,#5B3A8C,#FF4D6D);color:#fff;font-size:1.6rem;cursor:pointer;box-shadow:0 8px 24px rgba(0,0,0,.3)}#chat-fab .cb{position:absolute;top:-4px;right:-4px;background:#FFD23F;color:#2B2238;font:700 .72rem Inter,sans-serif;border-radius:99px;padding:2px 6px;display:none}'
+      +'#chat-pn{position:fixed;right:18px;bottom:84px;z-index:9981;width:min(380px,calc(100vw - 24px));height:min(560px,calc(100vh - 120px));background:var(--card-bg,#fff);color:var(--ink,#222);border:1px solid var(--border,#ddd);border-radius:18px;box-shadow:0 16px 50px rgba(0,0,0,.35);display:none;flex-direction:column;overflow:hidden;font-family:Inter,sans-serif}'
+      +'#chat-pn.show{display:flex}.ch-h{padding:12px 14px;font-weight:700;background:linear-gradient(135deg,#5B3A8C,#FF4D6D);color:#fff;display:flex;justify-content:space-between;align-items:center}.ch-h button{background:none;border:none;color:#fff;font-size:1.1rem;cursor:pointer}'
+      +'.ch-list{flex:1;overflow-y:auto;padding:10px;display:flex;flex-direction:column;gap:6px}.ch-m{max-width:82%;padding:7px 11px;border-radius:14px;font-size:.88rem;line-height:1.35;background:rgba(128,128,128,.14);align-self:flex-start;word-wrap:break-word;position:relative}.ch-m.mine{align-self:flex-end;background:linear-gradient(135deg,#7c4dcc,#FF4D6D);color:#fff}'
+      +'.ch-n{font-size:.7rem;font-weight:700;opacity:.75;margin-bottom:2px}.ch-t{font-size:.64rem;opacity:.6;margin-top:3px;text-align:right}.ch-film{display:flex;gap:8px;align-items:center;margin-top:5px;padding:6px;border-radius:10px;background:rgba(0,0,0,.12);cursor:pointer}.ch-film img{width:36px;height:54px;object-fit:cover;border-radius:5px}'
+      +'.ch-del{position:absolute;top:2px;left:-22px;background:none;border:none;opacity:0;cursor:pointer;font-size:.8rem}.ch-m:hover .ch-del{opacity:.6}.ch-day{align-self:center;font-size:.68rem;opacity:.55;margin:6px 0}'
+      +'.ch-in{display:flex;gap:6px;padding:8px;border-top:1px solid var(--border,#ddd)}.ch-in input{flex:1;padding:10px 12px;border-radius:12px;border:1px solid var(--border,#ddd);background:var(--input-bg,#fff);color:inherit;font-size:.9rem}.ch-in button{border:none;border-radius:12px;padding:0 14px;background:#FF4D6D;color:#fff;font-weight:700;cursor:pointer}'
+      +'.ch-emo{display:flex;gap:4px;padding:6px 8px 0}.ch-emo button{background:none;border:none;font-size:1.15rem;cursor:pointer;padding:2px}.ch-err{padding:14px;font-size:.84rem}';
+    document.head.appendChild(st);
+    var fab=document.createElement('button');fab.id='chat-fab';fab.title='Salon — discuter avec tes potes';fab.innerHTML='💬<span class="cb"></span>';document.body.appendChild(fab);
+    var pn=document.createElement('div');pn.id='chat-pn';
+    pn.innerHTML='<div class="ch-h"><span>💬 Le salon</span><button id="ch-x">✕</button></div><div class="ch-list" id="ch-list"></div><div class="ch-emo">'+['😂','🔥','😱','😭','👍','🍿','❤️','🤯'].map(function(e){return '<button data-emo="'+e+'">'+e+'</button>';}).join('')+'</div><div class="ch-in"><input id="ch-txt" maxlength="1000" placeholder="Écris un message…" autocomplete="off"><button id="ch-send">➤</button></div>';
+    document.body.appendChild(pn);
+    fab.onclick=function(){chatOpen=!chatOpen;pn.classList.toggle('show',chatOpen);if(chatOpen){drawChat(true);setTimeout(function(){var i=document.getElementById('ch-txt');if(i&&window.matchMedia('(pointer:fine)').matches)i.focus();},50);}};
+    document.getElementById('ch-x').onclick=function(){chatOpen=false;pn.classList.remove('show');};
+    function send(extra){var i=document.getElementById('ch-txt');var t=(i.value||'').trim();if(!t&&!extra)return;
+      var msg={uid:me.uid,name:chatName(),text:t||'',t:Date.now()};if(extra)msg.film=extra;
+      i.value='';db.collection('chat').add(msg).catch(function(e){tst('💬 Envoi impossible : '+((e&&e.code)==='permission-denied'?'règles Firestore à mettre à jour':(e&&e.message)||e));});}
+    window.CineChatShare=function(film){if(!chatOpen)fab.onclick();send(film);};
+    document.getElementById('ch-send').onclick=function(){send();};
+    document.getElementById('ch-txt').addEventListener('keydown',function(e){if(e.key==='Enter')send();});
+    pn.querySelectorAll('[data-emo]').forEach(function(b){b.onclick=function(){var i=document.getElementById('ch-txt');i.value+=b.dataset.emo;i.focus();};});
+    chatUnsub=db.collection('chat').orderBy('t','desc').limit(200).onSnapshot(function(qs){
+      var prevLast=chatMsgs.length?chatMsgs[chatMsgs.length-1].t:0;
+      chatMsgs=[];qs.forEach(function(d){chatMsgs.push(Object.assign({id:d.id},d.data()));});chatMsgs.reverse();
+      var last=chatMsgs[chatMsgs.length-1];
+      if(last&&prevLast&&last.t>prevLast&&last.uid!==me.uid&&!chatOpen)tst('💬 '+(last.name||'Ton pote')+' : '+(last.text||'🎬 '+(last.film&&last.film.t||'')).slice(0,60));
+      drawChat(chatOpen);
+    },function(e){var l=document.getElementById('ch-list');if(l)l.innerHTML='<div class="ch-err">⚙️ Le salon n\'est pas encore activé : l\'admin doit ajouter la règle « chat » dans Firestore.<br><small>'+esc2((e&&e.code)||'')+'</small></div>';});
+  }
+  function drawChat(markRead){
+    var l=document.getElementById('ch-list');if(!l)return;
+    var atBottom=l.scrollHeight-l.scrollTop-l.clientHeight<60;
+    var lastDay='';
+    l.innerHTML=chatMsgs.length?chatMsgs.map(function(m){var d=new Date(m.t),day=d.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'});var sep=day!==lastDay?'<div class="ch-day">'+day+'</div>':'';lastDay=day;var mine=m.uid===me.uid;
+      return sep+'<div class="ch-m'+(mine?' mine':'')+'">'+((mine||isAdmin())?'<button class="ch-del" data-chdel="'+m.id+'" title="Supprimer">🗑</button>':'')+(mine?'':'<div class="ch-n">'+esc2(m.name||'?')+'</div>')+esc2(m.text||'')
+        +(m.film?'<div class="ch-film" data-chfilm="'+esc2(m.film.k||'')+'">'+(m.film.p?'<img src="'+esc2(m.film.p)+'">':'')+'<div><b>'+esc2(m.film.t||'')+'</b>'+(m.film.r?'<br>'+'★'.repeat(Math.round(m.film.r))+' ('+(m.film.r*2)+'/10)':'')+'</div></div>':'')
+        +'<div class="ch-t">'+d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})+'</div></div>';}).join(''):'<div class="ch-err">👋 Aucun message pour l\'instant. Dis bonjour !</div>';
+    l.querySelectorAll('[data-chfilm]').forEach(function(b){b.onclick=function(){if(window.CineOpenByKey&&b.dataset.chfilm){chatOpen=false;document.getElementById('chat-pn').classList.remove('show');window.CineOpenByKey(b.dataset.chfilm);}};});
+    l.querySelectorAll('[data-chdel]').forEach(function(b){b.onclick=function(){db.collection('chat').doc(b.dataset.chdel).delete().catch(function(){});};});
+    if(markRead||atBottom)l.scrollTop=l.scrollHeight;
+    var last=chatMsgs[chatMsgs.length-1];
+    if(markRead&&last)chatSetRead(last.t);
+    var read=chatRead(),unread=chatMsgs.filter(function(m){return m.t>read&&m.uid!==me.uid;}).length;
+    var cb=document.querySelector('#chat-fab .cb');if(cb){cb.textContent=unread>9?'9+':String(unread);cb.style.display=unread&&!chatOpen?'block':'none';}
+  }
   function startSync(uid){
+    setTimeout(function(){try{startChat();}catch(_){}},1500);
     CP.onWrite.push(function(k,v){dirty[k]=v;clearTimeout(timer);timer=setTimeout(function(){flush(uid);},2500);
       if(k==='cineItems'||k==='cineWish'){clearTimeout(pubT);pubT=setTimeout(function(){publishPub(uid);},45000);}});
     setTimeout(function(){publishPub(uid);},6000);
@@ -12169,6 +12346,21 @@ setTimeout(function(){try{
     document.body.appendChild(b);
     document.getElementById('pwa-x').onclick=function(){done();b.remove();};
     var g=document.getElementById('pwa-go');if(g)g.onclick=function(){onGo&&onGo();done();b.remove();};
+  }
+  // 🖥️ Appli installée sur ordi : plein écran sans barre du haut (Échap pour en sortir, ⛶ pour y revenir)
+  var desk=window.matchMedia('(pointer:fine)').matches&&!/android|iphone|ipad/i.test(navigator.userAgent);
+  if(standalone&&desk&&document.documentElement.requestFullscreen){
+    var fsOff=function(){try{return localStorage.getItem('cineNoFs')==='1';}catch(e){return false;}};
+    var go=function(){if(!document.fullscreenElement)document.documentElement.requestFullscreen({navigationUI:'hide'}).catch(function(){});};
+    var first=function(){document.removeEventListener('pointerdown',first,true);if(!fsOff())go();};
+    document.addEventListener('pointerdown',first,true);
+    window.addEventListener('load',function(){
+      var b=document.createElement('button');b.id='fs-btn';b.textContent='⛶';b.title='Plein écran (Échap pour sortir)';
+      b.style.cssText='position:fixed;top:8px;right:8px;z-index:9995;width:34px;height:34px;border-radius:10px;border:none;background:rgba(43,34,56,.75);color:#fff;font-size:1.1rem;cursor:pointer;display:none';
+      b.onclick=function(){try{localStorage.removeItem('cineNoFs');}catch(e){}go();};document.body.appendChild(b);
+      var upd=function(){b.style.display=document.fullscreenElement?'none':'block';};
+      document.addEventListener('fullscreenchange',upd);upd();
+    });
   }
   var deferred=null;
   window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();deferred=e;
