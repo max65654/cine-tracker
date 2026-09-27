@@ -1701,6 +1701,16 @@ header.scrolled{padding-top:8px;padding-bottom:8px;background:color-mix(in srgb,
 .tn-t span{opacity:.8;font-size:.8rem;}
 .tn-done{font-family:'Fredoka',sans-serif;font-weight:800;border:none;border-radius:12px;padding:10px 14px;background:linear-gradient(180deg,#3ce26b,#1faa4a);color:#fff;cursor:pointer;box-shadow:0 3px 0 rgba(0,0,0,.3);}
 .pd-done{font-family:'Fredoka',sans-serif;font-weight:700;font-size:.74rem;border:none;border-radius:10px;padding:5px 10px;background:var(--mint);color:#fff;cursor:pointer;flex-shrink:0;align-self:center;}
+.plan-week-cfg{flex-basis:100%;background:var(--card-bg);border-radius:14px;padding:10px 12px;box-shadow:0 3px 0 var(--shadow);}
+.pwc-t{font-weight:700;font-size:.84rem;margin-bottom:6px;color:var(--ink);}
+.pwc-row{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;}
+@media(max-width:600px){.pwc-row{grid-template-columns:repeat(4,1fr);}}
+.pwc-row label{display:flex;flex-direction:column;gap:3px;font-size:.72rem;font-weight:700;color:var(--muted2);}
+.pwc-row label.pwc-big{color:var(--raspberry);}
+.pwc-row select{min-width:0!important;padding:6px 4px!important;font-size:.76rem;}
+.pwc-h{font-size:.7rem;color:var(--muted2);margin-top:6px;}
+.plan-day.same{margin-top:-3px;}
+.pd-big{display:inline-block;font-size:.62rem;background:var(--raspberry);color:#fff;border-radius:999px;padding:1px 6px;margin-top:2px;}
 .plan-day.today{box-shadow:0 0 0 2px var(--raspberry),0 2px 0 var(--shadow);}
 .pi-bar{height:5px;background:var(--input-bg);border-radius:4px;overflow:hidden;margin:4px 0 2px;max-width:220px;}
 .pi-bar div{height:100%;}
@@ -2296,8 +2306,7 @@ body.dark .subr-details summary{color:#C9A8FF;}
   </div>
   <div class="plan-profile" id="plan-profile"></div>
   <div class="plan-settings">
-    <label>⏱️ Temps par soirée<select id="plan-min"><option value="45">45 min</option><option value="60">1 h</option><option value="90">1 h 30</option><option value="120">2 h</option><option value="180">3 h</option><option value="240">4 h</option></select></label>
-    <label>📆 Soirs par semaine<select id="plan-days"><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option></select></label>
+    <div class="plan-week-cfg" id="plan-week-cfg"></div>
     <label>🚀 Début (au plus tôt)<input type="date" id="plan-start"></label>
     <button class="sub-action" id="plan-go">🔄 Recalculer</button>
   </div>
@@ -8770,7 +8779,12 @@ setTimeout(scheduleEnrich,2500);
    des « pépites » cachées — des films/séries méconnus choisis selon tes goûts,
    qui se retournent quand tu atteins le palier. */
 var planList=ld('cinePlanList',[]); // [{id,title,poster,mode:'auto'|'binge'|'alt'}]
-var planSettings=ld('cinePlanSettings',{min:90,days:5,start:''});
+var planSettings=ld('cinePlanSettings',{start:''});
+// Semaine type : temps dispo par jour (lundi → dimanche). Mercredi après-midi et week-end = plus de temps.
+if(!planSettings.week)planSettings.week=[90,90,240,90,120,300,240];
+var PLAN_DAYS=['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'];
+var PLAN_OPTS=[0,45,60,90,120,150,180,240,300,360,480];
+function planBudgetFor(dateS){var d=new Date(dateS+'T12:00');return planSettings.week[(d.getDay()+6)%7]||0;}
 var planProgress=ld('cinePlanProgress',{}); // tvId -> {s,e} prochain épisode à voir (quand la série n'est pas suivie épisode par épisode dans la collection)
 var planSeen=ld('cinePlanSeen',{});         // tvId -> nb d'épisodes déjà vus (pour donner l'XP des épisodes cochés ailleurs)
 var passState=ld('cinePass',{xp:0,log:[],claimed:{},pepites:{},owned:{avatar:['a0'],banner:['b0'],title:['t0']},equip:{avatar:'a0',banner:'b0',title:'t0'},name:'',welcome:false,quests:{}});
@@ -9165,20 +9179,34 @@ function computePlan(){
       if(bingeQ.length)blocks.push({sr:bingeQ[0].sr,eps:bingeQ.shift().eps,kind:'binge'});
       altQ.filter(function(a){return a.seasons.length;}).forEach(function(a){blocks.push({sr:a.sr,eps:a.seasons.shift(),kind:'alt'});});
     }
+    // On remplit chaque jour avec le temps libre de ce jour-là (semaine type).
+    // Les grosses journées (mercredi après-midi, week-end) peuvent enchaîner plusieurs séances.
     var nights=[];
-    blocks.forEach(function(b){
-      var rt=b.sr.info.rt||45;
-      var perNight=Math.max(1,Math.floor(budget/rt));
-      if(b.kind==='alt')perNight=Math.min(perNight,Math.max(maxEpsAlt,1));
-      for(var i=0;i<b.eps.length;){var chunk=b.eps.slice(i,i+perNight);i+=chunk.length;nights.push({sr:b.sr,eps:chunk,min:chunk.length*rt,kind:b.kind});}
-    });
-    // Les soirées ratées ne restent pas dans le passé : le planning repart toujours d'aujourd'hui
     var todayS=todayStr();
     var startS=(planSettings.start&&planSettings.start>todayS)?planSettings.start:todayS;
-    if(passState.lastDoneDay===todayS&&startS===todayS)startS=shiftDate(todayS,1); // soirée déjà faite aujourd'hui → la suite commence demain
-    var dates=planDateList(startS,nights.length,dpw);
+    var doneToday=(passState.doneMin&&passState.doneMin.d===todayS)?passState.doneMin.m:0;
+    if(!planSettings.week.some(function(x){return x>0;}))planSettings.week=[90,90,240,90,120,300,240];
+    var bi=0,pos=0,day=startS,guard=0;
+    while(bi<blocks.length&&guard<2000){
+      guard++;
+      var budget=planBudgetFor(day);if(day===todayS)budget=Math.max(0,budget-doneToday);
+      var left=budget,first=true,lastSr=null,perSr={};
+      while(bi<blocks.length&&left>0){
+        var b=blocks[bi],rt=b.sr.info.rt||45,remain=b.eps.length-pos;
+        var big=budget>=180;
+        var cap=b.kind==='alt'?Math.max(1,maxEpsAlt)*(big?2:1):999;
+        cap-= (perSr[b.sr.info.id]||0);
+        var n=Math.min(Math.floor(left/rt),cap,remain);
+        if(n<=0){if(first&&budget>0&&cap>0)n=1;else break;}
+        var chunk=b.eps.slice(pos,pos+n);pos+=n;left-=n*rt;first=false;
+        perSr[b.sr.info.id]=(perSr[b.sr.info.id]||0)+n;
+        nights.push({sr:b.sr,eps:chunk,min:chunk.length*rt,kind:b.kind,date:day});
+        if(pos>=b.eps.length){bi++;pos=0;}else if(b.kind==='alt')break;
+      }
+      day=shiftDate(day,1);
+    }
     var firstOfSeries={};
-    nights.forEach(function(n,k){n.date=dates[k];var id=n.sr.info.id;if(!firstOfSeries[id]){firstOfSeries[id]=true;n.isNext=true;}});
+    nights.forEach(function(n){var id=n.sr.info.id;if(!firstOfSeries[id]){firstOfSeries[id]=true;n.isNext=true;}});
     return {prof:prof,series:series,nights:nights};
   });
 }
@@ -9216,7 +9244,9 @@ function buildPlan(){
         var ss=n.sr.info.seasons.find(function(s){return s.n===z.s;});
         var endTag=(ss&&z.e===ss.released)?(n.kind==='alt'?' <i>· fin de saison → on change de série</i>':' <i>· fin de saison</i>'):'';
         var isToday=n.date===todayS;
-        return '<div class="plan-day'+(isToday?' today':'')+'"><div class="pd-d">'+(isToday?'🌙 Ce soir':new Date(n.date+'T12:00').toLocaleDateString('fr-FR',{weekday:'short',day:'numeric'}))+'</div><div class="pd-c"><span class="plan-dot" style="background:'+n.sr.color+'"></span><b>'+esc(n.sr.info.name)+'</b> · '+nightLabel(n)+' <span style="color:var(--muted2)">('+fmtMin(n.min)+')</span>'+endTag+'</div>'
+        var sameDay=weeks[wk].indexOf(n)>0&&weeks[wk][weeks[wk].indexOf(n)-1].date===n.date;
+        var dayMin=planBudgetFor(n.date);
+        return '<div class="plan-day'+(isToday?' today':'')+(sameDay?' same':'')+'"><div class="pd-d">'+(sameDay?'':(isToday?'🌙 Aujourd\'hui':new Date(n.date+'T12:00').toLocaleDateString('fr-FR',{weekday:'short',day:'numeric'}))+(dayMin>=180?' <span class="pd-big">'+fmtMin(dayMin)+'</span>':''))+'</div><div class="pd-c"><span class="plan-dot" style="background:'+n.sr.color+'"></span><b>'+esc(n.sr.info.name)+'</b> · '+nightLabel(n)+' <span style="color:var(--muted2)">('+fmtMin(n.min)+')</span>'+endTag+'</div>'
           +(n.isNext?'<button class="pd-done" data-pdone="'+nights.indexOf(n)+'" title="J\'ai regardé cette soirée">✓ Fait</button>':'')+'</div>';
       }).join('')+'</div>';
     }).join('');
@@ -9257,6 +9287,7 @@ function doneNight(n){
     passState.streak=keep?(passState.streak||0)+1:1;
   }
   passState.lastDoneDay=todayS;
+  passState.doneMin=(passState.doneMin&&passState.doneMin.d===todayS)?{d:todayS,m:passState.doneMin.m+n.min}:{d:todayS,m:n.min};
   passState.log.unshift({d:todayS,t:'night',xp:0,l:'',onTime:onTime,seasonEnd:seasonEnd,eps:n.eps.length});
   svPlan();svPass();
   addPassXp(xp,n.sr.info.name+' — '+parts.join(' + '),'nightxp');
@@ -9268,8 +9299,8 @@ function renderTonight(nights){
   var list=(nights||[]).filter(function(n){return n.date===todayS;});
   var html='';
   if(list.length){
-    var n=list[0];
-    html='<div class="tonight-card"><div class="tn-ico">🌙</div><div class="tn-main"><div class="tn-lbl">Ce soir dans ton planning</div><div class="tn-t"><b>'+esc(n.sr.info.name)+'</b> · '+nightLabel(n)+' <span>('+fmtMin(n.min)+')</span></div></div>'+(n.isNext?'<button class="tn-done" data-tndone="1">✓ C\'est fait · +100 XP</button>':'')+'</div>';
+    var n=list[0],tot=list.reduce(function(a,x){return a+x.min;},0);
+    html='<div class="tonight-card"><div class="tn-ico">'+(tot>=180?'🍿':'🌙')+'</div><div class="tn-main"><div class="tn-lbl">Aujourd\'hui dans ton planning'+(list.length>1?' · '+list.length+' séances · '+fmtMin(tot):'')+'</div><div class="tn-t"><b>'+esc(n.sr.info.name)+'</b> · '+nightLabel(n)+' <span>('+fmtMin(n.min)+')</span>'+(list.length>1?'<br><span>ensuite : '+list.slice(1).map(function(x){return esc(x.sr.info.name)+' '+nightLabel(x);}).join(' · ')+'</span>':'')+'</div></div>'+(n.isNext?'<button class="tn-done" data-tndone="1">✓ C\'est fait · +100 XP</button>':'')+'</div>';
   } else if(passState.lastDoneDay===todayS){
     html='<div class="tonight-card done"><div class="tn-ico">✅</div><div class="tn-main"><div class="tn-lbl">Soirée validée</div><div class="tn-t">Bien joué ! La suite est programmée'+(passState.streak>1?' · 🔥 '+passState.streak+' soirées d\'affilée':'')+'</div></div></div>';
   }
@@ -9773,9 +9804,11 @@ var _planInit=false;
 function initPlanning(){
   if(!_planInit){
     _planInit=true;
-    var mi=document.getElementById('plan-min'),di=document.getElementById('plan-days'),st=document.getElementById('plan-start');
-    mi.value=String(planSettings.min||90);di.value=String(planSettings.days||5);st.value=planSettings.start||'';
-    [mi,di,st].forEach(function(x){x.addEventListener('change',function(){planSettings={min:parseInt(mi.value),days:parseInt(di.value),start:st.value};svPlan();buildPlan();});});
+    var st=document.getElementById('plan-start');st.value=planSettings.start||'';
+    st.addEventListener('change',function(){planSettings.start=st.value;svPlan();buildPlan();});
+    var wc=document.getElementById('plan-week-cfg');
+    wc.innerHTML='<div class="pwc-t">⏱️ Mon temps libre pour les séries</div><div class="pwc-row">'+PLAN_DAYS.map(function(dn,i){return '<label class="'+(i===2||i>=5?'pwc-big':'')+'">'+dn+'<select data-pwd="'+i+'">'+PLAN_OPTS.map(function(m){return '<option value="'+m+'"'+(planSettings.week[i]===m?' selected':'')+'>'+(m===0?'Repos':fmtMin(m))+'</option>';}).join('')+'</select></label>';}).join('')+'</div><div class="pwc-h">Le mercredi après-midi et le week-end ont plus de temps : le planning y met plus d\'épisodes, voire plusieurs séries.</div>';
+    wc.querySelectorAll('[data-pwd]').forEach(function(sel){sel.addEventListener('change',function(){planSettings.week[parseInt(sel.dataset.pwd)]=parseInt(sel.value);svPlan();buildPlan();});});
     document.getElementById('plan-go').addEventListener('click',function(){_planTvCache={};buildPlan();});
     document.querySelectorAll('.pass-tab').forEach(function(b){b.addEventListener('click',function(){passTab=b.dataset.ptab;renderPass();});});
     document.getElementById('plan-import-avoir').addEventListener('click',function(){
@@ -11438,7 +11471,7 @@ setTimeout(function(){try{
   var CFG=window.CINE_CLOUD,ADMINS=(CFG.admins||[]).map(function(x){return String(x).toLowerCase();});
   var uidLocal=rget('cineAuthUid');
   var db=null,auth=null,me=null,userDoc=null;
-  var css=document.createElement('style');css.textContent='.acl-ov{position:fixed;inset:0;z-index:10001;background:linear-gradient(135deg,#1b0b2e,#4a1760 60%,#c2410c);display:flex;align-items:center;justify-content:center;padding:18px;font-family:Inter,sans-serif}.acl-box{background:#fff;color:#2B2238;border-radius:22px;padding:26px;max-width:380px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.4);text-align:center}.acl-box h2{font-family:Fredoka,sans-serif;margin-bottom:6px}.acl-box p{font-size:.86rem;color:#6b5f7a;margin-bottom:14px}.acl-box input{width:100%;padding:12px;border-radius:12px;border:2px solid #ece1f7;margin-bottom:10px;font-size:.95rem;font-family:inherit;box-sizing:border-box}.acl-btn{width:100%;padding:12px;border:none;border-radius:12px;background:linear-gradient(135deg,#5b21d6,#ff4d6d);color:#fff;font-weight:700;font-size:1rem;cursor:pointer;font-family:inherit}.acl-link{background:none;border:none;color:#5b21d6;cursor:pointer;margin-top:12px;font-size:.85rem;text-decoration:underline}.acl-err{color:#e50914;font-size:.82rem;min-height:18px;margin-bottom:6px}';document.head.appendChild(css);
+  var css=document.createElement('style');css.textContent='.acl-ov{position:fixed;inset:0;z-index:10001;background:linear-gradient(135deg,#1b0b2e,#4a1760 60%,#c2410c);display:flex;align-items:center;justify-content:center;padding:18px;font-family:Inter,sans-serif}.acl-box{background:#fff;color:#2B2238;border-radius:22px;padding:26px;max-width:380px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.4);text-align:center}.acl-box h2{font-family:Fredoka,sans-serif;margin-bottom:6px}.acl-box p{font-size:.86rem;color:#6b5f7a;margin-bottom:14px}.acl-box input{width:100%;padding:12px;border-radius:12px;border:2px solid #ece1f7;margin-bottom:10px;font-size:.95rem;font-family:inherit;box-sizing:border-box}.acl-btn{width:100%;padding:12px;border:none;border-radius:12px;background:linear-gradient(135deg,#5b21d6,#ff4d6d);color:#fff;font-weight:700;font-size:1rem;cursor:pointer;font-family:inherit}.acl-link{background:none;border:none;color:#5b21d6;cursor:pointer;margin-top:12px;font-size:.85rem;text-decoration:underline}.acl-pw{position:relative}.acl-pw input{padding-right:46px}.acl-eye{position:absolute;right:8px;top:6px;background:none;border:none;font-size:1.2rem;cursor:pointer;padding:4px}.acl-forgot{font-weight:700;text-decoration:none}.acl-err{color:#e50914;font-size:.82rem;min-height:18px;margin-bottom:6px}';document.head.appendChild(css);
   function overlay(html){var o=document.getElementById('acl-ov');if(!o){o=document.createElement('div');o.id='acl-ov';o.className='acl-ov';document.body.appendChild(o);}o.innerHTML='<div class="acl-box">'+html+'</div>';return o;}
   function closeOverlay(){var o=document.getElementById('acl-ov');if(o)o.remove();}
   function loadScript(src){return new Promise(function(res,rej){var s=document.createElement('script');s.src=src;s.onload=res;s.onerror=rej;document.head.appendChild(s);});}
@@ -11467,12 +11500,14 @@ setTimeout(function(){try{
     mode=mode||'login';
     var o=overlay('<div style="font-size:2.4rem">🎬</div><h2>Mon Ciné Tracker</h2><p>'+(mode==='login'?'Connecte-toi à ton compte':'Crée ton compte — l\'admin devra valider ta demande')+'</p>'
       +(mode==='signup'?'<input id="acl-name" placeholder="Prénom / pseudo" maxlength="24">':'')
-      +'<input id="acl-mail" type="email" placeholder="E-mail" autocomplete="email"><input id="acl-pass" type="password" placeholder="Mot de passe (6 caractères min.)" autocomplete="'+(mode==='login'?'current-password':'new-password')+'">'
+      +'<input id="acl-mail" type="email" placeholder="E-mail" autocomplete="email"><div class="acl-pw"><input id="acl-pass" type="password" placeholder="Mot de passe (6 caractères min.)" autocomplete="'+(mode==='login'?'current-password':'new-password')+'"><button type="button" class="acl-eye" id="acl-eye" title="Afficher / masquer le mot de passe">👁️</button></div>'
       +'<div class="acl-err" id="acl-err"></div><button class="acl-btn" id="acl-go">'+(mode==='login'?'Se connecter':'Envoyer ma demande')+'</button>'
       +'<button class="acl-link" id="acl-sw">'+(mode==='login'?'Pas de compte ? Créer un compte':'J\'ai déjà un compte')+'</button>'
-      +(mode==='login'?'<br><button class="acl-link" id="acl-reset">Mot de passe oublié</button>':''));
+      +(mode==='login'?'<br><button class="acl-link acl-forgot" id="acl-reset">🔑 Mot de passe oublié ?</button>':''));
+    document.getElementById('acl-eye').addEventListener('click',function(){var i=document.getElementById('acl-pass');var show=i.type==='password';i.type=show?'text':'password';this.textContent=show?'🙈':'👁️';});
+    document.getElementById('acl-pass').addEventListener('keydown',function(e){if(e.key==='Enter')document.getElementById('acl-go').click();});
     document.getElementById('acl-sw').addEventListener('click',function(){showLogin(mode==='login'?'signup':'login');});
-    var rs=document.getElementById('acl-reset');if(rs)rs.addEventListener('click',function(){var m=document.getElementById('acl-mail').value.trim();if(!m){document.getElementById('acl-err').textContent='Écris ton e-mail d\'abord.';return;}auth.sendPasswordResetEmail(m).then(function(){document.getElementById('acl-err').textContent='📧 E-mail de réinitialisation envoyé.';});});
+    var rs=document.getElementById('acl-reset');if(rs)rs.addEventListener('click',function(){var m=document.getElementById('acl-mail').value.trim(),err=document.getElementById('acl-err');if(!m){err.textContent='✍️ Écris d\'abord ton e-mail au-dessus, puis reclique ici.';document.getElementById('acl-mail').focus();return;}auth.sendPasswordResetEmail(m).then(function(){err.style.color='#06a77d';err.textContent='📧 E-mail envoyé à '+m+' : clique sur le lien reçu pour choisir un nouveau mot de passe (regarde aussi dans les spams).';}).catch(function(e){err.style.color='';err.textContent=(e&&e.code||'').indexOf('invalid-email')>=0?'E-mail invalide.':'Impossible d\'envoyer l\'e-mail : '+(e.message||e);});});
     document.getElementById('acl-go').addEventListener('click',function(){
       var m=document.getElementById('acl-mail').value.trim(),p=document.getElementById('acl-pass').value,err=document.getElementById('acl-err');err.textContent='';
       var pr=mode==='login'?auth.signInWithEmailAndPassword(m,p):auth.createUserWithEmailAndPassword(m,p).then(function(c){var n=(document.getElementById('acl-name')||{}).value||'';return c.user.updateProfile({displayName:n}).then(function(){return db.collection('users').doc(c.user.uid).set({email:m,name:n,approved:ADMINS.indexOf(m.toLowerCase())>=0,requestedAt:Date.now()});});});
@@ -11559,12 +11594,13 @@ setTimeout(function(){try{
         +allUsers.map(function(p){var mine=p.uid===me.uid;return '<div class="acc-req'+(p.approved?'':' pend')+'"><span><b>'+esc2(p.name||'—')+'</b> '+esc2(p.email)+(mine?' <small>(toi)</small>':'')+'<br><small>'+(p.approved?'✅ Accès autorisé':'⏳ Demande du '+new Date(p.requestedAt||0).toLocaleString('fr-FR'))+(p.updatedAt?' · dernière synchro '+new Date(p.updatedAt).toLocaleDateString('fr-FR'):'')+'</small></span>'
           +(p.approved?'<button class="acc-out" data-view="'+p.uid+'">👀 Voir</button>'+(mine?'':'<button class="acc-no" data-revoke="'+p.uid+'" title="Retirer l\'accès">🚫</button>'):'<button class="acc-ok" data-ok="'+p.uid+'">✅ Accepter</button>')
           +(mine?'':'<button class="acc-out" data-reset="'+esc2(p.email)+'" title="Envoyer un e-mail pour changer de mot de passe">🔑</button><button class="acc-no" data-no="'+p.uid+'" title="Supprimer">✕</button>')+'</div>';}).join(''):'')
-      +'<div style="margin-top:10px"><button class="acc-out" id="acc-out">🚪 Se déconnecter</button></div></div>';
+      +'<div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap"><button class="acc-out" id="acc-pw">🔑 Changer mon mot de passe</button><button class="acc-out" id="acc-out">🚪 Se déconnecter</button></div></div>';
     el.querySelectorAll('[data-ok]').forEach(function(b){b.addEventListener('click',function(){db.collection('users').doc(b.dataset.ok).update({approved:true,approvedAt:Date.now()}).then(function(){tst('✅ Compte validé !');});});});
     el.querySelectorAll('[data-no]').forEach(function(b){b.addEventListener('click',function(){if(confirm('Supprimer ce compte de la liste ? (il devra refaire une demande)'))db.collection('users').doc(b.dataset.no).delete();});});
     el.querySelectorAll('[data-revoke]').forEach(function(b){b.addEventListener('click',function(){if(confirm('Retirer l\'accès à ce compte ? Ses données sont gardées.'))db.collection('users').doc(b.dataset.revoke).update({approved:false}).then(function(){tst('🚫 Accès retiré');});});});
     el.querySelectorAll('[data-reset]').forEach(function(b){b.addEventListener('click',function(){auth.sendPasswordResetEmail(b.dataset.reset).then(function(){tst('📧 E-mail de réinitialisation envoyé à '+b.dataset.reset);}).catch(function(e){tst('Erreur : '+(e.message||e));});});});
     el.querySelectorAll('[data-view]').forEach(function(b){b.addEventListener('click',function(){viewUser(b.dataset.view);});});
+    document.getElementById('acc-pw').addEventListener('click',function(){auth.sendPasswordResetEmail(me.email).then(function(){tst('📧 E-mail envoyé à '+me.email+' pour choisir un nouveau mot de passe');}).catch(function(e){tst('Erreur : '+(e.message||e));});});
     document.getElementById('acc-out').addEventListener('click',function(){flush(me.uid);setTimeout(function(){auth.signOut().then(function(){rset('cineAuthUid','');location.reload();});},600);});
   }};
 })();
