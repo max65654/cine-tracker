@@ -4576,7 +4576,7 @@ function openModal(id){
   }
   var nextEpBlock=(item.type==='serie'&&item.nextEpisode)?nextEpisodeCountdownHtml(item,{compact:true}):'';
   var filmVideoBlock='';
-  if(item.type==='film'){
+  if(false&&item.type==='film'){ // bloc « Vidéo du film importée » retiré à la demande
     filmVideoBlock='<div class="film-video-block"><label>🎬 Vidéo du film (importée depuis ton PC)</label>'
       +(item.hasLocalVideo
         ?'<button class="ep-btn-small" style="border-color:var(--mint);color:var(--mint);" onclick="playLocalFilmVideo('+id+')">▶ Regarder le film</button> <button class="ep-btn-small" style="border-color:var(--raspberry);color:var(--raspberry);" onclick="removeLocalFilmVideo('+id+')">🗑 Retirer</button>'
@@ -5867,16 +5867,16 @@ var trailerCache={};
 function fetchTrailerKey(item){
   return new Promise(function(resolve){
     if(!item.tmdbId){resolve(null);return;}
-    var ck=item.tmdbType+item.tmdbId+(item.season?('s'+item.season):'');
+    var ck='vf'+item.tmdbType+item.tmdbId+(item.season?('s'+item.season):'');
     if(trailerCache[ck]!==undefined){resolve(trailerCache[ck]);return;}
-    function pickVid(list){list=(list||[]).filter(function(v){return v.site==='YouTube';});function ofType(t){return list.find(function(v){return v.type===t;});}return (ofType('Trailer')||ofType('Teaser')||ofType('Clip')||ofType('Featurette')||ofType('Opening Credits')||list[0]||null);}
+    function pickVid(list){list=(list||[]).filter(function(v){return v.site==='YouTube';});var _fr=list.filter(function(v){return v.iso_639_1==='fr'&&(v.type==='Trailer'||v.type==='Teaser');}).sort(function(a,b){return (a.type==='Trailer'?0:1)-(b.type==='Trailer'?0:1)||(b.official?1:0)-(a.official?1:0);});if(_fr[0])return _fr[0];function ofType(t){return list.find(function(v){return v.type===t;});}return (ofType('Trailer')||ofType('Teaser')||ofType('Clip')||ofType('Featurette')||ofType('Opening Credits')||list[0]||null);}
     // Si on connaît la saison précise (ex: notif "Attentes" sur une saison à venir),
     // on cherche les vidéos DE CETTE SAISON, pas celles de toute la série —
     // sinon l'API renvoie les trailers de toutes les saisons mélangées et on
     // risque d'afficher la bande-annonce de la saison 1 ou 2 pour une notif
     // concernant la saison 3, qui elle n'a peut-être encore aucune vidéo.
     if(item.tmdbType==='tv'&&item.season){
-      var seasonUrl='https://api.themoviedb.org/3/tv/'+item.tmdbId+'/season/'+item.season+'?api_key='+TMDB+'&append_to_response=videos';
+      var seasonUrl='https://api.themoviedb.org/3/tv/'+item.tmdbId+'/season/'+item.season+'?api_key='+TMDB+'&append_to_response=videos&include_video_language=fr,en,null';
       fetch(seasonUrl).then(function(r){return r.json();}).then(function(ds){
         var pv=ds.videos?pickVid(ds.videos.results):null;
         trailerCache[ck]=pv?pv.key:null;resolve(pv?pv.key:null);
@@ -5884,11 +5884,12 @@ function fetchTrailerKey(item){
       return;
     }
     var base='https://api.themoviedb.org/3/'+item.tmdbType+'/'+item.tmdbId+'/videos?api_key='+TMDB;
+    var baseAll=base+'&include_video_language=fr,en,null'; // VF d'abord si elle existe
     // 1) Sans filtre de langue : l'API TMDB ne fait AUCUN fallback quand on précise
     // une langue — beaucoup de bandes-annonces n'ont pas de langue renseignée (ou
     // une autre langue que fr/en) et étaient donc ratées. Cet appel "brut" recense
     // généralement tout ce qui est disponible, langue par langue confondues.
-    fetch(base).then(function(r){return r.json();}).then(function(d0){
+    fetch(baseAll).then(function(r){return r.json();}).then(function(d0){
       var p0=pickVid(d0.results);
       if(p0){trailerCache[ck]=p0.key;resolve(p0.key);return;}
       // 2) Repli explicite fr-FR puis en-US, au cas où l'appel sans langue serait
