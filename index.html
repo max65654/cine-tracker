@@ -1572,7 +1572,9 @@ button:active,.nav-btn:active,.filter-chip:active,.bfilter-chip:active,.sub-acti
 .shatter-layer{overflow:visible;}
 /* header qui réagit au scroll */
 header{transition:padding .25s ease,background .25s ease,box-shadow .25s ease;position:sticky;top:0;z-index:40;background:var(--cream);}
-header{position:-webkit-sticky;position:sticky;top:0;z-index:60;}
+header{position:relative;top:auto;z-index:60;transition:none!important;}
+header.scrolled{position:fixed!important;top:0;left:0;right:0;animation:hdrIn .22s ease-out;}
+@keyframes hdrIn{from{transform:translateY(-100%);}to{transform:none;}}
 /* Barre compacte quand on descend : 1 seule ligne qui défile sur le côté */
 header.scrolled{flex-wrap:nowrap;gap:10px;}
 header.scrolled .brand{font-size:1.05rem;white-space:nowrap;flex-shrink:0;}
@@ -1837,6 +1839,13 @@ body.dark .subr-details summary{color:#C9A8FF;}
 .acc-req span{flex:1;}
 .acc-ok,.acc-no,.acc-out{border:none;border-radius:10px;padding:6px 10px;cursor:pointer;font-weight:700;font-family:inherit;}
 .acc-ok{background:#06d6a0;color:#fff;}.acc-no{background:#ff4d6d;color:#fff;}.acc-out{background:var(--card-bg);color:var(--ink);box-shadow:0 2px 0 var(--shadow);}
+.acc-req.pend{box-shadow:0 0 0 2px #ffd23f;}
+.adm-stats{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin:8px 0;}
+.adm-stats div{background:var(--input-bg);border-radius:12px;padding:8px;text-align:center;font-size:.72rem;}
+.adm-stats b{display:block;font-family:'Fredoka',sans-serif;font-size:1.3rem;}
+.adm-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(84px,1fr));gap:8px;}
+.adm-grid div{font-size:.68rem;line-height:1.2;}
+.adm-grid img{width:100%;aspect-ratio:2/3;object-fit:cover;border-radius:8px;display:block;margin-bottom:3px;background:var(--input-bg);}
 .hdr-adm{position:absolute;bottom:-6px;left:-10px;background:#ffd23f;color:#2a1070;font-size:.58rem;font-weight:800;border-radius:8px;padding:0 4px;}
 .rc-foot{text-align:center;font-size:.7rem;opacity:.8;margin-top:10px;}
 
@@ -11222,7 +11231,7 @@ function showVuStamp(){try{if(typeof sfx!=='undefined'&&sfx.pop)sfx.pop();}catch
 /* tap-bounce + header scroll */
 (function(){
   document.addEventListener('pointerdown',function(e){var c=e.target.closest&&e.target.closest('.movie-card');if(!c)return;c.classList.remove('tap-bounce');void c.offsetWidth;c.classList.add('tap-bounce');},true);
-  var h=document.querySelector('header');if(h)window.addEventListener('scroll',function(){if(window.scrollY>28)h.classList.add('scrolled');else h.classList.remove('scrolled');},{passive:true});
+  /* (ancien réglage de la barre du haut retiré : il entrait en conflit avec la barre compacte) */
 })();
 
 buildParticles();
@@ -11352,34 +11361,68 @@ setTimeout(function(){try{
       flush(uid);}
   }
   /* --- Admin : demandes d'inscription --- */
-  var pending=[];
+  var pending=[],allUsers=[];
   function watchRequests(){
-    db.collection('users').where('approved','==',false).onSnapshot(function(qs){
-      pending=[];qs.forEach(function(d){pending.push(Object.assign({uid:d.id},d.data()));});
+    db.collection('users').onSnapshot(function(qs){
+      allUsers=[];qs.forEach(function(d){allUsers.push(Object.assign({uid:d.id},d.data()));});
+      allUsers.sort(function(a,b){return (a.approved===b.approved)?((b.requestedAt||0)-(a.requestedAt||0)):(a.approved?1:-1);});
+      pending=allUsers.filter(function(u){return !u.approved;});
       var h=document.getElementById('hdr-avatar');if(h){var b=h.querySelector('.hdr-adm');if(!b){b=document.createElement('span');b.className='hdr-adm';h.appendChild(b);}b.textContent=pending.length?'👑'+pending.length:'';b.style.display=pending.length?'':'none';}
       if(pending.length)tst('👑 '+pending.length+' demande(s) de compte en attente (clique sur ton avatar)');
       var el=document.getElementById('pm-account');if(el)window.CineAccount.renderPanel(el);
     });
   }
+  // 👀 Voir la collection d'un compte (lecture seule, admin)
+  function viewUser(uid){
+    var u=allUsers.find(function(x){return x.uid===uid;})||{};
+    var ov=document.getElementById('adm-ov');if(!ov){ov=document.createElement('div');ov.id='adm-ov';ov.className='pepite-ov';document.body.appendChild(ov);ov.addEventListener('click',function(e){if(e.target===ov)ov.classList.remove('show');});}
+    ov.innerHTML='<div class="pepite-box" style="max-width:900px"><button class="pepite-x">✕</button><div class="pepite-tag">👀 '+esc2(u.name||u.email||'Compte')+'</div><div class="trend-loading">Chargement…</div></div>';ov.classList.add('show');
+    ov.querySelector('.pepite-x').addEventListener('click',function(){ov.classList.remove('show');});
+    function get(k){return db.collection('users').doc(uid).collection('kv').doc(k).get().then(function(d){if(!d.exists)return null;var x=d.data();if(!x.chunks)return x.v;var ps=[];for(var i=0;i<x.chunks;i++)ps.push(db.collection('users').doc(uid).collection('kv').doc(k+'__c'+i).get());return Promise.all(ps).then(function(a){return a.map(function(z){return (z.data()||{}).v||'';}).join('');});});}
+    Promise.all([get('cineItems'),get('cineWish'),get('cinePass')]).then(function(r){
+      var its=[],wish=[],pass={};try{its=JSON.parse(r[0]||'[]');}catch(_){}try{wish=JSON.parse(r[1]||'[]');}catch(_){}try{pass=JSON.parse(r[2]||'{}');}catch(_){}
+      var vus=its.filter(function(i){return i.status==='termine';}),avg=vus.filter(function(i){return i.rating>0;});var moy=avg.length?(avg.reduce(function(a,i){return a+parseFloat(i.rating);},0)/avg.length).toFixed(1):'–';
+      var top=its.filter(function(i){return parseFloat(i.rating||0)>=4.5;}).slice(0,12);
+      var box=ov.querySelector('.pepite-box');
+      box.innerHTML='<button class="pepite-x">✕</button><div class="pepite-tag">👀 '+esc2(u.name||u.email||'Compte')+'</div>'
+        +'<div class="adm-stats"><div><b>'+its.length+'</b>titres</div><div><b>'+vus.length+'</b>vus</div><div><b>'+wish.length+'</b>attentes</div><div><b>'+moy+'</b>note moy.</div><div><b>'+(pass.xp||0)+'</b>XP Pass</div></div>'
+        +(top.length?'<h4 style="margin:10px 0 6px">❤️ Ses coups de cœur</h4><div class="adm-grid">'+top.map(function(i){return '<div><img src="'+(i.poster||'')+'" alt=""><span>'+esc2(i.title)+' · '+(i.rating||'')+'★</span></div>';}).join('')+'</div>':'')
+        +'<h4 style="margin:14px 0 6px">📚 Sa collection ('+its.length+')</h4><div class="adm-grid">'+its.slice(0,60).map(function(i){return '<div><img src="'+(i.poster||'')+'" alt="" loading="lazy"><span>'+esc2(i.title)+'</span></div>';}).join('')+'</div>'+(its.length>60?'<div class="acc-hint">… et '+(its.length-60)+' autres</div>':'');
+      box.querySelector('.pepite-x').addEventListener('click',function(){ov.classList.remove('show');});
+    }).catch(function(e){ov.querySelector('.pepite-box').innerHTML='<button class="pepite-x">✕</button><p>⚠️ Lecture impossible. As-tu bien mis à jour les <b>règles Firestore</b> (nouvelle version) ?<br><small>'+esc2(e.message||e)+'</small></p>';ov.querySelector('.pepite-x').addEventListener('click',function(){ov.classList.remove('show');});});
+  }
   window.CineAccount={renderPanel:function(el){
     if(!me){el.innerHTML='';return;}
     el.innerHTML='<div class="acc-box"><div class="acc-h">☁️ Compte en ligne</div><div class="acc-hint">Connecté : <b>'+esc2(me.email)+'</b>'+(isAdmin()?' · 👑 admin':'')+' — tes données sont synchronisées sur tous tes appareils.</div>'
-      +(isAdmin()?'<div class="acc-h" style="margin-top:10px">👑 Demandes d\'inscription ('+pending.length+')</div>'+(pending.length?pending.map(function(p){return '<div class="acc-req"><span><b>'+esc2(p.name||'—')+'</b> '+esc2(p.email)+'<br><small>'+new Date(p.requestedAt||0).toLocaleString('fr-FR')+'</small></span><button class="acc-ok" data-ok="'+p.uid+'">✅ Accepter</button><button class="acc-no" data-no="'+p.uid+'">✕</button></div>';}).join(''):'<div class="acc-hint">Aucune demande en attente.</div>'):'')
+      +(isAdmin()?'<div class="acc-h" style="margin-top:10px">👑 Administration — '+allUsers.length+' compte'+(allUsers.length>1?'s':'')+(pending.length?' · <span style="color:#ff4d6d">'+pending.length+' en attente</span>':'')+'</div>'
+        +allUsers.map(function(p){var mine=p.uid===me.uid;return '<div class="acc-req'+(p.approved?'':' pend')+'"><span><b>'+esc2(p.name||'—')+'</b> '+esc2(p.email)+(mine?' <small>(toi)</small>':'')+'<br><small>'+(p.approved?'✅ Accès autorisé':'⏳ Demande du '+new Date(p.requestedAt||0).toLocaleString('fr-FR'))+(p.updatedAt?' · dernière synchro '+new Date(p.updatedAt).toLocaleDateString('fr-FR'):'')+'</small></span>'
+          +(p.approved?'<button class="acc-out" data-view="'+p.uid+'">👀 Voir</button>'+(mine?'':'<button class="acc-no" data-revoke="'+p.uid+'" title="Retirer l\'accès">🚫</button>'):'<button class="acc-ok" data-ok="'+p.uid+'">✅ Accepter</button>')
+          +(mine?'':'<button class="acc-out" data-reset="'+esc2(p.email)+'" title="Envoyer un e-mail pour changer de mot de passe">🔑</button><button class="acc-no" data-no="'+p.uid+'" title="Supprimer">✕</button>')+'</div>';}).join(''):'')
       +'<div style="margin-top:10px"><button class="acc-out" id="acc-out">🚪 Se déconnecter</button></div></div>';
     el.querySelectorAll('[data-ok]').forEach(function(b){b.addEventListener('click',function(){db.collection('users').doc(b.dataset.ok).update({approved:true,approvedAt:Date.now()}).then(function(){tst('✅ Compte validé !');});});});
-    el.querySelectorAll('[data-no]').forEach(function(b){b.addEventListener('click',function(){if(confirm('Refuser et supprimer cette demande ?'))db.collection('users').doc(b.dataset.no).delete();});});
+    el.querySelectorAll('[data-no]').forEach(function(b){b.addEventListener('click',function(){if(confirm('Supprimer ce compte de la liste ? (il devra refaire une demande)'))db.collection('users').doc(b.dataset.no).delete();});});
+    el.querySelectorAll('[data-revoke]').forEach(function(b){b.addEventListener('click',function(){if(confirm('Retirer l\'accès à ce compte ? Ses données sont gardées.'))db.collection('users').doc(b.dataset.revoke).update({approved:false}).then(function(){tst('🚫 Accès retiré');});});});
+    el.querySelectorAll('[data-reset]').forEach(function(b){b.addEventListener('click',function(){auth.sendPasswordResetEmail(b.dataset.reset).then(function(){tst('📧 E-mail de réinitialisation envoyé à '+b.dataset.reset);}).catch(function(e){tst('Erreur : '+(e.message||e));});});});
+    el.querySelectorAll('[data-view]').forEach(function(b){b.addEventListener('click',function(){viewUser(b.dataset.view);});});
     document.getElementById('acc-out').addEventListener('click',function(){flush(me.uid);setTimeout(function(){auth.signOut().then(function(){rset('cineAuthUid','');location.reload();});},600);});
   }};
 })();
 </script>
 
 <script>
-// Barre du haut : reste collée en haut, et devient compacte (1 ligne) quand on descend
+// Barre du haut : la grande barre reste à sa place ; quand elle sort de l'écran, une barre
+// compacte (1 ligne) glisse depuis le haut. Une « cale » de la même hauteur remplace la grande
+// barre → plus aucun saut de la page en remontant (c'était ça le petit bug d'1 seconde).
 (function(){
   var h=document.querySelector('header');if(!h)return;
-  var on=false;
-  function upd(){var y=window.scrollY||document.documentElement.scrollTop;var want=on?y>40:y>120;if(want!==on){on=want;h.classList.toggle('scrolled',on);if(on){var a=h.querySelector('.nav-btn.active');if(a&&a.scrollIntoView)try{a.scrollIntoView({block:'nearest',inline:'center'});}catch(_){}}}}
-  window.addEventListener('scroll',upd,{passive:true});upd();
+  var sp=document.createElement('div');sp.id='hdr-spacer';sp.style.display='none';h.parentNode.insertBefore(sp,h.nextSibling);
+  var on=false,full=h.offsetHeight,ticking=false;
+  function upd(){ticking=false;var y=window.scrollY||document.documentElement.scrollTop;
+    if(!on){full=h.offsetHeight;if(y>full+30){on=true;sp.style.height=full+'px';sp.style.display='block';h.classList.add('scrolled');var a=h.querySelector('.nav-btn.active');if(a&&a.scrollIntoView)try{a.scrollIntoView({block:'nearest',inline:'center'});}catch(_){}}}
+    else if(y<=full){on=false;h.classList.remove('scrolled');sp.style.display='none';}
+  }
+  window.addEventListener('scroll',function(){if(!ticking){ticking=true;requestAnimationFrame(upd);}},{passive:true});upd();
+  window.addEventListener('resize',function(){if(!on)full=h.offsetHeight;});
   document.addEventListener('click',function(e){var b=e.target.closest&&e.target.closest('header .nav-btn');if(b&&on){setTimeout(function(){try{b.scrollIntoView({block:'nearest',inline:'center'});}catch(_){}},50);}});
 })();
 </script>
