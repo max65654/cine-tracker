@@ -2053,6 +2053,9 @@ body.dark .subr-details summary{color:#C9A8FF;}
   img{max-width:100%;}
 }
 .mob-more{display:none;border:none;background:var(--card-bg);border-radius:999px;width:34px;height:34px;flex-shrink:0;cursor:pointer;box-shadow:0 2px 8px var(--shadow);font-size:1rem;align-items:center;justify-content:center;}
+.tn-btns{display:flex;flex-wrap:wrap;gap:6px;align-items:center;justify-content:flex-end}.tn-mini{border:1px solid rgba(255,255,255,.35);background:rgba(255,255,255,.12);color:inherit;border-radius:999px;padding:5px 10px;font-size:.74rem;cursor:pointer;font-family:inherit}.tn-recap{flex-basis:100%;font-size:.82rem;line-height:1.45;background:rgba(0,0,0,.15);border-radius:12px;padding:10px 12px;margin-top:8px}.tonight-card{flex-wrap:wrap}
+.pi-like{display:inline-block;font-size:.68rem;font-weight:700;padding:2px 8px;border-radius:999px;background:linear-gradient(90deg,rgba(6,214,160,.25) var(--lk),rgba(128,128,128,.12) var(--lk));margin-left:4px;vertical-align:middle}
+.plan-remind{margin:0 0 16px}.pr-card{background:var(--card-bg);border:1px solid var(--border);border-radius:16px;padding:12px 14px;box-shadow:0 3px 0 var(--shadow)}.pr-card.on{border-color:rgba(6,214,160,.45)}.pr-h{font-weight:700;display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}.pr-t{font-size:.8rem;color:var(--muted);margin:4px 0 8px}.pr-go{border:none;border-radius:10px;padding:8px 14px;background:var(--raspberry);color:#fff;font-weight:700;cursor:pointer}.pr-row{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:8px;font-size:.82rem}.pr-row select{margin-left:4px}.pr-sw{font-size:.8rem;font-weight:500}.pr-how{margin-top:8px;font-size:.8rem}.pr-how summary{cursor:pointer;color:var(--violet);font-weight:600}.pr-how code{background:var(--input-bg);padding:2px 6px;border-radius:6px}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 </head>
@@ -2379,6 +2382,7 @@ body.dark .subr-details summary{color:#C9A8FF;}
   </div>
 
   <div class="plan-tonight" id="plan-tonight"></div>
+  <div class="plan-remind" id="plan-remind"></div>
 
   <div class="add-card" style="margin-bottom:18px">
     <h3>➕ Ajoute les séries que tu vas regarder</h3>
@@ -2394,6 +2398,8 @@ body.dark .subr-details summary{color:#C9A8FF;}
   <div class="plan-profile" id="plan-profile"></div>
   <div class="plan-settings">
     <div class="plan-week-cfg" id="plan-week-cfg"></div>
+    <label>🔀 Façon de regarder<select id="plan-style"><option value="rotate">Alterner les séries chaque soir</option><option value="smart">Selon mes habitudes (saison par saison)</option></select></label>
+    <label>🥇 Par quoi commencer<select id="plan-order"><option value="least">La moins sûre de me plaire d'abord</option><option value="best">Ma préférée d'abord</option><option value="manual">Mon ordre (flèches ↑↓)</option></select></label>
     <label>🚀 Début (au plus tôt)<input type="date" id="plan-start"></label>
     <button class="sub-action" id="plan-go">🔄 Recalculer</button>
     <button class="sub-action" id="plan-ics">📅 Dans mon agenda</button>
@@ -5958,13 +5964,15 @@ function makeBgPlayer(elId,key,wrapEl,soundOn){
   return new YT.Player(elId,{videoId:key,host:'https://www.youtube.com',
     playerVars:{autoplay:1,mute:1,controls:0,start:5,modestbranding:1,playsinline:1,rel:0,iv_load_policy:3,disablekb:1,fs:0,origin:location.origin},
     events:{
-      onReady:function(e){try{e.target.playVideo();if(soundOn){e.target.unMute();e.target.setVolume(60);}else{e.target.mute();}var f=e.target.getIframe();if(f&&wrapEl){f.classList.add('bg-yt');}fitBgVideo(wrapEl);setTimeout(function(){fitBgVideo(wrapEl);},350);}catch(_){}},
+      onReady:function(e){try{var pl=e.target;if(wrapEl){clearInterval(wrapEl._loop);wrapEl._shown=false;wrapEl._loop=setInterval(function(){try{if(!document.body.contains(wrapEl)){clearInterval(wrapEl._loop);return;}var d=pl.getDuration(),t=pl.getCurrentTime();if(d>12&&t>d-2.5)pl.seekTo(5,true);}catch(_){}},400);}
+        e.target.playVideo();if(soundOn){e.target.unMute();e.target.setVolume(60);}else{e.target.mute();}var f=e.target.getIframe();if(f&&wrapEl){f.classList.add('bg-yt');}fitBgVideo(wrapEl);setTimeout(function(){fitBgVideo(wrapEl);},350);}catch(_){}},
       onStateChange:function(e){
         // PLAYING → on attend que l'icône ⏸ de YouTube ait disparu avant d'afficher la vidéo ;
         // pause / chargement → on recache la vidéo (jamais d'icône ⏸ ni de rond de chargement visibles)
-        if(wrapEl){clearTimeout(wrapEl._vt);
-          if(e.data===1){fitBgVideo(wrapEl);wrapEl._vt=setTimeout(function(){wrapEl.classList.add('playing');},3600);}
-          else if(e.data===2||e.data===3||e.data===-1){wrapEl.classList.remove('playing');}}
+        // Boucle continue : on revient au début AVANT la fin (jamais d'écran de fin ni de coupure)
+        if(wrapEl){
+          if(e.data===1&&!wrapEl._shown){fitBgVideo(wrapEl);clearTimeout(wrapEl._vt);wrapEl._vt=setTimeout(function(){wrapEl.classList.add('playing');wrapEl._shown=true;},3600);}
+          else if(e.data===2){clearTimeout(wrapEl._vt);wrapEl.classList.remove('playing');wrapEl._shown=false;}}
         if(e.data===0){try{e.target.seekTo(5);e.target.playVideo();}catch(_){}}        // ENDED → boucle manuelle (pas de boutons ⏮⏭)
       },
       onError:function(e){try{if(wrapEl)wrapEl.classList.remove('playing');var f=e.target.getIframe&&e.target.getIframe();if(f)f.style.display='none';}catch(_){}} // vidéo bloquée → on garde l'image
@@ -5979,6 +5987,7 @@ function fitBgVideo(wrapEl){
   var w=wrapEl.clientWidth,h=wrapEl.clientHeight;if(!w||!h)return;
   f.style.position='absolute';f.style.maxWidth='none';f.style.transform='none';
   var vw=w,vh=w*9/16;if(vh<h){vh=h;vw=h*16/9;} // "cover" : la vidéo remplit le cadre
+  vw*=1.38;vh*=1.38; // zoom : les barres YouTube (titre en haut, logo/suggestions en bas) sortent du cadre
   f.style.width=vw+'px';f.style.height=vh+'px';
   f.style.left=((w-vw)/2)+'px';f.style.top=((h-vh)/2)+'px'; // bien centré (horizontal + vertical)
 }
@@ -9492,7 +9501,7 @@ function fetchPlanTv(id){
       return {n:s.season_number,count:s.episode_count,released:released,air:s.air_date||''};
     });
     var rt=(d.episode_run_time&&d.episode_run_time[0])||(last&&last.runtime)||45;
-    return {id:d.id,name:d.name,genres:(d.genres||[]).map(function(g){return g.name;}),rt:rt,seasons:seasons,next:next,poster:d.poster_path?'https://image.tmdb.org/t/p/w185'+d.poster_path:'',status:d.status||''};
+    return {id:d.id,name:d.name,vote:d.vote_average||0,vc:d.vote_count||0,genres:(d.genres||[]).map(function(g){return g.name;}),rt:rt,seasons:seasons,next:next,poster:d.poster_path?'https://image.tmdb.org/t/p/w185'+d.poster_path:'',status:d.status||''};
   }).catch(function(){delete _planTvCache[id];return null;});
   return _planTvCache[id];
 }
@@ -9512,6 +9521,62 @@ function planStartPos(tvId){
   if(pp&&posGreater(pp,pos))pos={s:pp.s,e:pp.e};
   return pos;
 }
+/* ---------- 🔀 Planning : alterner les séries chaque soir, en commençant par la moins sûre ---------- */
+if(!planSettings.skip)planSettings.skip={};
+(function(){var t=todayStr();Object.keys(planSettings.skip).forEach(function(d){if(d<t)delete planSettings.skip[d];});})();
+function planDayBudget(day){return planSettings.skip&&planSettings.skip[day]?0:planBudgetFor(day);}
+function planGenreAvg(){
+  var acc={};
+  items.forEach(function(i){var r=parseFloat(i.rating)||0;if(r<=0)return;(i.tags||[]).forEach(function(t){if(!GENRE_NAMES_FR[t])return;(acc[t]=acc[t]||{s:0,n:0});acc[t].s+=r;acc[t].n++;});});
+  var out={};Object.keys(acc).forEach(function(k){out[k]=acc[k].s/acc[k].n;});return out;
+}
+var _pga=null,_pgaT=0;
+function planLikeScore(info){
+  if(!_pga||Date.now()-_pgaT>60000){_pga=planGenreAvg();_pgaT=Date.now();}
+  var gs=(info.genres||[]).map(function(g){return _pga[g];}).filter(function(x){return x!==undefined;});
+  var g=gs.length?gs.reduce(function(a,b){return a+b;},0)/gs.length:3.4;
+  var v=info.vc>=30?info.vote/2:3.4;
+  var it=planItemFor(info.id);var bonus=0;
+  if(it&&it.fav)bonus+=0.4;
+  if((typeof notForMe!=='undefined'?notForMe:[]).some(function(n){return n&&n.key==='tv_'+info.id;}))bonus-=0.8;
+  var sc=0.55*g+0.45*v+bonus;
+  return Math.max(3,Math.min(99,Math.round((sc-1)/4*100)));
+}
+function rotateNights(series,prof,startS,todayS,doneToday){
+  var cap=Math.max(2,Math.round(prof.avgEps||2));
+  var q=series.filter(function(sr){return sr.eps.length;}).map(function(sr){return {sr:sr,pos:0,binge:sr.mode==='binge'};});
+  var nights=[],day=startS,r=0,guard=0;
+  function alive(x){return x.pos<x.sr.eps.length;}
+  while(q.some(alive)&&guard<1500){
+    guard++;
+    var budget=planDayBudget(day);if(day===todayS)budget=Math.max(0,budget-doneToday);
+    var left=budget,first=true,served={},rounds=0,g2=0;
+    while(left>0&&g2<40){
+      g2++;
+      if(!q.some(alive))break;
+      var cur=q.find(function(x){return x.binge&&x.pos>0&&alive(x);});
+      if(!cur){
+        var tries=0;do{cur=q[r%q.length];r++;tries++;}while((!alive(cur)||served[cur.sr.info.id])&&tries<=q.length);
+        if(!alive(cur)||served[cur.sr.info.id]){if(budget>=180&&rounds<1){served={};rounds++;continue;}break;}
+      }
+      var rt=cur.sr.info.rt||45,rem=cur.sr.eps.length-cur.pos;
+      var n=Math.min(Math.floor(left/rt),cur.binge?999:cap,rem);
+      if(n<=0){if(first&&budget>0)n=1;else break;}
+      var chunk=cur.sr.eps.slice(cur.pos,cur.pos+n);cur.pos+=n;left-=n*rt;first=false;
+      served[cur.sr.info.id]=1;
+      nights.push({sr:cur.sr,eps:chunk,min:n*rt,kind:cur.binge?'binge':'alt',date:day});
+    }
+    day=shiftDate(day,1);
+  }
+  return nights;
+}
+// 📖 Rappel de l'épisode d'avant (pour reprendre sans être perdu)
+function planPrevEpisode(n){
+  var a=n.eps[0];var s=a.s,e=a.e-1;
+  if(e<1){var ps=n.sr.info.seasons.filter(function(x){return x.n<a.s;}).sort(function(x,y){return y.n-x.n;})[0];if(!ps)return Promise.resolve(null);s=ps.n;e=ps.count;}
+  return fetch('https://api.themoviedb.org/3/tv/'+n.sr.info.id+'/season/'+s+'/episode/'+e+'?api_key='+TMDB+'&language=fr-FR').then(function(r){return r.json();}).then(function(d){return d&&d.overview?{s:s,e:e,name:d.name,ov:d.overview}:null;}).catch(function(){return null;});
+}
+
 function decideMode(entry,info,prof,remaining){
   if(entry.mode==='binge')return {mode:'binge',why:'Choisi par toi'};
   if(entry.mode==='alt')return {mode:'alt',why:'Choisi par toi'};
@@ -9550,8 +9615,22 @@ function computePlan(){
       var m=decideMode(e,info,prof,eps.length);
       series.push({entry:e,info:info,eps:eps,mode:m.mode,why:m.why,color:PLAN_COLORS[idx%PLAN_COLORS.length],idx:idx,unreleased:unreleased,seenIdx:seenIdx});
     });
+    // 💚 Chances que ça te plaise (tes notes par genre + note du public) → ordre du planning
+    series.forEach(function(sr){sr.like=planLikeScore(sr.info);});
+    var ord=planSettings.order||'least';
+    if(ord!=='manual')series.sort(function(a,b){return ord==='best'?b.like-a.like:a.like-b.like;});
+    var rotate=(planSettings.style||'rotate')==='rotate';
+    if(rotate)series.forEach(function(sr){if(sr.entry.mode==='binge'){sr.mode='binge';sr.why='Choisi par toi : d\'un coup';}else{sr.mode='alt';sr.why='On alterne avec tes autres séries, un peu chaque soir';}});
     svPlan();
     if(epsXp)setTimeout(function(){addPassXp(epsXp,epsXpN+' épisode'+(epsXpN>1?'s':'')+' vu'+(epsXpN>1?'s':'')+' de ton planning','eps');},300);
+    if(rotate){
+      var todayR=todayStr(),startR=(planSettings.start&&planSettings.start>todayR)?planSettings.start:todayR;
+      var doneR=(passState.doneMin&&passState.doneMin.d===todayR)?passState.doneMin.m:0;
+      if(!planSettings.week.some(function(x){return x>0;}))planSettings.week=[90,90,240,90,120,300,240];
+      var nightsR=rotateNights(series,prof,startR,todayR,doneR);
+      var firstR={};nightsR.forEach(function(n){var id=n.sr.info.id;if(!firstR[id]){firstR[id]=true;n.isNext=true;}});
+      return {prof:prof,series:series,nights:nightsR};
+    }
     var bingeQ=[],altQ=[];
     series.forEach(function(sr){
       if(!sr.eps.length)return;
@@ -9574,7 +9653,7 @@ function computePlan(){
     var bi=0,pos=0,day=startS,guard=0;
     while(bi<blocks.length&&guard<2000){
       guard++;
-      var budget=planBudgetFor(day);if(day===todayS)budget=Math.max(0,budget-doneToday);
+      var budget=planDayBudget(day);if(day===todayS)budget=Math.max(0,budget-doneToday);
       var left=budget,first=true,lastSr=null,perSr={};
       while(bi<blocks.length&&left>0){
         var b=blocks[bi],rt=b.sr.info.rt||45,remain=b.eps.length-pos;
@@ -9623,6 +9702,8 @@ function buildPlan(){
     var totalMin=nights.reduce(function(a,n){return a+n.min;},0);
     var todayS=todayStr();
     var html='<div class="learn-note">📊 '+nights.length+' soirées · environ '+Math.round(totalMin/60)+' h de séries · fin prévue le '+new Date(nights[nights.length-1].date+'T12:00').toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'})+' · ~'+(nights.length*100)+' XP à gagner 🎟️</div>';
+    var firstSr=nights[0]&&nights[0].sr;var ordM=planSettings.order||'least';
+    if(firstSr&&ordM!=='manual')html+='<div class="learn-note plan-start-note">🥇 On commence par <b>'+esc(firstSr.info.name)+'</b> '+(ordM==='least'?'— la moins sûre de te plaire ('+firstSr.like+'%). Si elle ne t\'accroche pas, retire-la (✕) sans casser le reste : tes préférées arrivent ensuite 😉':'— celle qui a le plus de chances de te plaire ('+firstSr.like+'%).')+((planSettings.style||'rotate')==='rotate'?'<br>🔀 Ensuite on alterne : un peu de chaque série chaque soir (plus de séries les jours où tu as du temps).':'')+'</div>';
     html+=Object.keys(weeks).sort().slice(0,52).map(function(wk){
       return '<div class="plan-week"><h4>Semaine du '+new Date(wk+'T12:00').toLocaleDateString('fr-FR',{day:'numeric',month:'long'})+'</h4>'+weeks[wk].map(function(n){
         var z=n.eps[n.eps.length-1];
@@ -9686,7 +9767,9 @@ function renderTonight(nights){
   var html='';
   if(list.length){
     var n=list[0],tot=list.reduce(function(a,x){return a+x.min;},0);
-    html='<div class="tonight-card"><div class="tn-ico">'+(tot>=180?'🍿':'🌙')+'</div><div class="tn-main"><div class="tn-lbl">Aujourd\'hui dans ton planning'+(list.length>1?' · '+list.length+' séances · '+fmtMin(tot):'')+'</div><div class="tn-t"><b>'+esc(n.sr.info.name)+'</b> · '+nightLabel(n)+' <span>('+fmtMin(n.min)+')</span>'+(list.length>1?'<br><span>ensuite : '+list.slice(1).map(function(x){return esc(x.sr.info.name)+' '+nightLabel(x);}).join(' · ')+'</span>':'')+'</div></div>'+(n.isNext?'<button class="tn-done" data-tndone="1">✓ C\'est fait · +100 XP</button>':'')+'</div>';
+    html='<div class="tonight-card"><div class="tn-ico">'+(tot>=180?'🍿':'🌙')+'</div><div class="tn-main"><div class="tn-lbl">Aujourd\'hui dans ton planning'+(list.length>1?' · '+list.length+' séances · '+fmtMin(tot):'')+'</div><div class="tn-t"><b>'+esc(n.sr.info.name)+'</b> · '+nightLabel(n)+' <span>('+fmtMin(n.min)+')</span>'+(list.length>1?'<br><span>ensuite : '+list.slice(1).map(function(x){return esc(x.sr.info.name)+' '+nightLabel(x);}).join(' · ')+'</span>':'')+'</div></div>'+'<div class="tn-btns">'+(n.isNext?'<button class="tn-done" data-tndone="1">✓ C\'est fait · +100 XP</button>':'')+'<button class="tn-mini" data-tnrecap="1">📖 Rappel de l\'épisode d\'avant</button><button class="tn-mini" data-tnskip="1">⏭️ Pas ce soir</button></div><div class="tn-recap" style="display:none"></div></div>';
+  } else if(planSettings.skip&&planSettings.skip[todayS]){
+    html='<div class="tonight-card done"><div class="tn-ico">😴</div><div class="tn-main"><div class="tn-lbl">Soirée repos</div><div class="tn-t">Tu as sauté ce soir : tout le planning est décalé d\'un jour.</div></div><button class="tn-mini" data-tnunskip="1">↩️ Finalement si</button></div>';
   } else if(passState.lastDoneDay===todayS){
     html='<div class="tonight-card done"><div class="tn-ico">✅</div><div class="tn-main"><div class="tn-lbl">Soirée validée</div><div class="tn-t">Bien joué ! La suite est programmée'+(passState.streak>1?' · 🔥 '+passState.streak+' soirées d\'affilée':'')+'</div></div></div>';
   }
@@ -9694,6 +9777,9 @@ function renderTonight(nights){
     var el=document.getElementById(idEl);if(!el)return;
     el.innerHTML=html;el.style.display=html?'':'none';
     var b=el.querySelector('[data-tndone]');if(b)b.addEventListener('click',function(){doneNight(list[0]);});
+    var sk=el.querySelector('[data-tnskip]');if(sk)sk.addEventListener('click',function(){planSettings.skip[todayS]=true;svPlan();toast('😴 Soirée repos — le planning est décalé d\'un jour');if(typeof buildPlan==='function'&&document.getElementById('plan-timeline'))buildPlan();else refreshHomeTonight();});
+    var us=el.querySelector('[data-tnunskip]');if(us)us.addEventListener('click',function(){delete planSettings.skip[todayS];svPlan();buildPlan();refreshHomeTonight();});
+    var rc=el.querySelector('[data-tnrecap]');if(rc)rc.addEventListener('click',function(){var box=el.querySelector('.tn-recap');box.style.display='';box.innerHTML='⏳…';planPrevEpisode(list[0]).then(function(x){box.innerHTML=x?'<b>S'+x.s+'E'+x.e+(x.name?' — '+esc(x.name):'')+'</b><br>'+esc(x.ov):'Pas de résumé dispo (c\'est le tout début 😉).';});});
   });
 }
 function refreshHomeTonight(){
@@ -9702,22 +9788,25 @@ function refreshHomeTonight(){
 }
 function renderPlanList(series){
   var box=document.getElementById('plan-list');if(!box)return;
+  var os=document.getElementById('plan-order');if(os)os.value=planSettings.order||'least';
   if(!planList.length){box.innerHTML='';return;}
+  if(series&&series.length&&(planSettings.order||'least')!=='manual'){var ordIds=series.map(function(x){return x.entry.id;});planList.sort(function(a,b){var ia=ordIds.indexOf(a.id),ib=ordIds.indexOf(b.id);return (ia<0?999:ia)-(ib<0?999:ib);});}
   box.innerHTML=planList.map(function(e,idx){
     var sr=series.find(function(x){return x.entry.id===e.id;});
     var total=sr?(sr.seenIdx+sr.eps.length):0;
     var pct=sr&&total?Math.round(sr.seenIdx/total*100):0;
     var sub=sr?(sr.eps.length+' épisode'+(sr.eps.length>1?'s':'')+' à voir · '+sr.info.rt+' min/ép.'):'…';
     var why=sr?((sr.mode==='binge'?'🍿 D\'un coup':'🔀 Alternance')+' — '+sr.why):'';
-    return '<div class="plan-item">'+(e.poster?'<img src="'+e.poster+'" alt="">':'')+'<div class="pi-main"><div class="pi-t">'+(sr?'<span class="plan-dot" style="background:'+sr.color+'"></span>':'')+esc(e.title)+'</div><div class="pi-s">'+sub+'</div>'
+    var likeB=sr&&sr.like!==undefined?'<span class="pi-like" style="--lk:'+sr.like+'%">💚 '+sr.like+'% pour toi</span>':'';
+    return '<div class="plan-item">'+(e.poster?'<img src="'+e.poster+'" alt="">':'')+'<div class="pi-main"><div class="pi-t">'+(sr?'<span class="plan-dot" style="background:'+sr.color+'"></span>':'')+esc(e.title)+' '+likeB+'</div><div class="pi-s">'+sub+'</div>'
       +(sr?'<div class="pi-bar"><div style="width:'+pct+'%;background:'+sr.color+'"></div></div>':'')
       +'<div class="pi-why">'+esc(why)+'</div></div>'
       +'<select data-pmode="'+idx+'"><option value="auto"'+(e.mode==='auto'?' selected':'')+'>🤖 Auto</option><option value="binge"'+(e.mode==='binge'?' selected':'')+'>🍿 D\'un coup</option><option value="alt"'+(e.mode==='alt'?' selected':'')+'>🔀 Alternance</option></select>'
       +'<button data-pup="'+idx+'" title="Plus tôt">↑</button><button data-pdown="'+idx+'" title="Plus tard">↓</button><button data-prm="'+idx+'" title="Retirer">✕</button></div>';
   }).join('');
   box.querySelectorAll('[data-pmode]').forEach(function(s){s.addEventListener('change',function(){planList[parseInt(s.dataset.pmode)].mode=s.value;svPlan();buildPlan();});});
-  box.querySelectorAll('[data-pup]').forEach(function(b){b.addEventListener('click',function(){var i=parseInt(b.dataset.pup);if(i>0){var t=planList[i];planList[i]=planList[i-1];planList[i-1]=t;svPlan();buildPlan();}});});
-  box.querySelectorAll('[data-pdown]').forEach(function(b){b.addEventListener('click',function(){var i=parseInt(b.dataset.pdown);if(i<planList.length-1){var t=planList[i];planList[i]=planList[i+1];planList[i+1]=t;svPlan();buildPlan();}});});
+  box.querySelectorAll('[data-pup]').forEach(function(b){b.addEventListener('click',function(){var i=parseInt(b.dataset.pup);if(i>0){var t=planList[i];planList[i]=planList[i-1];planList[i-1]=t;planSettings.order='manual';svPlan();buildPlan();}});});
+  box.querySelectorAll('[data-pdown]').forEach(function(b){b.addEventListener('click',function(){var i=parseInt(b.dataset.pdown);if(i<planList.length-1){var t=planList[i];planList[i]=planList[i+1];planList[i+1]=t;planSettings.order='manual';svPlan();buildPlan();}});});
   box.querySelectorAll('[data-prm]').forEach(function(b){b.addEventListener('click',function(){planList.splice(parseInt(b.dataset.prm),1);svPlan();buildPlan();});});
 }
 function planAdd(id,title,poster,silent){
@@ -10241,6 +10330,9 @@ var _planInit=false;
 function initPlanning(){
   if(!_planInit){
     _planInit=true;
+    var sty=document.getElementById('plan-style');sty.value=planSettings.style||'rotate';sty.addEventListener('change',function(){planSettings.style=sty.value;svPlan();buildPlan();});
+    var ordS=document.getElementById('plan-order');ordS.value=planSettings.order||'least';ordS.addEventListener('change',function(){planSettings.order=ordS.value;svPlan();buildPlan();});
+    renderPlanRemind();
     var st=document.getElementById('plan-start');st.value=planSettings.start||'';
     st.addEventListener('change',function(){planSettings.start=st.value;svPlan();buildPlan();});
     var wc=document.getElementById('plan-week-cfg');
@@ -11080,14 +11172,51 @@ function ntfyScheduleReleases(){
     ntfyOnce('w_'+w.id+'_'+w.releaseDate+'_'+(w.epLabel||''),'🔥 '+w.title+' est sorti !',(w.epLabel?w.epLabel+' est dispo':(w.season?'La saison '+w.season+' est dispo':'C\'est sorti'))+' 🍿',{at:ms,tags:'fire'});});
 }
 // Rappel de la soirée du planning (aujourd'hui + 2 jours suivants) à l'heure choisie
+function planRemindHour(d){var wd=(new Date(d+'T12:00').getDay()+6)%7;var big=planBudgetFor(d)>=180&&(wd===2||wd>=5);return big?(ntfyCfg.hourBig!=null?ntfyCfg.hourBig:15):(ntfyCfg.hour||20);}
+function planRemindText(l){return l.map(function(n){return n.sr.info.name+' '+nightLabel(n);}).join(' · ')+' — '+fmtMin(l.reduce(function(a,n){return a+n.min;},0))+' 🍿';}
+var _planTodayList=[];
 function ntfySchedulePlan(nights){
-  if(!ntfyCfg.on||!ntfyCfg.topic||!ntfyCfg.plan||!nights)return;
+  if(!nights)return;
   var byDay={};nights.forEach(function(n){(byDay[n.date]=byDay[n.date]||[]).push(n);});
+  _planTodayList=byDay[todayStr()]||[];
+  if(!ntfyCfg.on||!ntfyCfg.topic||ntfyCfg.plan===false)return;
   var now=Date.now();
   for(var i=0;i<3;i++){var d=shiftDate(todayStr(),i),l=byDay[d];if(!l)continue;
-    var at=new Date(d+'T'+String(ntfyCfg.hour||20).padStart(2,'0')+':00:00').getTime();if(at<=now)continue;
-    var txt=l.map(function(n){return n.sr.info.name+' '+nightLabel(n);}).join(' · ');
-    ntfyOnce('plan_'+d+'_'+txt.length+'_'+l[0].sr.info.id,'🌙 Ce soir dans ton planning',txt+' — '+fmtMin(l.reduce(function(a,n){return a+n.min;},0))+' 🍿',{at:at,tags:'popcorn'});}
+    var h=planRemindHour(d);var at=new Date(d+'T'+String(h).padStart(2,'0')+':00:00').getTime();if(at<=now)continue;
+    ntfyOnce('planday_'+d,(h<18?'☀️ Aprèm séries':'🌙 Ce soir')+' dans ton planning',planRemindText(l),{at:at,tags:'popcorn'});}
+}
+// 🔔 Si l'appli est ouverte à l'heure du rappel : notification du navigateur en plus
+setInterval(function(){
+  try{
+    if(!_planTodayList.length||!('Notification' in window)||Notification.permission!=='granted')return;
+    var d=todayStr(),h=planRemindHour(d),now=new Date();if(now.getHours()!==h||now.getMinutes()>5)return;
+    if(passState.lastDoneDay===d||(planSettings.skip&&planSettings.skip[d]))return;
+    var k='cinePlanBN_'+d;if(localStorage.getItem(k))return;localStorage.setItem(k,'1');
+    new Notification('🍿 C\'est l\'heure de ton planning',{body:planRemindText(_planTodayList),icon:'icon-192.png'});
+  }catch(_){}
+},60000);
+function renderPlanRemind(){
+  var el=document.getElementById('plan-remind');if(!el)return;
+  var on=ntfyCfg.on&&ntfyCfg.topic;
+  var hrs=[];for(var h=9;h<=23;h++)hrs.push(h);
+  var opt=function(sel){return hrs.map(function(h){return '<option value="'+h+'"'+(h===sel?' selected':'')+'>'+h+'h</option>';}).join('');};
+  if(!on){
+    el.innerHTML='<div class="pr-card"><div class="pr-h">🔔 Rappels chaque jour sur ton téléphone</div><div class="pr-t">Reçois tous les jours une notif avec ta soirée du planning (même appli fermée).</div><button class="pr-go" id="pr-on">🔔 Activer les rappels</button></div>';
+    el.querySelector('#pr-on').addEventListener('click',function(){
+      if(!ntfyCfg.topic)ntfyCfg.topic='cine-'+Math.random().toString(36).slice(2,8)+Math.random().toString(36).slice(2,6);
+      ntfyCfg.on=true;ntfyCfg.plan=true;ntfySent={};svNtfy();renderPlanRemind();buildPlan();
+      try{if('Notification' in window&&Notification.permission==='default')Notification.requestPermission();}catch(_){}
+    });
+    return;
+  }
+  el.innerHTML='<div class="pr-card on"><div class="pr-h">🔔 Rappels du planning <label class="pr-sw"><input type="checkbox" id="pr-plan"'+(ntfyCfg.plan!==false?' checked':'')+'> actifs</label></div>'
+    +'<div class="pr-row"><label>Soirs de semaine <select id="pr-h">'+opt(ntfyCfg.hour||20)+'</select></label><label>Mercredi & week-end <select id="pr-hb">'+opt(ntfyCfg.hourBig!=null?ntfyCfg.hourBig:15)+'</select></label><button class="sub-action" id="pr-test">📲 Tester</button></div>'
+    +'<details class="pr-how"><summary>📱 Pas encore reçu de notif ? Installe ntfy (1 fois)</summary><ol><li>Installe l\'appli gratuite <b>ntfy</b> (App Store / Google Play).</li><li>Touche <b>＋</b> et abonne-toi au sujet : <code id="pr-topic">'+esc(ntfyCfg.topic)+'</code> <button class="tn-mini" id="pr-copy">Copier</button></li><li>Appuie sur « Tester » ci-dessus : tu dois recevoir une notif.</li></ol><div class="pr-t">Sur ordi : garde l\'appli ouverte et autorise les notifications du navigateur.</div></details></div>';
+  el.querySelector('#pr-plan').addEventListener('change',function(){ntfyCfg.plan=this.checked;svNtfy();if(this.checked)buildPlan();});
+  el.querySelector('#pr-h').addEventListener('change',function(){ntfyCfg.hour=parseInt(this.value);Object.keys(ntfySent).forEach(function(k){if(k.indexOf('planday_')===0)delete ntfySent[k];});svNtfy();buildPlan();toast('⏰ Rappel à '+this.value+'h les soirs de semaine');});
+  el.querySelector('#pr-hb').addEventListener('change',function(){ntfyCfg.hourBig=parseInt(this.value);Object.keys(ntfySent).forEach(function(k){if(k.indexOf('planday_')===0)delete ntfySent[k];});svNtfy();buildPlan();toast('⏰ Rappel à '+this.value+'h le mercredi et le week-end');});
+  el.querySelector('#pr-test').addEventListener('click',function(){ntfySend('🍿 Test du planning',_planTodayList.length?'Ce soir : '+planRemindText(_planTodayList):'Les rappels marchent ! 🎉',{tags:'popcorn'}).then(function(ok){toast(ok?'📲 Notif envoyée — regarde ton téléphone':'❌ Envoi impossible (connexion ?)');});try{if('Notification' in window&&Notification.permission==='default')Notification.requestPermission();}catch(_){}});
+  el.querySelector('#pr-copy').addEventListener('click',function(){try{navigator.clipboard.writeText(ntfyCfg.topic);toast('Copié : '+ntfyCfg.topic);}catch(_){}});
 }
 setTimeout(function(){try{ntfyScheduleReleases();}catch(_){}},5000);
 setInterval(function(){try{ntfyScheduleReleases();}catch(_){}},30*60000);

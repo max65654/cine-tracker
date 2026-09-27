@@ -1,5 +1,5 @@
 /* Mon Ciné Tracker — service worker : appli installable + consultable sans réseau */
-var V='v1';
+var V='v2';
 var SHELL='shell-'+V, IMG='img-'+V, API='api-'+V, LIB='lib-'+V;
 self.addEventListener('install',function(e){
   e.waitUntil(caches.open(SHELL).then(function(c){return c.addAll(['./','./manifest.webmanifest','./icon-192.png','./icon-512.png']);}).then(function(){return self.skipWaiting();}));
