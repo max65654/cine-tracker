@@ -2062,6 +2062,8 @@ body.dark .subr-details summary{color:#C9A8FF;}
   header button,header a,header input,header select,header nav{-webkit-app-region:no-drag;app-region:no-drag;}
   header .header-right{padding-right:calc(100vw - env(titlebar-area-x,0px) - env(titlebar-area-width,100vw));}
 }
+.soc-ov{position:fixed;inset:0;z-index:10050;background:rgba(10,6,20,.72);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;padding:16px}.soc-box{background:var(--card-bg);color:var(--ink);border-radius:22px;padding:22px;width:min(440px,100%);max-height:92vh;overflow:auto;box-shadow:0 20px 60px rgba(0,0,0,.45);text-align:center}.soc-h{font-family:'Fredoka',sans-serif;font-size:1.2rem;margin-bottom:10px}.soc-t{font-size:.86rem;color:var(--muted)}.soc-big{font-size:3rem;line-height:1;margin-bottom:6px;animation:socPop .5s ease}@keyframes socPop{0%{transform:scale(.3)}70%{transform:scale(1.15)}100%{transform:scale(1)}}.soc-poster{width:150px;border-radius:14px;box-shadow:0 10px 30px rgba(0,0,0,.35);margin:6px auto 10px;display:block}.soc-title{font-weight:700;font-size:1.1rem}.soc-quote{margin:10px 0;padding:10px 14px;border-left:4px solid var(--raspberry);background:rgba(255,77,109,.08);border-radius:0 12px 12px 0;font-style:italic;text-align:left}.soc-row{display:flex;gap:8px;justify-content:center;margin-top:14px}.soc-row.wrap{flex-wrap:wrap}.soc-btn{border:none;border-radius:12px;padding:10px 16px;background:linear-gradient(135deg,var(--raspberry),#ff8c42);color:#fff;font-weight:700;cursor:pointer;font-family:inherit}.soc-btn2{border:1px solid var(--border);border-radius:12px;padding:10px 14px;background:none;color:inherit;cursor:pointer;font-family:inherit}.soc-fr{display:flex;flex-direction:column;gap:6px;text-align:left;margin:8px 0}.soc-f{padding:8px 12px;border:1px solid var(--border);border-radius:10px;cursor:pointer}.soc-f.has{opacity:.5}#soc-msg{width:100%;min-height:70px;border-radius:12px;border:1px solid var(--border);background:var(--input-bg);color:inherit;padding:10px;font-family:inherit;box-sizing:border-box}.soc-news{text-align:left;display:flex;flex-direction:column;gap:10px;font-size:.9rem}.soc-news small{color:var(--muted)}
+.home-activity{background:var(--card-bg);border-radius:18px;padding:14px 16px;margin:0 auto 18px;max-width:1100px;box-shadow:0 4px 0 var(--shadow)}.act-h{font-family:'Fredoka',sans-serif;font-weight:700;margin-bottom:8px}.act-row{display:flex;align-items:center;gap:10px;padding:7px 0;border-top:1px solid var(--border);cursor:pointer}.act-row:first-of-type{border-top:none}.act-row img,.act-noimg{width:34px;height:50px;object-fit:cover;border-radius:6px;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:var(--input-bg)}.act-m{flex:1;font-size:.86rem;min-width:0}.act-t{font-size:.72rem;color:var(--muted)}.act-r{color:var(--orange);font-weight:700}.act-add{border:none;background:var(--raspberry);color:#fff;border-radius:50%;width:30px;height:30px;cursor:pointer;flex-shrink:0}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 </head>
@@ -2237,6 +2239,7 @@ body.dark .subr-details summary{color:#C9A8FF;}
   <div id="release-alert" class="release-alert" style="display:none"></div>
   <div id="avail-alert" class="release-alert" style="display:none"></div>
   <div id="home-tonight" style="display:none"></div>
+  <div id="home-activity" class="home-activity" style="display:none"></div>
   <div id="forgot-card" class="release-alert" style="display:none"></div>
   <div id="cd-strip" class="cd-strip" style="display:none"></div>
   <div id="showcase" class="showcase" style="display:none">
@@ -2405,8 +2408,6 @@ body.dark .subr-details summary{color:#C9A8FF;}
   <div class="plan-profile" id="plan-profile"></div>
   <div class="plan-settings">
     <div class="plan-week-cfg" id="plan-week-cfg"></div>
-    <label>🔀 Façon de regarder<select id="plan-style"><option value="rotate">Alterner les séries chaque soir</option><option value="smart">Selon mes habitudes (saison par saison)</option></select></label>
-    <label>🥇 Par quoi commencer<select id="plan-order"><option value="least">La moins sûre de me plaire d'abord</option><option value="best">Ma préférée d'abord</option><option value="manual">Mon ordre (flèches ↑↓)</option></select></label>
     <label>🚀 Début (au plus tôt)<input type="date" id="plan-start"></label>
     <button class="sub-action" id="plan-go">🔄 Recalculer</button>
     <button class="sub-action" id="plan-ics">📅 Dans mon agenda</button>
@@ -2995,7 +2996,7 @@ function safeSet(k,val){
     return false;
   }
 }
-function sv(){safeSet(SK,items);try{scheduleEnrich();}catch(_){}try{schedulePassWatch();}catch(_){}}
+function sv(){safeSet(SK,items);try{scheduleEnrich();}catch(_){}try{schedulePassWatch();}catch(_){}try{activityScan();}catch(_){}}
 function svW(){safeSet(WK,wishlist);}
 function svE(){safeSet(EK,episodes);try{autoStatusFromEps();}catch(_){}}
 /* ====== Statut automatique d'une série quand on coche ses épisodes ======
@@ -4640,7 +4641,7 @@ function openModal(id){
     +'<div id="m-reco-'+id+'"></div>'
     +'</div>'
     +(hasTabs?'<div class="modal-tab-content" id="mt-episodes">'+buildEpTracker(item)+'</div>':'')
-    +'<div class="modal-actions">'+(item.tmdbId?'<button id="m-trailer" class="m-trailer-btn">▶️ Bande-annonce</button>':'')+'<button id="m-ost" class="m-trailer-btn">🎵 Bande originale</button>'+(window.CineChatShare?'<button id="m-chat" class="m-trailer-btn">💬 Partager au salon</button>':'')+'<button id="m-edit">✏️ Modifier</button><button id="m-del">🗑️ Supprimer</button><button id="m-ep-full" style="display:'+(hasTabs?'block':'none')+';">📺 Épisodes plein écran</button></div>'
+    +'<div class="modal-actions">'+(item.tmdbId?'<button id="m-trailer" class="m-trailer-btn">▶️ Bande-annonce</button>':'')+'<button id="m-ost" class="m-trailer-btn">🎵 Bande originale</button>'+(window.CineChatShare?'<button id="m-chat" class="m-trailer-btn">💬 Partager au salon</button>':'')+(window.CineSocial&&item.tmdbId?'<button id="m-reco" class="m-trailer-btn">📨 Recommander à un pote</button>':'')+'<button id="m-edit">✏️ Modifier</button><button id="m-del">🗑️ Supprimer</button><button id="m-ep-full" style="display:'+(hasTabs?'block':'none')+';">📺 Épisodes plein écran</button></div>'
     +'</div>';
 
   document.querySelectorAll('.modal-tab').forEach(function(t){t.addEventListener('click',function(){document.querySelectorAll('.modal-tab').forEach(function(x){x.classList.remove('active');});document.querySelectorAll('.modal-tab-content').forEach(function(x){x.classList.remove('active');});t.classList.add('active');var tc=document.getElementById('mt-'+t.dataset.tab);if(tc)tc.classList.add('active');});});
@@ -4652,6 +4653,7 @@ function openModal(id){
   if(document.getElementById('m-ep-full'))document.getElementById('m-ep-full').addEventListener('click',function(){openEpModal(id);});
   bindEpEvents(id);
   try{bindWatchHelper(item);}catch(_){}
+  var mrc=document.getElementById('m-reco');if(mrc)mrc.addEventListener('click',function(){openRecoDialog(item);});
   var mch=document.getElementById('m-chat');if(mch)mch.addEventListener('click',function(){window.CineChatShare({k:friendKey(item)||'',t:item.title,p:item.poster||'',r:+item.rating||0});toast('💬 Partagé au salon');});
   if(item.tmdbId){loadProviders(item);loadTrivia(item);loadRecommendations(item);}
   loadHeroBackdrop(item); // image paysage qui remplit bien le cadre de la fiche
@@ -9571,6 +9573,20 @@ function planLikeScore(info){
   var sc=0.55*g+0.45*v+bonus;
   return Math.max(3,Math.min(99,Math.round((sc-1)/4*100)));
 }
+// 💚 Ressemblance de chaque série du planning avec tes coups de cœur (profil de goût complet)
+var _ptl={t:0,p:null};
+function planTasteLikes(){
+  try{
+    var src=getTasteSources().slice(0,25);
+    if(!src.length||!planList.length)return Promise.resolve({});
+    if(!_ptl.p||Date.now()-_ptl.t>10*60000){_ptl.t=Date.now();_ptl.p=buildTasteProfile(src).catch(function(){return null;});}
+    return _ptl.p.then(function(prof){
+      if(!prof)return {};
+      return Promise.all(planList.map(function(e){return fetchTmdbDetails('tv',e.id).then(function(c){return [e.id,c?computeProfileScore(prof,c):null];}).catch(function(){return [e.id,null];});})).then(function(l){var m={};l.forEach(function(x){if(x[1]!=null)m[x[0]]=x[1];});return m;});
+    }).catch(function(){return {};});
+  }catch(e){return Promise.resolve({});}
+}
+
 function rotateNights(series,prof,startS,todayS,doneToday){
   var cap=Math.max(2,Math.round(prof.avgEps||2));
   var q=series.filter(function(sr){return sr.eps.length;}).map(function(sr){return {sr:sr,pos:0,binge:sr.mode==='binge'};});
@@ -9628,7 +9644,8 @@ function planDateList(startS,count,daysPerWeek){
 function computePlan(){
   var prof=buildWatchProfile();
   if(!planList.length)return Promise.resolve({prof:prof,series:[],nights:[]});
-  return Promise.all(planList.map(function(e){return fetchPlanTv(e.id);})).then(function(infos){
+  return Promise.all([Promise.all(planList.map(function(e){return fetchPlanTv(e.id);})),planTasteLikes()]).then(function(pair){
+    var infos=pair[0],LIKES=pair[1]||{};
     var budget=parseInt(planSettings.min)||90,dpw=parseInt(planSettings.days)||5;
     var maxEpsAlt=Math.max(1,Math.round(prof.avgEps||2));
     var series=[],epsXp=0,epsXpN=0;
@@ -9645,10 +9662,15 @@ function computePlan(){
       series.push({entry:e,info:info,eps:eps,mode:m.mode,why:m.why,color:PLAN_COLORS[idx%PLAN_COLORS.length],idx:idx,unreleased:unreleased,seenIdx:seenIdx});
     });
     // 💚 Chances que ça te plaise (tes notes par genre + note du public) → ordre du planning
-    series.forEach(function(sr){sr.like=planLikeScore(sr.info);});
-    var ord=planSettings.order||'least';
-    if(ord!=='manual')series.sort(function(a,b){return ord==='best'?b.like-a.like:a.like-b.like;});
-    var rotate=(planSettings.style||'rotate')==='rotate';
+    // 🤖 C'est l'appli qui choisit : score = ressemblance avec tes coups de cœur (genres, acteurs,
+    // créateurs, époque…) + tes notes par genre + la note du public.
+    series.forEach(function(sr){var base=planLikeScore(sr.info),t=LIKES[sr.info.id];sr.like=(t!=null)?Math.max(3,Math.min(99,Math.round(0.6*t+0.4*base))):base;});
+    // Ordre choisi pour toi : on commence par la moins sûre (si elle ne te plaît pas, tu la lâches vite),
+    // puis on intercale un coup de cœur, puis la suivante moins sûre… → jamais deux soirées « bof » d'affilée.
+    var asc=series.slice().sort(function(a,b){return a.like-b.like;}),mix=[];
+    while(asc.length){mix.push(asc.shift());if(asc.length)mix.push(asc.pop());}
+    series.length=0;mix.forEach(function(x){series.push(x);});
+    var rotate=true;
     if(rotate)series.forEach(function(sr){if(sr.entry.mode==='binge'){sr.mode='binge';sr.why='Choisi par toi : d\'un coup';}else{sr.mode='alt';sr.why='On alterne avec tes autres séries, un peu chaque soir';}});
     svPlan();
     if(epsXp)setTimeout(function(){addPassXp(epsXp,epsXpN+' épisode'+(epsXpN>1?'s':'')+' vu'+(epsXpN>1?'s':'')+' de ton planning','eps');},300);
@@ -9731,8 +9753,9 @@ function buildPlan(){
     var totalMin=nights.reduce(function(a,n){return a+n.min;},0);
     var todayS=todayStr();
     var html='<div class="learn-note">📊 '+nights.length+' soirées · environ '+Math.round(totalMin/60)+' h de séries · fin prévue le '+new Date(nights[nights.length-1].date+'T12:00').toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'})+' · ~'+(nights.length*100)+' XP à gagner 🎟️</div>';
-    var firstSr=nights[0]&&nights[0].sr;var ordM=planSettings.order||'least';
-    if(firstSr&&ordM!=='manual')html+='<div class="learn-note plan-start-note">🥇 On commence par <b>'+esc(firstSr.info.name)+'</b> '+(ordM==='least'?'— la moins sûre de te plaire ('+firstSr.like+'%). Si elle ne t\'accroche pas, retire-la (✕) sans casser le reste : tes préférées arrivent ensuite 😉':'— celle qui a le plus de chances de te plaire ('+firstSr.like+'%).')+((planSettings.style||'rotate')==='rotate'?'<br>🔀 Ensuite on alterne : un peu de chaque série chaque soir (plus de séries les jours où tu as du temps).':'')+'</div>';
+    var firstSr=nights[0]&&nights[0].sr;
+    var best=series.slice().sort(function(a,b){return b.like-a.like;})[0];
+    if(firstSr)html+='<div class="learn-note plan-start-note">🤖 <b>Planning choisi pour toi</b> d\'après tes coups de cœur ❤️, tes meilleures notes et ce que tu mets en attente.<br>🥇 On commence par <b>'+esc(firstSr.info.name)+'</b> ('+firstSr.like+'% pour toi) : c\'est la moins sûre, donc si elle ne t\'accroche pas, retire-la (✕) sans rien casser.'+(best&&best!==firstSr?'<br>❤️ Ton futur coup de cœur, d\'après moi : <b>'+esc(best.info.name)+'</b> ('+best.like+'%) — il arrive juste après pour garder la motivation.':'')+'<br>🔀 Chaque soir on alterne : une moins sûre, un coup de cœur… jamais deux soirées « bof » d\'affilée.</div>';
     html+=Object.keys(weeks).sort().slice(0,52).map(function(wk){
       return '<div class="plan-week"><h4>Semaine du '+new Date(wk+'T12:00').toLocaleDateString('fr-FR',{day:'numeric',month:'long'})+'</h4>'+weeks[wk].map(function(n){
         var z=n.eps[n.eps.length-1];
@@ -9817,9 +9840,8 @@ function refreshHomeTonight(){
 }
 function renderPlanList(series){
   var box=document.getElementById('plan-list');if(!box)return;
-  var os=document.getElementById('plan-order');if(os)os.value=planSettings.order||'least';
   if(!planList.length){box.innerHTML='';return;}
-  if(series&&series.length&&(planSettings.order||'least')!=='manual'){var ordIds=series.map(function(x){return x.entry.id;});planList.sort(function(a,b){var ia=ordIds.indexOf(a.id),ib=ordIds.indexOf(b.id);return (ia<0?999:ia)-(ib<0?999:ib);});}
+  if(series&&series.length){var ordIds=series.map(function(x){return x.entry.id;});planList.sort(function(a,b){var ia=ordIds.indexOf(a.id),ib=ordIds.indexOf(b.id);return (ia<0?999:ia)-(ib<0?999:ib);});}
   box.innerHTML=planList.map(function(e,idx){
     var sr=series.find(function(x){return x.entry.id===e.id;});
     var total=sr?(sr.seenIdx+sr.eps.length):0;
@@ -9831,7 +9853,7 @@ function renderPlanList(series){
       +(sr?'<div class="pi-bar"><div style="width:'+pct+'%;background:'+sr.color+'"></div></div>':'')
       +'<div class="pi-why">'+esc(why)+'</div></div>'
       +'<select data-pmode="'+idx+'"><option value="auto"'+(e.mode==='auto'?' selected':'')+'>🤖 Auto</option><option value="binge"'+(e.mode==='binge'?' selected':'')+'>🍿 D\'un coup</option><option value="alt"'+(e.mode==='alt'?' selected':'')+'>🔀 Alternance</option></select>'
-      +'<button data-pup="'+idx+'" title="Plus tôt">↑</button><button data-pdown="'+idx+'" title="Plus tard">↓</button><button data-prm="'+idx+'" title="Retirer">✕</button></div>';
+      +'<button data-prm="'+idx+'" title="Retirer du planning">✕</button></div>';
   }).join('');
   box.querySelectorAll('[data-pmode]').forEach(function(s){s.addEventListener('change',function(){planList[parseInt(s.dataset.pmode)].mode=s.value;svPlan();buildPlan();});});
   box.querySelectorAll('[data-pup]').forEach(function(b){b.addEventListener('click',function(){var i=parseInt(b.dataset.pup);if(i>0){var t=planList[i];planList[i]=planList[i-1];planList[i-1]=t;planSettings.order='manual';svPlan();buildPlan();}});});
@@ -10359,8 +10381,6 @@ var _planInit=false;
 function initPlanning(){
   if(!_planInit){
     _planInit=true;
-    var sty=document.getElementById('plan-style');sty.value=planSettings.style||'rotate';sty.addEventListener('change',function(){planSettings.style=sty.value;svPlan();buildPlan();});
-    var ordS=document.getElementById('plan-order');ordS.value=planSettings.order||'least';ordS.addEventListener('change',function(){planSettings.order=ordS.value;svPlan();buildPlan();});
     renderPlanRemind();
     var st=document.getElementById('plan-start');st.value=planSettings.start||'';
     st.addEventListener('change',function(){planSettings.start=st.value;svPlan();buildPlan();});
@@ -10956,6 +10976,120 @@ function friendPicker(body,title,go){
   });
 }
 function fPoster(p){return p?(p.indexOf('http')===0?p:'https://image.tmdb.org/t/p/w342'+p):'';}
+
+/* ====== 📨 RECOMMANDER À UN POTE · 👀 ACTIVITÉ DES POTES ====== */
+function socOwnedKey(k){if(!k)return false;if(items.some(function(i){return friendKey(i)===k;}))return true;var p=k.split('_');return wishlist.some(function(w){return String(w.tmdbId)===p[1]&&((w.tmdbType==='tv'?'tv':'movie')===p[0]);});}
+function socAgo(ts){var m=Math.round((Date.now()-ts)/60000);if(m<1)return 'à l\'instant';if(m<60)return 'il y a '+m+' min';var h=Math.round(m/60);if(h<24)return 'il y a '+h+' h';var d=Math.round(h/24);return d===1?'hier':'il y a '+d+' jours';}
+function socOverlay(html){var o=document.getElementById('soc-ov');if(o)o.remove();o=document.createElement('div');o.id='soc-ov';o.className='soc-ov';o.innerHTML='<div class="soc-box">'+html+'</div>';document.body.appendChild(o);o.addEventListener('click',function(e){if(e.target===o)o.remove();});return o;}
+function socNtfy(topic,title,msg){if(!topic)return;try{fetch('https://ntfy.sh/'+encodeURIComponent(topic)+'?title='+encodeURIComponent(title)+'&tags=envelope&click='+encodeURIComponent(SITE_URL),{method:'POST',body:msg});}catch(_){}}
+function openRecoDialog(item){
+  if(!window.CineSocial){toast('Connecte-toi à ton compte pour recommander à un pote');return;}
+  var film={k:friendKey(item),t:item.title,p:item.poster||'',y:item.year||''};
+  if(!film.k){toast('Ce titre n\'a pas de fiche TMDB, impossible de le recommander');return;}
+  var o=socOverlay('<div class="soc-h">📨 Recommander « '+esc(item.title)+' »</div><div class="soc-t">⏳ Recherche de tes potes…</div>');
+  window.CineSocial.friends().then(function(fr){
+    if(!fr.length){o.querySelector('.soc-box').innerHTML='<div class="soc-h">📨 Recommander</div><div class="soc-t">Aucun pote trouvé : ton pote doit ouvrir l\'appli au moins une fois avec son compte.</div><button class="soc-btn2" id="soc-x">OK</button>';o.querySelector('#soc-x').onclick=function(){o.remove();};return;}
+    o.querySelector('.soc-box').innerHTML='<div class="soc-h">📨 Recommander « '+esc(item.title)+' »</div>'
+      +'<div class="soc-fr">'+fr.map(function(f,i){var has=(f.items||[]).some(function(x){return x.k===film.k;});return '<label class="soc-f'+(has?' has':'')+'"><input type="radio" name="socf" value="'+i+'"'+(i===0&&!has?' checked':'')+(has?' disabled':'')+'> '+esc(f.name)+(has?' <small>(l\'a déjà)</small>':'')+'</label>';}).join('')+'</div>'
+      +'<textarea id="soc-msg" maxlength="300" placeholder="Un petit mot ? (ex. « Regarde-la, la fin est dingue 🤯 »)"></textarea>'
+      +'<div class="soc-row"><button class="soc-btn2" id="soc-x">Annuler</button><button class="soc-btn" id="soc-send">📨 Envoyer</button></div>';
+    o.querySelector('#soc-x').onclick=function(){o.remove();};
+    o.querySelector('#soc-send').onclick=function(){
+      var sel=o.querySelector('input[name=socf]:checked');if(!sel){toast('Choisis un pote');return;}
+      var f=fr[parseInt(sel.value)],msg=o.querySelector('#soc-msg').value.trim();
+      window.CineSocial.recommend(f.uid,film,msg).then(function(){
+        socNtfy(f.nt,'📨 '+window.CineSocial.name()+' te recommande un titre','« '+film.t+' »'+(msg?' — '+msg:'')+' 🍿');
+        o.remove();toast('📨 Envoyé à '+f.name+' !');try{confetti();}catch(_){}
+      }).catch(function(e){toast('❌ Envoi impossible'+((e&&e.code)==='permission-denied'?' : règles Firestore à mettre à jour':''));});
+    };
+  }).catch(function(){o.remove();toast('❌ Impossible de trouver tes potes');});
+}
+// Recos reçues : grosse carte, une à la fois (jamais si tu l'as déjà)
+var _recoQueue=[],_recoShowing=false,_recoLater={};
+function handleRecos(list){
+  list.filter(function(r){return !r.seen;}).forEach(function(r){
+    if(socOwnedKey(r.k)){window.CineSocial.markReco(r.id,'owned');return;}
+    if(_recoLater[r.id]||_recoQueue.some(function(x){return x.id===r.id;}))return;
+    _recoQueue.push(r);
+  });
+  showNextReco();
+}
+function showNextReco(){
+  if(_recoShowing||!_recoQueue.length)return;
+  if(document.querySelector('.modal-overlay.show')||document.getElementById('soc-ov')){setTimeout(showNextReco,4000);return;}
+  var r=_recoQueue.shift();_recoShowing=true;
+  var poster=r.p?(r.p.indexOf('http')===0?r.p:'https://image.tmdb.org/t/p/w342'+r.p):'';
+  var o=socOverlay('<div class="soc-big">📨</div><div class="soc-h"><b>'+esc(r.fromName||'Ton pote')+'</b> te recommande</div>'
+    +(poster?'<img class="soc-poster" src="'+poster+'" alt="">':'')+'<div class="soc-title">'+esc(r.t)+(r.y?' <small>('+esc(String(r.y))+')</small>':'')+'</div>'
+    +(r.msg?'<div class="soc-quote">« '+esc(r.msg)+' »</div>':'')
+    +'<div class="soc-row wrap"><button class="soc-btn" data-ra="add">➕ Ajouter à mes À voir</button><button class="soc-btn2" data-ra="seen">✅ Déjà vu</button><button class="soc-btn2" data-ra="later">⏰ Plus tard</button><button class="soc-btn2" data-ra="no">✕ Pas pour moi</button></div>');
+  o.classList.add('soc-reco');
+  o.querySelectorAll('[data-ra]').forEach(function(b){b.onclick=function(){
+    var a=b.dataset.ra;
+    if(a==='add'){
+      var parts=r.k.split('_'),tv=parts[0]==='tv';
+      items.unshift({id:Date.now()+Math.floor(Math.random()*999),title:r.t,year:String(r.y||''),type:tv?'serie':'film',status:'a_voir',rating:0,fav:false,tags:['📨 Reco de '+(r.fromName||'un pote')],review:'',personalNotes:'',quote:'',poster:poster.replace('/w342/','/w500/'),director:'',cast:'',watchedDate:'',addedAt:Date.now(),synopsis:'',seriesStatus:'',nbSeasons:0,tmdbId:parseInt(parts[1]),tmdbType:tv?'tv':'movie',progress:null,lastEpDate:null,runtime:0,epRuntime:0,tmdbRating:0,rewatchCount:0});
+      sv();try{renderAll();}catch(_){}toast('➕ « '+r.t+' » ajouté à tes À voir');try{renderActivity();}catch(_){}
+    }
+    if(a==='later')_recoLater[r.id]=1;else window.CineSocial.markReco(r.id,a);
+    o.remove();_recoShowing=false;setTimeout(showNextReco,600);
+  };});
+}
+// Fil d'activité : ce que tu finis / notes est partagé avec tes potes
+var _actSnap={};items.forEach(function(i){_actSnap[i.id]={s:i.status,r:+i.rating||0};});
+var _actPending={},_actT=null;
+function activityScan(){
+  items.forEach(function(i){
+    var o=_actSnap[i.id],s=i.status,r=+i.rating||0;_actSnap[i.id]={s:s,r:r};
+    if(!o||i.locked||!friendKey(i))return;
+    var ev=null;
+    if(s==='termine'&&o.s!=='termine')ev={type:'finish'};
+    else if(i.type==='serie'&&s==='en_cours'&&o.s==='a_voir')ev={type:'start'};
+    else if(r>0&&r!==o.r)ev={type:'rate'};
+    if(ev){ev.k=friendKey(i);ev.t=i.title;ev.p=i.poster||'';ev.r=r;ev.kind=i.type;_actPending[i.id]=ev;}
+  });
+  if(Object.keys(_actPending).length&&window.CineSocial){clearTimeout(_actT);_actT=setTimeout(function(){var l=_actPending;_actPending={};Object.keys(l).forEach(function(k){window.CineSocial.post(l[k]);});},20000);}
+}
+var _actList=[];
+function renderActivity(){
+  var el=document.getElementById('home-activity');if(!el||!window.CineSocial)return;
+  var me=window.CineSocial.uid();
+  var l=_actList.filter(function(a){return a.uid!==me;}).slice(0,8);
+  if(!l.length){el.style.display='none';return;}
+  el.style.display='';
+  el.innerHTML='<div class="act-h">👀 Activité de tes potes</div>'+l.map(function(a){
+    var verb=a.type==='finish'?(a.kind==='serie'?'a fini la série':'a vu'):a.type==='start'?'a commencé':'a noté';
+    var owned=socOwnedKey(a.k);
+    return '<div class="act-row" data-actk="'+esc(a.k)+'">'+(a.p?'<img src="'+esc(a.p)+'" alt="">':'<span class="act-noimg">🎬</span>')+'<div class="act-m"><b>'+esc(a.name||'?')+'</b> '+verb+' <b>'+esc(a.t)+'</b>'+(a.r&&a.type!=='start'?' <span class="act-r">⭐ '+(a.r*2).toFixed(a.r%0.5?1:0).replace('.0','')+'/10</span>':'')+'<div class="act-t">'+socAgo(a.ts)+(owned?' · ✓ dans ta collection':'')+'</div></div>'+(owned?'':'<button class="act-add" data-actadd="'+esc(a.id)+'">➕</button>')+'</div>';
+  }).join('');
+  el.querySelectorAll('[data-actk]').forEach(function(row){row.addEventListener('click',function(e){if(e.target.closest('[data-actadd]'))return;var it=items.find(function(i){return friendKey(i)===row.dataset.actk;});if(it)openModal(it.id);});});
+  el.querySelectorAll('[data-actadd]').forEach(function(b){b.addEventListener('click',function(){var a=_actList.find(function(x){return x.id===b.dataset.actadd;});if(!a)return;var parts=a.k.split('_'),tv=parts[0]==='tv';
+    items.unshift({id:Date.now()+Math.floor(Math.random()*999),title:a.t,year:'',type:tv?'serie':'film',status:'a_voir',rating:0,fav:false,tags:['👀 Vu chez '+(a.name||'un pote')],review:'',personalNotes:'',quote:'',poster:a.p||'',director:'',cast:'',watchedDate:'',addedAt:Date.now(),synopsis:'',seriesStatus:'',nbSeasons:0,tmdbId:parseInt(parts[1]),tmdbType:tv?'tv':'movie',progress:null,lastEpDate:null,runtime:0,epRuntime:0,tmdbRating:0,rewatchCount:0});
+    sv();try{renderAll();}catch(_){}toast('➕ « '+a.t+' » ajouté à tes À voir');renderActivity();});});
+}
+// Annonce (une seule fois) des nouveautés entre potes
+function socNews(){
+  try{if(localStorage.getItem('cineNewsSocial1'))return;}catch(_){return;}
+  setTimeout(function(){
+    if(document.getElementById('soc-ov')||document.querySelector('.modal-overlay.show')){socNews();return;}
+    try{localStorage.setItem('cineNewsSocial1','1');}catch(_){}
+    var o=socOverlay('<div class="soc-big">🆕</div><div class="soc-h">Nouveau dans ton tracker !</div>'
+      +'<div class="soc-news"><div>📨 <b>Recommande un film ou une série à un pote</b><br><small>Dans n\'importe quelle fiche, bouton « 📨 Recommander à un pote ». Il reçoit une notif et une grosse carte quand il ouvre son tracker.</small></div>'
+      +'<div>👀 <b>Activité de tes potes</b><br><small>Sur l\'accueil : ce que tes potes viennent de finir ou de noter. ➕ pour l\'ajouter chez toi en un clic.</small></div>'
+      +'<div>💬 <b>Le salon</b><br><small>La bulle en bas à droite pour discuter entre vous.</small></div>'
+      +'<div>👥 <b>Soirée à deux & 🥊 Duel de notes</b><br><small>Dans Jeux → Multi.</small></div></div>'
+      +'<div class="soc-row"><button class="soc-btn" id="soc-ok">Trop bien 🎉</button></div>');
+    o.querySelector('#soc-ok').onclick=function(){o.remove();};
+  },3500);
+}
+function socialInit(){
+  if(!window.CineSocial||socialInit.done)return;socialInit.done=true;
+  window.CineSocial.onReco(function(l){handleRecos(l);});
+  window.CineSocial.onActivity(function(l){_actList=l;renderActivity();});
+  socNews();
+}
+window.addEventListener('cine-social-ready',socialInit);
+setTimeout(socialInit,3000);
 
 /* ---------- 👥 SOIRÉE À DEUX ---------- */
 function gameDuo(){
@@ -12348,7 +12482,8 @@ setTimeout(function(){try{
       var list=its.filter(function(i){return k(i)&&!i.locked;}).map(function(i){var o={k:k(i),t:i.title||'',s:i.status||'',r:+i.rating||0};if(i.poster&&i.poster.indexOf(P)===0)o.p=i.poster.slice(P.length);if(i.watchedDate)o.d=String(i.watchedDate).slice(0,10);return o;});
       var wl=wi.filter(function(w){return w.tmdbId;}).map(function(w){return (w.tmdbType==='tv'?'tv':'movie')+'_'+w.tmdbId;});
       var name=(pass&&pass.name)||(userDoc&&userDoc.name)||(me&&me.displayName)||((me&&me.email)||'').split('@')[0];
-      db.collection('pub').doc(uid).set({name:name,t:Date.now(),items:list,wish:wl}).then(function(){window._pubOk=true;}).catch(function(e){window._pubErr=(e&&e.code)||'err';});
+      var nt='';try{var nc=JSON.parse(rget('u_'+uid+'__cineNtfy')||'{}');if(nc&&nc.on&&nc.topic)nt=nc.topic;}catch(_){}
+      db.collection('pub').doc(uid).set({name:name,t:Date.now(),items:list,wish:wl,nt:nt}).then(function(){window._pubOk=true;}).catch(function(e){window._pubErr=(e&&e.code)||'err';});
     }catch(_){}
   }
   window.CineCloudPub={
@@ -12411,8 +12546,23 @@ setTimeout(function(){try{
     var read=chatRead(),unread=chatMsgs.filter(function(m){return m.t>read&&m.uid!==me.uid;}).length;
     var cb=document.querySelector('#chat-fab .cb');if(cb){cb.textContent=unread>9?'9+':String(unread);cb.style.display=unread&&!chatOpen?'block':'none';}
   }
+  /* --- 👥 Social : recommandations entre potes + fil d'activité --- */
+  function startSocial(){
+    window.CineSocial={
+      uid:function(){return me&&me.uid;},
+      name:function(){return chatName();},
+      friends:function(){return db.collection('pub').get().then(function(qs){var o=[];qs.forEach(function(d){if(d.id!==me.uid){var x=d.data();o.push({uid:d.id,name:x.name||'Ami',nt:x.nt||'',items:x.items||[]});}});return o;});},
+      recommend:function(to,film,msg){return db.collection('reco').add({from:me.uid,fromName:chatName(),to:to,k:film.k,t:film.t,p:film.p||'',y:film.y||'',msg:msg||'',ts:Date.now(),seen:false});},
+      onReco:function(cb){return db.collection('reco').where('to','==',me.uid).onSnapshot(function(qs){var l=[];qs.forEach(function(d){l.push(Object.assign({id:d.id},d.data()));});cb(l);},function(e){cb([],e);});},
+      markReco:function(id,answer){return db.collection('reco').doc(id).update({seen:true,answer:answer||'',answeredAt:Date.now()}).catch(function(){});},
+      post:function(evt){return db.collection('activity').add(Object.assign({uid:me.uid,name:chatName(),ts:Date.now()},evt)).catch(function(){});},
+      onActivity:function(cb){return db.collection('activity').orderBy('ts','desc').limit(60).onSnapshot(function(qs){var l=[];qs.forEach(function(d){l.push(Object.assign({id:d.id},d.data()));});cb(l);},function(e){cb([],e);});}
+    };
+    try{window.dispatchEvent(new Event('cine-social-ready'));}catch(_){}
+  }
   function startSync(uid){
     setTimeout(function(){try{startChat();}catch(_){}},1500);
+    setTimeout(function(){try{startSocial();}catch(_){}},1200);
     CP.onWrite.push(function(k,v){dirty[k]=v;clearTimeout(timer);timer=setTimeout(function(){flush(uid);},2500);
       if(k==='cineItems'||k==='cineWish'){clearTimeout(pubT);pubT=setTimeout(function(){publishPub(uid);},45000);}});
     setTimeout(function(){publishPub(uid);},6000);
