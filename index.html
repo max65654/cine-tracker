@@ -1868,6 +1868,7 @@ body.dark .subr-details summary{color:#C9A8FF;}
 .pc-quote{text-align:left;border:none;border-radius:12px;padding:8px 12px;background:rgba(255,255,255,.14);color:#fff;cursor:pointer;font-style:italic;font-size:.8rem;font-family:inherit;}
 .pc-quote small{display:block;font-style:normal;opacity:.8;font-size:.7rem;}
 .pc-quote.eq{outline:3px solid #3ce26b;}
+.cr-link{text-align:right;margin:-2px 0 6px;}.cr-mini2{background:none;border:none;color:#fff;opacity:.6;font-size:.72rem;cursor:pointer;text-decoration:underline;}
 .cr-box{background:rgba(0,0,0,.28);border-radius:14px;padding:10px 12px;margin:4px 0 12px;box-shadow:0 0 0 2px #3a86ff55;}
 .cr-h{font-family:'Fredoka',sans-serif;font-weight:700;margin-bottom:6px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
 .cr-row{display:flex;gap:8px;}
@@ -9434,6 +9435,7 @@ function crSync(force){
 }
 function clashBoxHtml(){
   var C=passState.clash;
+  if(!C.tag&&!window._crOpen)return '<div class="cr-link"><button class="cr-mini2" id="cr-open">⚔️ Relier Clash Royale (bêta)</button></div>';
   if(!C.tag)return '<div class="cr-box"><div class="cr-h">⚔️ Clash Royale</div><div class="cr-row"><input id="cr-tag" placeholder="Ton tag de joueur, ex. #2PQ8YLV9"><button class="pq-claim" id="cr-save">Relier</button></div><div class="cr-hint">Tes combats valideront des quêtes Clash (+XP pour le Pass) automatiquement.</div></div>';
   var P=C.player,last=(C.recs||[]).slice(0,5);
   return '<div class="cr-box"><div class="cr-h">⚔️ Clash Royale · '+esc(C.tag)+(P?' · <b>'+esc(P.name)+'</b> · 🏆 '+P.trophies+(P.arena?' · '+esc(P.arena):''):'')+' <button class="cr-mini" id="cr-refresh">🔄</button><button class="cr-mini" id="cr-unlink" title="Délier">✕</button></div>'
@@ -9442,6 +9444,7 @@ function clashBoxHtml(){
     +'<div class="cr-hint">Cette semaine : '+crWeek().length+' combat(s), '+crWeek().filter(function(r){return r.win;}).length+' victoire(s). Mis à jour à chaque ouverture (les 25 derniers combats).</div></div>';
 }
 function bindClashBox(el){
+  var op=el.querySelector('#cr-open');if(op)op.addEventListener('click',function(){window._crOpen=true;renderQuests();});
   var sv0=el.querySelector('#cr-save');if(sv0)sv0.addEventListener('click',function(){var v=(el.querySelector('#cr-tag').value||'').trim().toUpperCase().replace(/\s/g,'');if(!/^#?[0-9A-Z]{3,15}$/.test(v)){toast('Tag invalide (ex. #2PQ8YLV9)');return;}passState.clash.tag=v.charAt(0)==='#'?v:'#'+v;passState.clash.recs=[];passState.clash.last=0;svPass();toast('⚔️ Compte Clash relié, lecture des combats…');crSync(true).then(renderQuests);renderQuests();});
   var rf=el.querySelector('#cr-refresh');if(rf)rf.addEventListener('click',function(){rf.textContent='⏳';crSync(true).then(renderQuests);});
   var ul=el.querySelector('#cr-unlink');if(ul)ul.addEventListener('click',function(){if(confirm('Délier ton compte Clash Royale ?')){passState.clash={tag:'',recs:[],player:null,last:0,err:''};svPass();renderQuests();}});
