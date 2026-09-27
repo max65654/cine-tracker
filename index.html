@@ -4444,8 +4444,7 @@ var _modalOpenId=null;
 // tout seul plus tard (voir enrichItem) alors que l'utilisateur l'a déjà fermée.
 function closeModal(){
   modalOv.classList.remove('show');destroyModalPlayer();
-  try{if(scPlayer&&scPlayer.playVideo)scPlayer.playVideo();}catch(_){}
-  try{if(tpPlayer&&tpPlayer.playVideo)tpPlayer.playVideo();}catch(_){}
+  setTimeout(function(){try{bgvEval();}catch(_){}},30); // la bannière reprend là où elle était (si elle est visible)
   _modalOpenId=null;
   if(epOv&&epOv.classList.contains('show'))closeEpOverlayForce();
   flushSaves();flushSyncIfNoModalOpen();
@@ -4651,7 +4650,7 @@ function openModal(id){
   loadHeroBackdrop(item); // image paysage qui remplit bien le cadre de la fiche
   // Bande-annonce auto dans la fiche (hébergé uniquement), façon Netflix
   destroyModalPlayer();
-  try{if(scPlayer&&scPlayer.pauseVideo)scPlayer.pauseVideo();}catch(_){}try{if(tpPlayer&&tpPlayer.pauseVideo)tpPlayer.pauseVideo();}catch(_){}
+  setTimeout(function(){try{bgvEval();}catch(_){}},30);
   var msnd=document.getElementById('modal-sound');
   if(msnd)msnd.addEventListener('click',function(e){e.stopPropagation();modalMuted=!modalMuted;applyMute(modalPlayer,modalMuted,msnd);});
   if(isHosted()&&item.tmdbId){
@@ -5965,13 +5964,13 @@ function makeBgPlayer(elId,key,wrapEl,soundOn){
     playerVars:{autoplay:1,mute:1,controls:0,start:5,loop:1,playlist:key,modestbranding:1,playsinline:1,rel:0,iv_load_policy:3,disablekb:1,fs:0,origin:location.origin},
     events:{
       onReady:function(e){try{var pl=e.target;if(wrapEl){clearInterval(wrapEl._loop);wrapEl._shown=false;wrapEl._loop=setInterval(function(){try{if(!document.body.contains(wrapEl)){clearInterval(wrapEl._loop);return;}var d=pl.getDuration(),t=pl.getCurrentTime();if(d>12&&t>d-2.5)pl.seekTo(5,true);}catch(_){}},400);}
-        e.target.mute();e.target.playVideo();var f=e.target.getIframe();if(f&&wrapEl){f.classList.add('bg-yt');}fitBgVideo(wrapEl);setTimeout(function(){fitBgVideo(wrapEl);},350);}catch(_){}},
+        e.target.mute();e.target.playVideo();bgvRegister(e.target,wrapEl);var f=e.target.getIframe();if(f&&wrapEl){f.classList.add('bg-yt');}fitBgVideo(wrapEl);setTimeout(function(){fitBgVideo(wrapEl);},350);}catch(_){}},
       onStateChange:function(e){
         // PLAYING → on attend que l'icône ⏸ de YouTube ait disparu avant d'afficher la vidéo ;
         // pause / chargement → on recache la vidéo (jamais d'icône ⏸ ni de rond de chargement visibles)
         // Boucle continue : on revient au début AVANT la fin (jamais d'écran de fin ni de coupure)
         if(wrapEl){
-          if(e.data===1&&!wrapEl._shown){fitBgVideo(wrapEl);clearTimeout(wrapEl._vt);var pl2=e.target;wrapEl._vt=setTimeout(function(){wrapEl.classList.add('playing');wrapEl._shown=true;try{if(soundOn&&!(wrapEl.id==='sc-video-wrap'&&scMuted)&&!(wrapEl.id==='modal-video-wrap'&&modalMuted)){pl2.unMute();pl2.setVolume(60);}}catch(_){}},3600);}
+          if(e.data===1&&!wrapEl._shown){fitBgVideo(wrapEl);clearTimeout(wrapEl._vt);var pl2=e.target;wrapEl._vt=setTimeout(function(){wrapEl.classList.add('playing');wrapEl._shown=true;wrapEl._ever=true;try{if(soundOn&&!(wrapEl.id==='sc-video-wrap'&&scMuted)&&!(wrapEl.id==='modal-video-wrap'&&modalMuted)){pl2.unMute();pl2.setVolume(60);}}catch(_){}},wrapEl._ever?1300:3600);}
           else if(e.data===2){clearTimeout(wrapEl._vt);wrapEl.classList.remove('playing');wrapEl._shown=false;try{e.target.mute();}catch(_){}}}
         if(e.data===0){try{e.target.seekTo(5);e.target.playVideo();}catch(_){}}        // ENDED → boucle manuelle (pas de boutons ⏮⏭)
       },
@@ -5981,6 +5980,28 @@ function makeBgPlayer(elId,key,wrapEl,soundOn){
 (function(){var b=document.getElementById('video-toggle');if(!b)return;function paint(){b.style.opacity=ENABLE_TRAILERS?'1':'.45';b.title=ENABLE_TRAILERS?'Vidéos en fond : activées (clic pour couper)':'Vidéos en fond : coupées (clic pour activer)';}paint();
   b.addEventListener('click',function(){ENABLE_TRAILERS=!ENABLE_TRAILERS;try{localStorage.setItem('cineBgVideo',ENABLE_TRAILERS?'1':'0');}catch(_){}paint();toast(ENABLE_TRAILERS?'🎞️ Vidéos en fond activées':'🎞️ Vidéos en fond coupées');setTimeout(function(){location.reload();},700);});
 })();
+/* ====== ⏯️ Vidéos en fond : pause quand tu ne les vois pas, reprise là où elles étaient ======
+   (bannière qui sort de l'écran, fiche où tu descends, autre onglet, fiche ouverte par-dessus la bannière) */
+var _bgv=[];
+function bgvShould(x){
+  if(!document.body.contains(x.w))return false;
+  if(document.hidden)return false;
+  if(x.w.id==='sc-video-wrap'&&document.querySelector('.modal-overlay.show'))return false;
+  return !!x.inView;
+}
+function bgvEval(){
+  _bgv=_bgv.filter(function(x){if(!document.body.contains(x.w)){try{x.io&&x.io.disconnect();}catch(_){}return false;}return true;});
+  _bgv.forEach(function(x){var want=bgvShould(x);if(want===x.on)return;x.on=want;try{if(want)x.p.playVideo();else x.p.pauseVideo();}catch(_){}});
+}
+function bgvRegister(p,w){
+  if(!w||!p)return;
+  var x={p:p,w:w,inView:true,on:true};_bgv.push(x);
+  if(window.IntersectionObserver){x.io=new IntersectionObserver(function(en){en.forEach(function(e){x.inView=e.isIntersecting&&e.intersectionRatio>0.3;});bgvEval();},{threshold:[0,0.3,0.6]});x.io.observe(w);}
+  setTimeout(bgvEval,50);
+}
+document.addEventListener('visibilitychange',bgvEval);
+(function(){var mo=new MutationObserver(function(){bgvEval();});document.querySelectorAll('.modal-overlay').forEach(function(o){mo.observe(o,{attributes:true,attributeFilter:['class']});});})();
+
 // Recadre la vidéo pour pousser le bouton ▶/⏸ central de YouTube HORS du cadre visible
 function fitBgVideo(wrapEl){
   if(!wrapEl)return;var f=wrapEl.querySelector('iframe');if(!f)return;
@@ -6006,7 +6027,8 @@ function destroyScPlayer(){try{if(scPlayer&&scPlayer.destroy)scPlayer.destroy();
 function destroyModalPlayer(){try{if(modalPlayer&&modalPlayer.destroy)modalPlayer.destroy();}catch(_){}modalPlayer=null;}
 // Pause / reprend la banderole selon sa visibilité (comme Netflix)
 var scObserver=null;
-function observeShowcase(){
+function observeShowcase(){return; // remplacé par bgvRegister (pause/reprise automatiques)
+
   var sc=document.getElementById('showcase');if(!sc||scObserver||!window.IntersectionObserver)return;
   scObserver=new IntersectionObserver(function(entries){entries.forEach(function(en){
     if(!scPlayer||modalOv.classList.contains('show'))return;
