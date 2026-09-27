@@ -4,6 +4,14 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Mon Ciné Tracker ✦</title>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#5B3A8C">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Ciné Tracker">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -1999,6 +2007,9 @@ body.dark .subr-details summary{color:#C9A8FF;}
 .mm-no{background:#fff;color:#ff4d6d;}.mm-yes{background:#ff4d6d;color:#fff;}
 .mm-res{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:8px;margin-top:10px;}
 .mm-card{font-size:.72rem;}.mm-card img{width:100%;aspect-ratio:2/3;object-fit:cover;border-radius:10px;display:block;margin-bottom:4px;}.mm-card span{display:block;color:var(--muted2);}
+.wh-row{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 4px}.wh-chip{font-size:.78rem;padding:4px 10px;border-radius:999px;background:rgba(128,128,128,.12);border:1px solid rgba(128,128,128,.22)}.wh-btn{cursor:pointer}.wh-btn:hover{border-color:var(--violet,#8b5cf6)}.wh-sting{background:rgba(255,196,0,.14);border-color:rgba(255,196,0,.45)}.wh-stop{width:100%;font-size:.85rem;padding:8px 12px;border-radius:12px;background:rgba(139,92,246,.12);border:1px solid rgba(139,92,246,.35)}.wh-x{background:none;border:none;cursor:pointer;opacity:.6;color:inherit}.wh-edit input{padding:2px 6px;border-radius:6px;border:1px solid rgba(128,128,128,.4);background:transparent;color:inherit}.wh-edit button{padding:2px 8px;border-radius:6px;border:none;background:var(--violet,#8b5cf6);color:#fff;cursor:pointer}
+.duo-head{text-align:center;margin:4px 0 12px;font-size:.95rem}.duo-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}.duo-card{position:relative;background:var(--card-bg);border:1px solid var(--border);border-radius:14px;overflow:hidden;display:flex;flex-direction:column}.duo-card.best{box-shadow:0 0 0 2px var(--sun)}.duo-card img{width:100%;aspect-ratio:2/3;object-fit:cover;background:#0002}.duo-b{padding:8px 10px;font-size:.82rem;display:flex;flex-direction:column;gap:6px;flex:1}.duo-why{color:var(--muted);font-size:.74rem;line-height:1.35}.duo-add{margin-top:auto;border:none;border-radius:8px;padding:6px;background:var(--raspberry);color:#fff;cursor:pointer;font-weight:600}.duo-ok{margin-top:auto;color:var(--mint);font-size:.78rem;font-weight:600}.duo-best{position:absolute;top:8px;left:8px;background:var(--sun);color:#2B2238;font-size:.7rem;font-weight:700;padding:3px 8px;border-radius:999px}
+.rd-top{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}.rd-stat{background:var(--card-bg);border:1px solid var(--border);border-radius:12px;padding:10px;text-align:center}.rd-stat b{display:block;font-size:1.25rem}.rd-stat span{font-size:.72rem;color:var(--muted)}.rd-worst{display:grid;grid-template-columns:70px 1fr;gap:12px;align-items:center;background:linear-gradient(135deg,rgba(255,77,109,.14),rgba(255,210,63,.12));border:1px solid rgba(255,77,109,.35);border-radius:14px;padding:12px;margin-bottom:12px}.rd-wlbl{grid-column:1/-1;font-weight:700}.rd-worst img{width:70px;border-radius:8px}.rd-vs{margin:4px 0;font-size:.9rem}.rd-hint{font-size:.78rem;color:var(--muted)}.rd-sort{display:flex;gap:6px;margin-bottom:8px}.rd-sort button{border:1px solid var(--border);background:none;color:inherit;border-radius:999px;padding:4px 12px;cursor:pointer;font-size:.8rem}.rd-sort button.on{background:var(--violet);color:#fff;border-color:transparent}.rd-row{display:grid;grid-template-columns:1fr 70px 70px;gap:6px;align-items:center;padding:6px 4px;border-bottom:1px solid var(--border);font-size:.85rem;text-align:center}.rd-row.rd-h{font-weight:700;font-size:.75rem;color:var(--muted)}.rd-t{display:flex;align-items:center;gap:8px;text-align:left}.rd-t img{width:28px;height:42px;object-fit:cover;border-radius:4px}.rd-win{color:var(--mint);font-weight:700}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 </head>
@@ -2928,7 +2939,27 @@ function safeSet(k,val){
 }
 function sv(){safeSet(SK,items);try{scheduleEnrich();}catch(_){}try{schedulePassWatch();}catch(_){}}
 function svW(){safeSet(WK,wishlist);}
-function svE(){safeSet(EK,episodes);}
+function svE(){safeSet(EK,episodes);try{autoStatusFromEps();}catch(_){}}
+/* ====== Statut automatique d'une série quand on coche ses épisodes ======
+   1er épisode coché → « En cours » · dernier épisode coché (tout vu) → « Terminé ».
+   On ne touche qu'aux séries dont les épisodes viennent de changer. */
+function epCounts(id){var m=episodes[id]||{},seen=0,tot=0;Object.keys(m).forEach(function(k){if(k==='0'||!Array.isArray(m[k]))return;m[k].forEach(function(e){tot++;if(e&&e.seen)seen++;});});return {seen:seen,tot:tot};}
+var _epSnap={};Object.keys(episodes||{}).forEach(function(id){_epSnap[id]=epCounts(id).seen;});
+function autoStatusFromEps(){
+  var changed=false;
+  Object.keys(episodes).forEach(function(id){
+    var c=epCounts(id),prev=_epSnap[id]||0;_epSnap[id]=c.seen;
+    if(c.seen===prev)return;
+    var it=items.find(function(x){return String(x.id)===String(id);});
+    if(!it||it.type!=='serie')return;
+    if(c.tot>0&&c.seen>=c.tot&&prev<c.tot){
+      if(it.status!=='termine'){it.status='termine';it.watchedDate=todayStr();delete it.autoPaused;changed=true;setTimeout(function(){toast('🏁 « '+it.title+' » terminée → passée en Vu ✅');},300);}
+    } else if(c.seen>0&&c.seen<c.tot){
+      if(it.status==='a_voir'||it.status==='en_pause'||(it.status==='termine'&&prev>=c.tot)){var was=it.status;it.status='en_cours';delete it.autoPaused;changed=true;if(was==='a_voir')setTimeout(function(){toast('▶️ « '+it.title+' » passée En cours');},300);}
+    }
+  });
+  if(changed){safeSet(SK,items);try{scheduleSync();}catch(_){}}
+}
 function svP(){safeSet(PK,planned);}
 function svT(){safeSet(TK,customTop);}
 function svSG(){safeSet(SGK,sagas);}
@@ -4531,6 +4562,7 @@ function openModal(id){
     +'<div class="modal-tab-content active" id="mt-infos">'
     +'<h2>'+esc(item.titleLatin||item.title)+(item.fav?' ❤️':'')+(item.toRewatch?' 🔁':'')+stBadge+'</h2>'+((item.titleLatin&&item.titleLatin!==item.title)?'<div class="orig-title">'+esc(item.title)+'</div>':'')
     +'<div class="meta">'+(item.year||'—')+' · '+(item.type==='film'?'🎬 Film':'📺 Série')+' · '+(item.status==='a_voir'?'📌 À voir':item.status==='en_cours'?'▶️ En cours':item.status==='en_pause'?'⏸️ En pause':'✅ Vu')+(item.watchedDate?' · '+new Date(item.watchedDate).toLocaleDateString('fr-FR'):'')+'</div>'
+    +watchHelperHtml(item)
     +((item.favChar||item.favCouple)?'<div class="m-watchctx">'+(item.favChar?'<span>⭐ '+esc(item.favChar)+'</span>':'')+(item.favCouple?'<span>💞 '+esc(item.favCouple)+'</span>':'')+'</div>':'')
     +(credits?'<div class="credits">'+credits+'</div>':'')
     +progressBlock
@@ -4562,6 +4594,7 @@ function openModal(id){
   if(document.getElementById('m-trailer'))document.getElementById('m-trailer').addEventListener('click',function(){openTrailer(item);});
   if(document.getElementById('m-ep-full'))document.getElementById('m-ep-full').addEventListener('click',function(){openEpModal(id);});
   bindEpEvents(id);
+  try{bindWatchHelper(item);}catch(_){}
   if(item.tmdbId){loadProviders(item);loadTrivia(item);loadRecommendations(item);}
   loadHeroBackdrop(item); // image paysage qui remplit bien le cadre de la fiche
   // Bande-annonce auto dans la fiche (hébergé uniquement), façon Netflix
@@ -4579,6 +4612,67 @@ function openModal(id){
     });
   }
   modalOv.classList.add('show');
+}
+
+/* ====== ⏰ Fini à quelle heure · ⏸️ Arrêté à… · 🍿 Scène post-générique ====== */
+function fmtHM(min){min=Math.max(0,Math.round(min));var h=Math.floor(min/60),m=min%60;return h?(h+'h'+String(m).padStart(2,'0')):(m+' min');}
+function endAtTxt(min){var d=new Date(Date.now()+min*60000);return d.getHours()+'h'+String(d.getMinutes()).padStart(2,'0');}
+function parseStopAt(v){v=String(v||'').trim().toLowerCase().replace(',', '.');if(!v)return 0;var m=v.match(/^(\d+)\s*[h:]\s*(\d{0,2})/);if(m)return parseInt(m[1],10)*60+(parseInt(m[2]||'0',10)||0);m=v.match(/^(\d+)\s*(min|m)?$/);return m?parseInt(m[1],10):0;}
+function nextUnseenEps(item){
+  var m=episodes[item.id]||{},today=todayStr(),out=null;
+  Object.keys(m).filter(function(k){return k!=='0'&&Array.isArray(m[k]);}).sort(function(a,b){return a-b;}).some(function(k){
+    var arr=m[k];var i=arr.findIndex(function(e){return e&&!e.seen;});if(i<0)return false;
+    var left=arr.slice(i).filter(function(e){return !e.seen&&(!e.airDate||e.airDate<=today);}).length;
+    if(arr[i].airDate&&arr[i].airDate>today)return true; // prochain épisode pas encore sorti
+    out={s:k,e:i+1,left:left,last:i===arr.length-1};return true;
+  });
+  return out;
+}
+function watchHelperHtml(item){
+  var chips=[],id=item.id;
+  if(item.type==='film'){
+    var rt=item.runtime||0,stop=item.stopAt||0;
+    if(stop&&item.status!=='termine'){chips.push('<div class="wh-stop">⏸️ Tu t\'es arrêté à <b>'+fmtHM(stop)+'</b>'+(rt>stop?' — il reste '+fmtHM(rt-stop)+' → fini vers <b>'+endAtTxt(rt-stop)+'</b>':'')+' <button class="wh-x" data-whclear title="Effacer">✕</button></div>');}
+    else if(rt&&item.status!=='termine')chips.push('<span class="wh-chip">⏰ Lancé maintenant → fini vers <b>'+endAtTxt(rt)+'</b> ('+fmtHM(rt)+')</span>');
+    if(item.status!=='termine')chips.push('<span class="wh-chip wh-btn" data-whstop>⏸️ '+(stop?'Modifier où je me suis arrêté':'Arrêté à…')+'</span>');
+    if(item.tmdbId&&item.tmdbType==='movie')chips.push('<span id="m-stinger-'+id+'"></span>');
+  } else if(item.type==='serie'&&item.status!=='termine'){
+    var nx=nextUnseenEps(item),er=item.epRuntime||45;
+    if(nx){
+      chips.push('<span class="wh-chip">⏰ S'+nx.s+'E'+nx.e+' maintenant → fini vers <b>'+endAtTxt(er)+'</b></span>');
+      if(nx.left>1)chips.push('<span class="wh-chip">🍿 Fin de saison ('+nx.left+' ép.) → <b>'+endAtTxt(er*nx.left)+'</b>'+(er*nx.left>=24*60?'':'')+'</span>');
+    }
+  }
+  if(!chips.length)return '';
+  return '<div class="wh-row" id="wh-'+id+'">'+chips.join('')+'</div>';
+}
+function bindWatchHelper(item){
+  var box=document.getElementById('wh-'+item.id);if(!box)return;
+  var st=box.querySelector('[data-whstop]');
+  if(st)st.addEventListener('click',function(){
+    st.outerHTML='<span class="wh-chip wh-edit">⏸️ Arrêté à <input id="wh-in" placeholder="1h12" value="'+(item.stopAt?fmtHM(item.stopAt).replace(' min',''):'')+'" style="width:64px"> <button id="wh-ok">OK</button></span>';
+    var inp=document.getElementById('wh-in');inp.focus();
+    function ok(){var v=parseStopAt(inp.value);if(!v){toast('Écris par ex. 1h12 ou 45');return;}item.stopAt=v;if(item.status==='a_voir')item.status='en_cours';sv();toast('⏸️ Noté : arrêté à '+fmtHM(v));openModal(item.id);}
+    document.getElementById('wh-ok').addEventListener('click',ok);
+    inp.addEventListener('keydown',function(e){if(e.key==='Enter')ok();});
+  });
+  var cl=box.querySelector('[data-whclear]');
+  if(cl)cl.addEventListener('click',function(){delete item.stopAt;sv();openModal(item.id);});
+  var sg=document.getElementById('m-stinger-'+item.id);
+  if(sg)fetchStinger(item.tmdbId).then(function(k){
+    if(!k||!document.body.contains(sg))return;
+    var t=k.during&&k.after?'🍿 Scènes pendant ET après le générique — reste jusqu\'au bout !':k.after?'🍿 Scène après le générique — reste jusqu\'au bout !':'🍿 Scène pendant le générique';
+    sg.outerHTML='<span class="wh-chip wh-sting">'+t+'</span>';
+  });
+}
+var _stingCache={};
+function fetchStinger(tmdbId){
+  if(_stingCache[tmdbId])return _stingCache[tmdbId];
+  return _stingCache[tmdbId]=fetch('https://api.themoviedb.org/3/movie/'+tmdbId+'/keywords?api_key='+TMDB).then(function(r){return r.json();}).then(function(d){
+    var ks=((d&&d.keywords)||[]).map(function(k){return k.id;});
+    var during=ks.indexOf(179431)>=0,after=ks.indexOf(179430)>=0;
+    return (during||after)?{during:during,after:after}:null;
+  }).catch(function(){return null;});
 }
 
 window.saveProgress=function(id){
@@ -10240,7 +10334,9 @@ var GAMES=[
   {id:'adv',ico:'🗺️',n:'Mode Aventure',d:'12 étapes, des boss, des étoiles et des récompenses',tag:'Aventure'},
   {id:'mduel',ico:'⚔️',n:'Duel quiz',d:'À 2 sur le même écran, chacun son tour',tag:'Multi'},
   {id:'mseen',ico:'👀',n:'Qui l\'a vu ?',d:'Devine ce que l\'autre profil a vu',tag:'Multi'},
-  {id:'mmatch',ico:'💞',n:'Match de soirée',d:'Chacun swipe, l\'appli trouve vos films en commun',tag:'Multi'}
+  {id:'mmatch',ico:'💞',n:'Match de soirée',d:'Chacun swipe, l\'appli trouve vos films en commun',tag:'Multi'},
+  {id:'mduo',ico:'👥',n:'Soirée à deux',d:'Un film que ni toi ni ton pote n\'avez vu, qui colle à vos deux goûts',tag:'Multi'},
+  {id:'mrate',ico:'🥊',n:'Duel de notes',d:'Vos notes côte à côte + le plus gros désaccord du mois',tag:'Multi'}
 ];
 var _gamesInit=false,_gameCtx=null;
 function renderGamesHub(){
@@ -10290,7 +10386,7 @@ function gEnd(id,res,xp,label){
 }
 function openGame(id,ctx){
   _gameCtx=ctx||null;
-  var f={dle:gameDle,quiz:gameQuiz,blur:gameBlur,timeline:gameTimeline,who:gameWho,deg:gameDeg,adv:gameAdventure,mduel:gameDuelQuiz,mseen:gameWhoSaw,mmatch:gameMatch}[id];
+  var f={dle:gameDle,quiz:gameQuiz,blur:gameBlur,timeline:gameTimeline,who:gameWho,deg:gameDeg,adv:gameAdventure,mduel:gameDuelQuiz,mseen:gameWhoSaw,mmatch:gameMatch,mduo:gameDuo,mrate:gameRateDuel}[id];
   if(f)f();
 }
 
@@ -10580,6 +10676,103 @@ function gameWhoSaw(){
       body.querySelectorAll('.qz-opt').forEach(function(b){b.addEventListener('click',function(){var ok=b.dataset.o===truth;if(ok)score++;body.querySelectorAll('.qz-opt').forEach(function(x){x.disabled=true;if(x.dataset.o===truth)x.classList.add('good');});if(!ok)b.classList.add('bad');setTimeout(function(){r++;draw();},1000);});});
     }
     draw();
+  });
+}
+
+/* ---------- 👥 Amis : profils de cet appareil + comptes en ligne validés ---------- */
+function friendKey(i){return i.tmdbId?((i.tmdbType==='tv'?'tv':'movie')+'_'+i.tmdbId):null;}
+function getFriends(){
+  var P='https://image.tmdb.org/t/p/';
+  var local=otherProfiles().map(function(p){
+    var its=[];try{its=window.CineProfiles.readItems(p.id)||[];}catch(_){}
+    return {id:'p:'+p.id,name:p.name||'Profil',items:its.filter(function(i){return friendKey(i)&&!i.locked;}).map(function(i){return {k:friendKey(i),t:i.title,s:i.status,r:+i.rating||0,p:i.poster&&i.poster.indexOf(P)===0?i.poster.slice(P.length):'',d:i.watchedDate?String(i.watchedDate).slice(0,10):''};}),wish:[]};
+  });
+  var cloud=(window.CineCloudPub?window.CineCloudPub.list():Promise.resolve([]));
+  return cloud.then(function(c){return local.concat(c);},function(e){var f=local.slice();f.err=(e&&e.code)||'err';return f;});
+}
+function myFriendView(){
+  var P='https://image.tmdb.org/t/p/';
+  return items.filter(function(i){return friendKey(i)&&!i.locked;}).map(function(i){return {k:friendKey(i),t:i.title,s:i.status,r:+i.rating||0,p:i.poster&&i.poster.indexOf(P)===0?i.poster.slice(P.length):'',d:i.watchedDate?String(i.watchedDate).slice(0,10):''};});
+}
+function friendPicker(body,title,go){
+  body.innerHTML=gLoading('👥 Recherche de tes potes…');
+  getFriends().then(function(fr){
+    fr=fr.filter(function(f){return f.items&&f.items.length;});
+    if(!fr.length){
+      var why=window.CineCloudPub?(fr.err==='permission-denied'?'<br><br>⚙️ <b>Pour l\'admin</b> : il faut ajouter la règle « pub » dans Firestore (voir le message de Claude).':'<br><br>Ton pote doit ouvrir l\'appli au moins une fois avec son compte (sa liste se partage alors toute seule).'):'<br><br>Crée un profil pour ton pote : clique sur ton avatar → 👥 → ➕.';
+      body.innerHTML='<div class="news-empty">Aucun pote trouvé pour l\'instant.'+why+'</div>';return;}
+    if(fr.length===1){go(fr[0]);return;}
+    body.innerHTML='<div class="mp-setup"><label>'+title+' <select id="fr-p">'+fr.map(function(f,i){return '<option value="'+i+'">'+esc(f.name)+' ('+f.items.length+' titres)</option>';}).join('')+'</select></label><button class="pq-claim" id="fr-go">Go</button></div>';
+    document.getElementById('fr-go').addEventListener('click',function(){go(fr[parseInt(document.getElementById('fr-p').value)]);});
+  });
+}
+function fPoster(p){return p?(p.indexOf('http')===0?p:'https://image.tmdb.org/t/p/w342'+p):'';}
+
+/* ---------- 👥 SOIRÉE À DEUX ---------- */
+function gameDuo(){
+  var body=gStage('👥 Soirée à deux','');
+  friendPicker(body,'Avec qui ?',function(fr){
+    body.innerHTML=gLoading('🍿 On cherche LE film pour '+esc(profName())+' & '+esc(fr.name)+'…');
+    var mine=myFriendView(),seenAny={},score={},why={},info={};
+    function isSeen(x){return x.s==='termine'||x.s==='en_cours';}
+    mine.forEach(function(x){if(isSeen(x))seenAny[x.k]=1;});fr.items.forEach(function(x){if(isSeen(x))seenAny[x.k]=1;});
+    (typeof notForMe!=='undefined'?notForMe:[]).forEach(function(n){if(n&&n.key)seenAny[n.key]=1;});
+    function bump(k,v,w){if(seenAny[k]||k.indexOf('movie_')!==0)return;score[k]=(score[k]||0)+v;(why[k]=why[k]||[]);if(w&&why[k].indexOf(w)<0)why[k].push(w);}
+    // 1) Déjà dans vos envies à tous les deux
+    var myWant={},hisWant={};
+    mine.forEach(function(x){if(x.s==='a_voir')myWant[x.k]=x;});wishlist.forEach(function(w){if(w.tmdbId&&w.tmdbType!=='tv')myWant['movie_'+w.tmdbId]=myWant['movie_'+w.tmdbId]||{t:w.title,p:w.poster};});
+    fr.items.forEach(function(x){if(x.s==='a_voir')hisWant[x.k]=x;});(fr.wish||[]).forEach(function(k){hisWant[k]=hisWant[k]||{};});
+    Object.keys(myWant).forEach(function(k){if(hisWant[k]){bump(k,10,'💞 Vous l\'avez TOUS LES DEUX en envie');info[k]=myWant[k];}});
+    Object.keys(myWant).forEach(function(k){if(!hisWant[k])bump(k,1.5,'📌 Dans tes envies');info[k]=info[k]||myWant[k];});
+    Object.keys(hisWant).forEach(function(k){if(!myWant[k]){bump(k,1.5,'📌 Dans les envies de '+fr.name);if(hisWant[k].t)info[k]=info[k]||hisWant[k];}});
+    // 2) Recos TMDB à partir des films que vous avez le mieux notés, chacun
+    function top(list){return list.filter(function(x){return x.k.indexOf('movie_')===0&&x.r>=4;}).sort(function(a,b){return b.r-a.r;}).slice(0,12).sort(function(){return Math.random()-.5;}).slice(0,4);}
+    var seeds=top(mine).map(function(x){return {x:x,who:'me'};}).concat(top(fr.items).map(function(x){return {x:x,who:'him'};}));
+    Promise.all(seeds.map(function(sd){return gJson('https://api.themoviedb.org/3/movie/'+sd.x.k.slice(6)+'/recommendations?api_key='+TMDB+'&language=fr-FR').then(function(d){return {sd:sd,res:(d&&d.results)||[]};});})).then(function(all){
+      var hits={};
+      all.forEach(function(a){a.res.slice(0,14).forEach(function(r,i){var k='movie_'+r.id;if(!r.poster_path)return;info[k]=info[k]||{t:r.title,p:r.poster_path,y:(r.release_date||'').slice(0,4),o:r.overview,v:r.vote_average};(hits[k]=hits[k]||{me:0,him:0});hits[k][a.sd.who]++;bump(k,(14-i)/14*2+(r.vote_average||0)/10,(a.sd.who==='me'?'Car tu as aimé ':'Car '+fr.name+' a aimé ')+a.sd.x.t);});});
+      // Bonus quand ça plaît aux DEUX côtés
+      Object.keys(hits).forEach(function(k){if(hits[k].me&&hits[k].him)bump(k,4,'🤝 Colle à vos deux goûts');});
+      var ranked=Object.keys(score).filter(function(k){return info[k]&&info[k].t;}).sort(function(a,b){return score[b]-score[a];}).slice(0,8);
+      if(!ranked.length){body.innerHTML='<div class="news-empty">Pas assez de notes pour trouver un film commun. Notez quelques films (4★ ou +) et réessayez !</div>';return;}
+      body.innerHTML='<div class="duo-head">🍿 Pour <b>'+esc(profName())+'</b> & <b>'+esc(fr.name)+'</b> — aucun des deux ne l\'a vu</div><div class="duo-grid">'+ranked.map(function(k,i){var f=info[k];var owned=items.some(function(it){return friendKey(it)===k;});
+        return '<div class="duo-card'+(i===0?' best':'')+'">'+(i===0?'<span class="duo-best">⭐ Le choix du soir</span>':'')+'<img src="'+fPoster(f.p)+'" alt=""><div class="duo-b"><b>'+esc(f.t)+'</b>'+(f.y?' <small>('+f.y+')</small>':'')+'<div class="duo-why">'+why[k].slice().sort(function(a,b){return (/^(💞|🤝)/.test(b)?1:0)-(/^(💞|🤝)/.test(a)?1:0);}).slice(0,2).map(esc).join('<br>')+'</div>'
+          +(owned?'<span class="duo-ok">✓ Déjà dans ta collection</span>':'<button class="duo-add" data-k="'+k+'">➕ À voir</button>')+'</div></div>';}).join('')+'</div><div style="text-align:center;margin-top:12px"><button class="pq-claim" id="duo-again">🔄 D\'autres idées</button></div>';
+      body.querySelectorAll('.duo-add').forEach(function(b){b.addEventListener('click',function(){var k=b.dataset.k,f=info[k];
+        items.unshift({id:Date.now()+Math.floor(Math.random()*999),title:f.t,year:f.y||'',type:'film',status:'a_voir',rating:0,fav:false,tags:['👥 Soirée à deux'],review:'',personalNotes:'',quote:'',poster:fPoster(f.p).replace('/w342/','/w500/'),director:'',cast:'',watchedDate:'',addedAt:Date.now(),synopsis:f.o||'',seriesStatus:'',nbSeasons:0,tmdbId:parseInt(k.slice(6)),tmdbType:'movie',progress:null,lastEpDate:null,runtime:0,epRuntime:0,tmdbRating:f.v||0,rewatchCount:0});
+        sv();try{renderAll();}catch(_){}b.outerHTML='<span class="duo-ok">✓ Ajouté</span>';toast(f.t+' ajouté à À voir ✓');});});
+      document.getElementById('duo-again').addEventListener('click',function(){openGame('mduo');});
+      gameXp(15,'Soirée à deux');
+    });
+  });
+}
+
+/* ---------- 🥊 DUEL DE NOTES ---------- */
+function gameRateDuel(){
+  var body=gStage('🥊 Duel de notes','');
+  friendPicker(body,'Contre qui ?',function(fr){
+    var mine={};myFriendView().forEach(function(x){if(x.r>0)mine[x.k]=x;});
+    var common=fr.items.filter(function(x){return x.r>0&&mine[x.k];}).map(function(x){var m=mine[x.k];return {k:x.k,t:m.t||x.t,p:m.p||x.p,a:m.r,b:x.r,d:m.d>x.d?m.d:x.d,gap:Math.abs(m.r-x.r)};});
+    if(!common.length){body.innerHTML='<div class="news-empty">Aucun film ou série noté par vous deux pour l\'instant.</div>';return;}
+    var month=new Date(Date.now()-31*86400000).toISOString().slice(0,10);
+    var recent=common.filter(function(c){return c.d&&c.d>=month;});
+    var pool=recent.length?recent:common;
+    var worst=pool.slice().sort(function(a,b){return b.gap-a.gap;})[0];
+    var agree=common.filter(function(c){return c.gap<0.6;}).length;
+    var pct=Math.round(agree/common.length*100);
+    var avgA=common.reduce(function(s,c){return s+c.a;},0)/common.length,avgB=common.reduce(function(s,c){return s+c.b;},0)/common.length;
+    var me=profName();
+    function stars(v){return (v*2).toFixed(v%1?1:0).replace('.0','')+'<small>/10</small>';}
+    var sort='gap';
+    function draw(){
+      var list=common.slice().sort(sort==='gap'?function(a,b){return b.gap-a.gap;}:function(a,b){return (b.d||'').localeCompare(a.d||'');});
+      body.innerHTML='<div class="rd-top"><div class="rd-stat"><b>'+common.length+'</b><span>titres notés tous les deux</span></div><div class="rd-stat"><b>'+pct+'%</b><span>d\'accord (même note)</span></div><div class="rd-stat"><b>'+(avgA>avgB+0.2?esc(me):avgB>avgA+0.2?esc(fr.name):'Égalité')+'</b><span>le plus généreux</span></div></div>'
+        +(worst&&worst.gap>0?'<div class="rd-worst"><div class="rd-wlbl">💥 Le plus gros désaccord '+(recent.length?'du mois':'')+'</div><img src="'+fPoster(worst.p)+'"><div><b>'+esc(worst.t)+'</b><div class="rd-vs"><span>'+esc(me)+' '+stars(worst.a)+'</span> vs <span>'+esc(fr.name)+' '+stars(worst.b)+'</span></div><div class="rd-hint">'+(worst.gap>=2.5?'Débat obligatoire ce soir 🔥':'Ça mérite une petite discussion 😄')+'</div></div></div>':'<div class="rd-worst"><div class="rd-wlbl">🤝 Aucun désaccord ce mois-ci !</div></div>')
+        +'<div class="rd-sort"><button data-s="gap" class="'+(sort==='gap'?'on':'')+'">💥 Désaccords</button><button data-s="d" class="'+(sort==='d'?'on':'')+'">🕒 Récents</button></div>'
+        +'<div class="rd-list"><div class="rd-row rd-h"><span></span><span>'+esc(me)+'</span><span>'+esc(fr.name)+'</span></div>'+list.map(function(c){return '<div class="rd-row"><span class="rd-t"><img src="'+fPoster(c.p)+'">'+esc(c.t)+'</span><span class="'+(c.a>c.b?'rd-win':'')+'">'+stars(c.a)+'</span><span class="'+(c.b>c.a?'rd-win':'')+'">'+stars(c.b)+'</span></div>';}).join('')+'</div>';
+      body.querySelectorAll('[data-s]').forEach(function(b){b.addEventListener('click',function(){sort=b.dataset.s;draw();});});
+    }
+    draw();gameXp(10,'Duel de notes');
   });
 }
 
@@ -11858,8 +12051,31 @@ setTimeout(function(){try{
       var now=Date.now();rset('cineCloudSync_'+uid,String(now));return db.collection('users').doc(uid).update({updatedAt:now});
     }).catch(function(){keys.forEach(function(k){if(!(k in dirty))dirty[k]=batch[k];});});
   }
+  /* --- 👥 Résumé public (ce que tes potes validés peuvent voir : titres vus, notes, attentes) --- */
+  var pubT=null;
+  function publishPub(uid){
+    try{
+      var its=JSON.parse(rget('u_'+uid+'__cineItems')||'[]'),wi=JSON.parse(rget('u_'+uid+'__cineWish')||'[]');
+      var pass={};try{pass=JSON.parse(rget('u_'+uid+'__cinePass')||'{}')||{};}catch(_){}
+      var k=function(i){return i.tmdbId?((i.tmdbType==='tv'?'tv':'movie')+'_'+i.tmdbId):null;};
+      var P='https://image.tmdb.org/t/p/';
+      var list=its.filter(function(i){return k(i)&&!i.locked;}).map(function(i){var o={k:k(i),t:i.title||'',s:i.status||'',r:+i.rating||0};if(i.poster&&i.poster.indexOf(P)===0)o.p=i.poster.slice(P.length);if(i.watchedDate)o.d=String(i.watchedDate).slice(0,10);return o;});
+      var wl=wi.filter(function(w){return w.tmdbId;}).map(function(w){return (w.tmdbType==='tv'?'tv':'movie')+'_'+w.tmdbId;});
+      var name=(pass&&pass.name)||(userDoc&&userDoc.name)||(me&&me.displayName)||((me&&me.email)||'').split('@')[0];
+      db.collection('pub').doc(uid).set({name:name,t:Date.now(),items:list,wish:wl}).then(function(){window._pubOk=true;}).catch(function(e){window._pubErr=(e&&e.code)||'err';});
+    }catch(_){}
+  }
+  window.CineCloudPub={
+    list:function(){
+      if(!db||!me)return Promise.resolve([]);
+      return db.collection('pub').get().then(function(qs){var out=[];qs.forEach(function(d){if(d.id!==me.uid){var x=d.data();out.push({id:'u:'+d.id,name:x.name||'Ami',items:x.items||[],wish:x.wish||[],t:x.t||0});}});return out;});
+    },
+    publishNow:function(){if(me)publishPub(me.uid);}
+  };
   function startSync(uid){
-    CP.onWrite.push(function(k,v){dirty[k]=v;clearTimeout(timer);timer=setTimeout(function(){flush(uid);},2500);});
+    CP.onWrite.push(function(k,v){dirty[k]=v;clearTimeout(timer);timer=setTimeout(function(){flush(uid);},2500);
+      if(k==='cineItems'||k==='cineWish'){clearTimeout(pubT);pubT=setTimeout(function(){publishPub(uid);},45000);}});
+    setTimeout(function(){publishPub(uid);},6000);
     window.addEventListener('beforeunload',function(){flush(uid);});
     // 1re synchro de cet appareil : on envoie tout ce qui existe déjà (ex. données locales d'avant les comptes)
     var last=parseInt(rget('cineCloudSync_'+uid)||'0');
@@ -11935,6 +12151,32 @@ setTimeout(function(){try{
   window.addEventListener('scroll',function(){if(!ticking){ticking=true;requestAnimationFrame(upd);}},{passive:true});upd();
   window.addEventListener('resize',function(){if(!on)full=h.offsetHeight;});
   document.addEventListener('click',function(e){var b=e.target.closest&&e.target.closest('header .nav-btn');if(b&&on){setTimeout(function(){try{b.scrollIntoView({block:'nearest',inline:'center'});}catch(_){}},50);}});
+})();
+</script>
+<script>
+/* 📱 Appli installable + hors ligne */
+(function(){
+  if(!('serviceWorker' in navigator)||location.protocol!=='https:')return;
+  window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});
+  var standalone=window.matchMedia('(display-mode: standalone)').matches||navigator.standalone;
+  function seen(){try{return localStorage.getItem('pwaHintDone')==='1';}catch(e){return false;}}
+  function done(){try{localStorage.setItem('pwaHintDone','1');}catch(e){}}
+  function bar(html,onGo){
+    if(standalone||seen()||document.getElementById('pwa-bar'))return;
+    var b=document.createElement('div');b.id='pwa-bar';
+    b.style.cssText='position:fixed;left:50%;transform:translateX(-50%);bottom:16px;z-index:9990;background:#2B2238;color:#fff;padding:10px 12px 10px 16px;border-radius:14px;box-shadow:0 8px 30px rgba(0,0,0,.35);display:flex;gap:10px;align-items:center;font:500 .88rem Inter,sans-serif;max-width:calc(100% - 32px)';
+    b.innerHTML=html+'<button id="pwa-x" style="background:none;border:none;color:#bbb;font-size:1rem;cursor:pointer">✕</button>';
+    document.body.appendChild(b);
+    document.getElementById('pwa-x').onclick=function(){done();b.remove();};
+    var g=document.getElementById('pwa-go');if(g)g.onclick=function(){onGo&&onGo();done();b.remove();};
+  }
+  var deferred=null;
+  window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();deferred=e;
+    setTimeout(function(){bar('📱 Mettre Ciné Tracker sur ton écran d\'accueil ? <button id="pwa-go" style="background:#FF4D6D;color:#fff;border:none;border-radius:8px;padding:6px 12px;cursor:pointer;font-weight:600">Installer</button>',function(){deferred.prompt();});},4000);
+  });
+  var ios=/iphone|ipad|ipod/i.test(navigator.userAgent);
+  if(ios&&!standalone)setTimeout(function(){bar('📱 Pour l\'avoir comme une appli : touche <b>Partager</b> ⬆️ puis <b>« Sur l\'écran d\'accueil »</b>');},5000);
+  window.CinePWA={install:function(){if(deferred){deferred.prompt();}}};
 })();
 </script>
 </body>
