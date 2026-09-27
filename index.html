@@ -1868,6 +1868,16 @@ body.dark .subr-details summary{color:#C9A8FF;}
 .pc-quote{text-align:left;border:none;border-radius:12px;padding:8px 12px;background:rgba(255,255,255,.14);color:#fff;cursor:pointer;font-style:italic;font-size:.8rem;font-family:inherit;}
 .pc-quote small{display:block;font-style:normal;opacity:.8;font-size:.7rem;}
 .pc-quote.eq{outline:3px solid #3ce26b;}
+.cr-box{background:rgba(0,0,0,.28);border-radius:14px;padding:10px 12px;margin:4px 0 12px;box-shadow:0 0 0 2px #3a86ff55;}
+.cr-h{font-family:'Fredoka',sans-serif;font-weight:700;margin-bottom:6px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+.cr-row{display:flex;gap:8px;}
+.cr-row input{flex:1;padding:9px 12px;border-radius:10px;border:none;font-family:inherit;}
+.cr-hint{font-size:.72rem;opacity:.85;margin-top:6px;}
+.cr-err{font-size:.78rem;color:#ffd23f;margin:4px 0;}
+.cr-last{display:flex;gap:6px;flex-wrap:wrap;}
+.cr-b{background:rgba(255,255,255,.12);border-radius:999px;padding:3px 9px;font-size:.76rem;font-weight:700;}
+.cr-b.w{box-shadow:0 0 0 1px #3ce26b;}.cr-b.l{box-shadow:0 0 0 1px #ff4d6d;}
+.cr-mini{background:rgba(255,255,255,.15);border:none;border-radius:8px;color:#fff;cursor:pointer;padding:2px 7px;font-size:.75rem;}
 .hdr-adm{position:absolute;bottom:-6px;left:-10px;background:#ffd23f;color:#2a1070;font-size:.58rem;font-weight:800;border-radius:8px;padding:0 4px;}
 .rc-foot{text-align:center;font-size:.7rem;opacity:.8;margin-top:10px;}
 
@@ -9357,7 +9367,54 @@ var PASS_BONUS_QUESTS=[
   {id:'qb5',ico:'🎟️',t:'BONUS · Valide 5 soirées cette semaine',goal:5,xp:300,count:function(l){return l.filter(function(x){return x.t==='night';}).length;}},
   {id:'qb12',ico:'🎟️',t:'BONUS · Regarde 12 épisodes du planning',goal:12,xp:250,count:qEps}
 ];
-function weekQuests(){var ws=weekStart(),q=PASS_QUESTS.slice();var nb=passState.bonusQuests[ws]||0;for(var i=0;i<nb&&i<PASS_BONUS_QUESTS.length;i++)q.push(PASS_BONUS_QUESTS[i]);return q;}
+function weekQuests(){var ws=weekStart(),q=PASS_QUESTS.slice();var nb=passState.bonusQuests[ws]||0;for(var i=0;i<nb&&i<PASS_BONUS_QUESTS.length;i++)q.push(PASS_BONUS_QUESTS[i]);if(passState.clash&&passState.clash.tag)q=q.concat(CLASH_QUESTS);return q;}
+/* ====== ⚔️ CLASH ROYALE : quêtes validées automatiquement via ton relais Cloudflare ====== */
+var CR_RELAY='https://cr-relais.maxfenec.workers.dev';
+passState.clash=passState.clash||{tag:'',recs:[],player:null,last:0,err:''};
+function crWeek(){var ws=weekStart();return (passState.clash.recs||[]).filter(function(r){return r.d>=ws;});}
+function crStreakMax(recs){var best=0,cur=0;recs.slice().sort(function(a,b){return a.t<b.t?-1:1;}).forEach(function(r){if(r.win){cur++;if(cur>best)best=cur;}else cur=0;});return best;}
+var CLASH_QUESTS=[
+  {id:'cr4',ico:'⚔️',t:'Clash Royale · Fais 4 combats',goal:4,xp:100,count:function(){return crWeek().length;}},
+  {id:'cr3w',ico:'🏆',t:'Clash Royale · Gagne 3 combats',goal:3,xp:150,count:function(){return crWeek().filter(function(r){return r.win;}).length;}},
+  {id:'cr3c',ico:'👑',t:'Clash Royale · Gagne un combat 3 couronnes',goal:1,xp:120,count:function(){return crWeek().filter(function(r){return r.win&&r.cr>=3;}).length;}},
+  {id:'crev',ico:'🎴',t:'Clash Royale · Joue 2 combats en défi / événement',goal:2,xp:80,count:function(){return crWeek().filter(function(r){return /challenge|event|tournament|special/i.test(r.ty||'');}).length;}},
+  {id:'crst',ico:'🔥',t:'Clash Royale · 3 victoires d\'affilée',goal:3,xp:200,count:function(){return crStreakMax(crWeek());}}
+];
+function crParseTime(bt){var m=/^(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})/.exec(bt||'');return m?new Date(Date.UTC(+m[1],m[2]-1,+m[3],+m[4],+m[5],+m[6])):null;}
+function crSync(force){
+  var C=passState.clash;if(!C.tag)return Promise.resolve();
+  if(!force&&Date.now()-(C.last||0)<5*60000)return Promise.resolve();
+  var tag=C.tag.replace(/^#/,'').toUpperCase();
+  return Promise.all([fetch(CR_RELAY+'/battlelog/'+tag).then(function(r){return r.json().then(function(j){return {ok:r.ok,j:j,st:r.status};});}),fetch(CR_RELAY+'/player/'+tag).then(function(r){return r.json().then(function(j){return {ok:r.ok,j:j,st:r.status};});})]).then(function(res){
+    var bl=res[0],pl=res[1];
+    if(!bl.ok){C.err=(bl.j&&bl.j.reason)||('erreur '+bl.st);svPass();return;}
+    C.err='';C.last=Date.now();
+    if(pl.ok)C.player={name:pl.j.name,trophies:pl.j.trophies,best:pl.j.bestTrophies,arena:pl.j.arena&&pl.j.arena.name,wins:pl.j.wins};
+    var have={};(C.recs||[]).forEach(function(r){have[r.t]=1;});
+    (bl.j||[]).forEach(function(b){
+      if(have[b.battleTime])return;var dt=crParseTime(b.battleTime);if(!dt)return;
+      var me=(b.team&&b.team[0])||{},op=(b.opponent&&b.opponent[0])||{};
+      C.recs.push({t:b.battleTime,d:dateToStr(dt),win:(me.crowns||0)>(op.crowns||0),cr:me.crowns||0,ocr:op.crowns||0,ty:b.type||'',mode:(b.gameMode&&b.gameMode.name)||'',tc:me.trophyChange||0,opp:op.name||''});
+    });
+    C.recs.sort(function(a,b){return a.t<b.t?1:-1;});C.recs=C.recs.slice(0,200);
+    svPass();
+  }).catch(function(){C.err='relais injoignable';svPass();});
+}
+function clashBoxHtml(){
+  var C=passState.clash;
+  if(!C.tag)return '<div class="cr-box"><div class="cr-h">⚔️ Clash Royale</div><div class="cr-row"><input id="cr-tag" placeholder="Ton tag de joueur, ex. #2PQ8YLV9"><button class="pq-claim" id="cr-save">Relier</button></div><div class="cr-hint">Tes combats valideront des quêtes Clash (+XP pour le Pass) automatiquement.</div></div>';
+  var P=C.player,last=(C.recs||[]).slice(0,5);
+  return '<div class="cr-box"><div class="cr-h">⚔️ Clash Royale · '+esc(C.tag)+(P?' · <b>'+esc(P.name)+'</b> · 🏆 '+P.trophies+(P.arena?' · '+esc(P.arena):''):'')+' <button class="cr-mini" id="cr-refresh">🔄</button><button class="cr-mini" id="cr-unlink" title="Délier">✕</button></div>'
+    +(C.err?'<div class="cr-err">⚠️ Impossible de lire tes combats ('+esc(C.err)+'). Vérifie ton tag, ou la clé dans ton relais Cloudflare.</div>':'')
+    +(last.length?'<div class="cr-last">'+last.map(function(r){return '<span class="cr-b '+(r.win?'w':'l')+'" title="'+esc(r.mode+(r.opp?' vs '+r.opp:''))+'">'+(r.win?'✅':'❌')+' '+r.cr+'-'+r.ocr+(r.tc?' <small>'+(r.tc>0?'+':'')+r.tc+'🏆</small>':'')+'</span>';}).join('')+'</div>':(C.err?'':'<div class="cr-hint">Aucun combat récent trouvé pour l\'instant.</div>'))
+    +'<div class="cr-hint">Cette semaine : '+crWeek().length+' combat(s), '+crWeek().filter(function(r){return r.win;}).length+' victoire(s). Mis à jour à chaque ouverture (les 25 derniers combats).</div></div>';
+}
+function bindClashBox(el){
+  var sv0=el.querySelector('#cr-save');if(sv0)sv0.addEventListener('click',function(){var v=(el.querySelector('#cr-tag').value||'').trim().toUpperCase().replace(/\s/g,'');if(!/^#?[0-9A-Z]{3,15}$/.test(v)){toast('Tag invalide (ex. #2PQ8YLV9)');return;}passState.clash.tag=v.charAt(0)==='#'?v:'#'+v;passState.clash.recs=[];passState.clash.last=0;svPass();toast('⚔️ Compte Clash relié, lecture des combats…');crSync(true).then(renderQuests);renderQuests();});
+  var rf=el.querySelector('#cr-refresh');if(rf)rf.addEventListener('click',function(){rf.textContent='⏳';crSync(true).then(renderQuests);});
+  var ul=el.querySelector('#cr-unlink');if(ul)ul.addEventListener('click',function(){if(confirm('Délier ton compte Clash Royale ?')){passState.clash={tag:'',recs:[],player:null,last:0,err:''};svPass();renderQuests();}});
+}
+setTimeout(function(){crSync(false).then(function(){try{renderHeaderAvatar();}catch(_){}});},2500);
 function weekLog(){var ws=weekStart();return (passState.log||[]).filter(function(x){return x.d>=ws;});}
 function questClaimableCount(){var ws=weekStart(),l=weekLog(),n=0;weekQuests().forEach(function(q){if(q.count(l)>=q.goal&&!(passState.quests[ws+'_'+q.id]))n++;});return n;}
 function renderQuests(){
@@ -9365,11 +9422,13 @@ function renderQuests(){
   var ws=weekStart(),l=weekLog();
   var end=new Date(ws+'T12:00');end.setDate(end.getDate()+7);
   var left=Math.max(0,Math.ceil((end-Date.now())/86400000));
-  el.innerHTML='<div class="pq-head">🎯 Quêtes de la semaine · se renouvellent dans '+left+' j</div><div class="pq-list">'+weekQuests().map(function(q){
+  el.innerHTML=clashBoxHtml()+'<div class="pq-head">🎯 Quêtes de la semaine · se renouvellent dans '+left+' j</div><div class="pq-list">'+weekQuests().map(function(q){
     var c=Math.min(q.count(l),q.goal),done=c>=q.goal,claimed=!!passState.quests[ws+'_'+q.id];
     return '<div class="pq'+(claimed?' claimed':done?' ready':'')+(q.id.indexOf('qb')===0?' bonus':'')+'"><div class="pq-ico">'+q.ico+'</div><div class="pq-main"><div class="pq-t">'+esc(q.t)+'</div><div class="pq-bar"><div style="width:'+Math.round(c/q.goal*100)+'%"></div><span>'+c+'/'+q.goal+'</span></div></div>'
       +(claimed?'<div class="pq-xp">✓</div>':done?'<button class="pq-claim" data-qclaim="'+q.id+'">+'+q.xp+' XP</button>':'<div class="pq-xp">'+q.xp+' XP</div>')+'</div>';
   }).join('')+'</div>';
+  bindClashBox(el);
+  if(passState.clash.tag&&Date.now()-(passState.clash.last||0)>5*60000)crSync(false).then(function(){if(passTab==='quests')renderQuests();});
   el.querySelectorAll('[data-qclaim]').forEach(function(b){b.addEventListener('click',function(){
     var q=weekQuests().find(function(x){return x.id===b.dataset.qclaim;});if(!q)return;
     passState.quests[ws+'_'+q.id]=true;svPass();addPassXp(q.xp,'Quête : '+q.t,'quest');renderQuests();
