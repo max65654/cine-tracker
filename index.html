@@ -2056,6 +2056,12 @@ body.dark .subr-details summary{color:#C9A8FF;}
 .tn-btns{display:flex;flex-wrap:wrap;gap:6px;align-items:center;justify-content:flex-end}.tn-mini{border:1px solid rgba(255,255,255,.35);background:rgba(255,255,255,.12);color:inherit;border-radius:999px;padding:5px 10px;font-size:.74rem;cursor:pointer;font-family:inherit}.tn-recap{flex-basis:100%;font-size:.82rem;line-height:1.45;background:rgba(0,0,0,.15);border-radius:12px;padding:10px 12px;margin-top:8px}.tonight-card{flex-wrap:wrap}
 .pi-like{display:inline-block;font-size:.68rem;font-weight:700;padding:2px 8px;border-radius:999px;background:linear-gradient(90deg,rgba(6,214,160,.25) var(--lk),rgba(128,128,128,.12) var(--lk));margin-left:4px;vertical-align:middle}
 .plan-remind{margin:0 0 16px}.pr-card{background:var(--card-bg);border:1px solid var(--border);border-radius:16px;padding:12px 14px;box-shadow:0 3px 0 var(--shadow)}.pr-card.on{border-color:rgba(6,214,160,.45)}.pr-h{font-weight:700;display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}.pr-t{font-size:.8rem;color:var(--muted);margin:4px 0 8px}.pr-go{border:none;border-radius:10px;padding:8px 14px;background:var(--raspberry);color:#fff;font-weight:700;cursor:pointer}.pr-row{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:8px;font-size:.82rem}.pr-row select{margin-left:4px}.pr-sw{font-size:.8rem;font-weight:500}.pr-how{margin-top:8px;font-size:.8rem}.pr-how summary{cursor:pointer;color:var(--violet);font-weight:600}.pr-how code{background:var(--input-bg);padding:2px 6px;border-radius:6px}
+/* Appli installée : la barre de titre laisse la place à l'appli (on garde réduire / agrandir / fermer) */
+@media (display-mode: window-controls-overlay){
+  header{padding-top:calc(env(titlebar-area-height,0px) + 6px)!important;-webkit-app-region:drag;app-region:drag;}
+  header button,header a,header input,header select,header nav{-webkit-app-region:no-drag;app-region:no-drag;}
+  header .header-right{padding-right:calc(100vw - env(titlebar-area-x,0px) - env(titlebar-area-width,100vw));}
+}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 </head>
@@ -2083,6 +2089,7 @@ body.dark .subr-details summary{color:#C9A8FF;}
       <button class="nav-btn" data-view="books">📖 Livres</button>
     </nav>
     <button class="mob-more" id="mob-more" title="Réglages" onclick="this.closest('header').classList.toggle('show-icons')">⚙️</button>
+    <button class="icon-btn" id="fs-toggle" title="Plein écran (Échap pour sortir)" onclick="window.CineFs&&window.CineFs()">⛶</button>
     <button class="icon-btn" id="video-toggle" title="Vidéos (bandes-annonces) en fond">🎞️</button>
     <button class="icon-btn" id="sound-toggle" title="Sons d'interface">🔊</button>
     <button class="icon-btn" id="haptic-toggle" title="Vibrations (mobile)">📳</button>
@@ -12503,21 +12510,9 @@ setTimeout(function(){try{
     document.getElementById('pwa-x').onclick=function(){done();b.remove();};
     var g=document.getElementById('pwa-go');if(g)g.onclick=function(){onGo&&onGo();done();b.remove();};
   }
-  // 🖥️ Appli installée sur ordi : plein écran sans barre du haut (Échap pour en sortir, ⛶ pour y revenir)
-  var desk=window.matchMedia('(pointer:fine)').matches&&!/android|iphone|ipad/i.test(navigator.userAgent);
-  if(standalone&&desk&&document.documentElement.requestFullscreen){
-    var fsOff=function(){try{return localStorage.getItem('cineNoFs')==='1';}catch(e){return false;}};
-    var go=function(){if(!document.fullscreenElement)document.documentElement.requestFullscreen({navigationUI:'hide'}).catch(function(){});};
-    var first=function(){document.removeEventListener('pointerdown',first,true);if(!fsOff())go();};
-    document.addEventListener('pointerdown',first,true);
-    window.addEventListener('load',function(){
-      var b=document.createElement('button');b.id='fs-btn';b.textContent='⛶';b.title='Plein écran (Échap pour sortir)';
-      b.style.cssText='position:fixed;top:8px;right:8px;z-index:9995;width:34px;height:34px;border-radius:10px;border:none;background:rgba(43,34,56,.75);color:#fff;font-size:1.1rem;cursor:pointer;display:none';
-      b.onclick=function(){try{localStorage.removeItem('cineNoFs');}catch(e){}go();};document.body.appendChild(b);
-      var upd=function(){b.style.display=document.fullscreenElement?'none':'block';};
-      document.addEventListener('fullscreenchange',upd);upd();
-    });
-  }
+  // 🖥️ Plein écran : bouton ⛶ en haut (Échap pour sortir). Dans l'appli installée, la barre de titre est
+  // remplacée par l'appli elle-même (boutons réduire/agrandir/fermer gardés) → on peut toujours agrandir la fenêtre.
+  window.CineFs=function(){try{if(document.fullscreenElement)document.exitFullscreen();else document.documentElement.requestFullscreen({navigationUI:'hide'}).catch(function(){});}catch(e){}};
   var deferred=null;
   window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();deferred=e;
     setTimeout(function(){bar('📱 Mettre Ciné Tracker sur ton écran d\'accueil ? <button id="pwa-go" style="background:#FF4D6D;color:#fff;border:none;border-radius:8px;padding:6px 12px;cursor:pointer;font-weight:600">Installer</button>',function(){deferred.prompt();});},4000);
