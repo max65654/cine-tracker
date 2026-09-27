@@ -3076,7 +3076,8 @@ function wishReleaseContextItem(w){
     // Si l'utilisateur a corrigé l'heure à la main (bouton ✏️ dans la fiche Attentes),
     // elle prime sur tout calcul automatique (Toku JST, plateforme…).
     manualTime:(w&&w.releaseTime)||null,
-    mediaType:(w&&w.tmdbType)||''
+    mediaType:(w&&w.tmdbType)||'',
+    tmdbId:(w&&w.tmdbId)||null
   };
 }
 /* ====== ATTENTES : où ça sort (cinéma / plateforme, et laquelle) ====== */
@@ -3289,7 +3290,7 @@ function releasedNow(ctx,dateStr){
   var t=airDateTimeFor(ctx,dateStr);
   return t?t.getTime()<=Date.now():dateStr<todayStr();
 }
-function tvCtxFromDetails(d){return {mediaType:'tv',networkName:(d&&d.networks&&d.networks[0]&&d.networks[0].name)||''};}
+function tvCtxFromDetails(d){return {mediaType:'tv',tmdbId:d&&d.id,networkName:(d&&d.networks&&d.networks[0]&&d.networks[0].name)||''};}
 // Une date qui BOUGE pour la même sortie n'est acceptée que si TMDB la confirme deux jours
 // différents : ça évite les dates fantaisistes ajoutées puis retirées sur TMDB.
 function stableDateChange(obj,newDate){
@@ -3325,6 +3326,70 @@ function wallClockToUtcDate(dateStr,hour,minute,timeZone){
   var real=new Date(dateStr+'T00:00:00Z');real.setUTCHours(hour-off,minute,0,0);
   return real;
 }
+/* ====== 📺 TVmaze : heure EXACTE de diffusion + vérification des dates ======
+   TVmaze (gratuit, sans clé) donne pour chaque épisode l'instant précis de diffusion (airstamp).
+   On garde un petit cache (épisodes récents/à venir seulement) et on s'en sert :
+   - pour l'heure de sortie (prioritaire sur l'estimation par chaîne),
+   - pour vérifier la date TMDB du prochain épisode (en cas de désaccord → la plus TARDIVE,
+     pour ne jamais annoncer un épisode comme sorti trop tôt). */
+var TVM_KEY='tvmCache';
+var TVM=(function(){try{return JSON.parse(localStorage.getItem(TVM_KEY))||{};}catch(e){return {};}})();
+function tvmSave(){try{localStorage.setItem(TVM_KEY,JSON.stringify(TVM));}catch(e){}}
+function tvmKeyOf(ctx){if(!ctx||!ctx.tmdbId)return null;var tv=ctx.tmdbType==='tv'||ctx.mediaType==='tv'||ctx.type==='serie';return tv?String(ctx.tmdbId):null;}
+function tvmStamp(ctx,dateStr){var k=tvmKeyOf(ctx);var e=k&&TVM[k];var st=e&&e.d&&e.d[dateStr];if(!st)return null;var dt=new Date(st);return isNaN(dt)?null:dt;}
+function tvmEpDate(tmdbId,s,e){var x=TVM[String(tmdbId)];return (x&&x.se&&x.se[s+'-'+e])||null;}
+// Date du prochain épisode vérifiée : si TMDB et TVmaze ne sont pas d'accord, on garde la plus tardive.
+function tvmCheckDate(tmdbId,s,e,date){var t=tvmEpDate(tmdbId,s,e);if(!t||!date)return date||t||'';return t>date?t:date;}
+function tvmHasTime(ctx,dateStr){return !!tvmStamp(ctx,dateStr);}
+function tvmFetchShow(tmdbId){
+  var k=String(tmdbId);
+  return fetch('https://api.themoviedb.org/3/tv/'+tmdbId+'/external_ids?api_key='+TMDB).then(function(r){return r.json();}).then(function(x){
+    var known=TVM[k]&&TVM[k].id;
+    if(known)return known;
+    var urls=[];if(x&&x.tvdb_id)urls.push('https://api.tvmaze.com/lookup/shows?thetvdb='+x.tvdb_id);if(x&&x.imdb_id)urls.push('https://api.tvmaze.com/lookup/shows?imdb='+x.imdb_id);
+    function tryNext(i){if(i>=urls.length)return Promise.resolve(0);return fetch(urls[i]).then(function(r){return r.ok?r.json():null;}).then(function(sh){return (sh&&sh.id)||tryNext(i+1);}).catch(function(){return tryNext(i+1);});}
+    return tryNext(0);
+  }).then(function(id){
+    if(!id){TVM[k]={id:0,ts:Date.now()};return false;}
+    return fetch('https://api.tvmaze.com/shows/'+id+'/episodes').then(function(r){return r.ok?r.json():[];}).then(function(eps){
+      var from=new Date(Date.now()-15*86400000).toISOString().slice(0,10);
+      var d={},se={};
+      (eps||[]).forEach(function(ep){
+        if(!ep||!ep.airdate||ep.airdate<from||ep.number==null)return;
+        se[ep.season+'-'+ep.number]=ep.airdate;
+        // Heure fiable seulement si TVmaze a une vraie heure (les plateformes sans heure → estimation par chaîne)
+        if(ep.airtime&&ep.airstamp){if(!d[ep.airdate]||ep.airstamp<d[ep.airdate])d[ep.airdate]=ep.airstamp;}
+      });
+      var old=JSON.stringify(TVM[k]&&TVM[k].se||{})+JSON.stringify(TVM[k]&&TVM[k].d||{});
+      TVM[k]={id:id,ts:Date.now(),d:d,se:se};
+      return old!==JSON.stringify(se)+JSON.stringify(d);
+    });
+  }).catch(function(){return false;});
+}
+var _tvmRunning=false;
+function tvmSyncAll(force){
+  if(_tvmRunning)return;
+  var ids={};
+  (items||[]).forEach(function(i){if(i.type==='serie'&&i.tmdbType==='tv'&&i.tmdbId&&i.status!=='abandonne')ids[i.tmdbId]=1;});
+  (wishlist||[]).forEach(function(w){if(w.tmdbType==='tv'&&w.tmdbId)ids[w.tmdbId]=1;});
+  var now=Date.now();
+  var list=Object.keys(ids).filter(function(k){var e=TVM[k];if(!e||force)return true;var age=now-(e.ts||0);return e.id?age>18*3600000:age>7*86400000;});
+  if(!list.length)return;
+  _tvmRunning=true;var i=0,changed=false;
+  function next(){
+    if(i>=list.length){_tvmRunning=false;tvmSave();if(changed){tvmApplyDates();try{renderUpcomingEpisodes();}catch(_){}try{renderAll();}catch(_){}}return;}
+    var id=list[i++];
+    tvmFetchShow(id).then(function(c){if(c)changed=true;if(i%5===0)tvmSave();setTimeout(next,700);});
+  }
+  next();
+}
+// Applique la vérification TVmaze aux prochains épisodes déjà enregistrés.
+function tvmApplyDates(){
+  var any=false;
+  (items||[]).forEach(function(it){var ne=it.nextEpisode;if(!ne||!ne.airDate||!it.tmdbId)return;var fixed=tvmCheckDate(it.tmdbId,ne.season,ne.episode,ne.airDate);if(fixed&&fixed!==ne.airDate){ne.airDate=fixed;ne.tvmFixed=1;any=true;}});
+  if(any)sv();
+}
+setTimeout(function(){try{tvmSyncAll();}catch(_){}},9000);
 // Instant de diffusion réel d'un épisode, du plus précis au plus approximatif :
 // 0) Heure corrigée à la main par l'utilisateur (item.manualTime, "HH:MM" en heure locale)
 //    → toujours prioritaire, quelle que soit la franchise/plateforme détectée.
@@ -3343,6 +3408,8 @@ function airDateTimeFor(item,dateStr){
     var tp=TOKU_RELEASE_PROFILE[item.tokuFranchise]||TOKU_RELEASE_PROFILE['autre'];
     return wallClockToUtcDate(dateStr,tp.hour,tp.minute,tp.tz);
   }
+  var tvs=tvmStamp(item,dateStr);
+  if(tvs)return tvs;
   var np=networkProfileFor(item);
   if(np)return wallClockToUtcDate(dateStr,np.hour,np.minute,np.tz);
   return new Date(dateStr+'T00:00:00');
@@ -6396,7 +6463,7 @@ function refreshSingleItemNextEpisode(it){
       var flags=computeEpisodeFlags(eps,nea.episode_number);
       var maxSeasonNum=(d.seasons||[]).filter(function(s){return s.season_number>0;}).reduce(function(m,s){return Math.max(m,s.season_number);},0);
       var isSeriesFinale=flags.isFinale&&(nea.season_number===maxSeasonNum)&&(d.status==='Ended'||d.status==='Canceled');
-      it.nextEpisode={season:nea.season_number,episode:nea.episode_number,name:nea.name||'',airDate:nea.air_date,isSeasonFinale:flags.isFinale,isPenultimate:flags.isPenultimate,isSeriesFinale:isSeriesFinale,dropCount:flags.dropCount};
+      it.nextEpisode={season:nea.season_number,episode:nea.episode_number,name:nea.name||'',airDate:tvmCheckDate(it.tmdbId,nea.season_number,nea.episode_number,nea.air_date),isSeasonFinale:flags.isFinale,isPenultimate:flags.isPenultimate,isSeriesFinale:isSeriesFinale,dropCount:flags.dropCount};
       sv();try{renderUpcomingEpisodes();}catch(_){}try{renderAll();}catch(_){}
     }).catch(function(){});
   }).catch(function(){});
@@ -6585,6 +6652,7 @@ function scanSeriesStatusChanges(){
       var nea=d.next_episode_to_air;
       var maxSeasonNum=(d.seasons||[]).filter(function(s){return s.season_number>0;}).reduce(function(m,s){return Math.max(m,s.season_number);},0);
       function finishItem(newNext){
+        if(newNext&&newNext.airDate){var _fx=tvmCheckDate(it.tmdbId,newNext.season,newNext.episode,newNext.airDate);if(_fx!==newNext.airDate)newNext=Object.assign({},newNext,{airDate:_fx,tvmFixed:1});}
         var oldN=it.nextEpisode;
         if(oldN&&newNext&&oldN.season===newNext.season&&oldN.episode===newNext.episode&&oldN.airDate&&newNext.airDate&&oldN.airDate!==newNext.airDate){
           var probe={releaseDate:oldN.airDate,_pendDate:it._pendDate,_pendDay:it._pendDay};
@@ -7012,7 +7080,61 @@ function loadTrivia(item){
     var links='<div style="margin-top:8px"><a class="trivia-link" href="https://fr.wikipedia.org/wiki/'+wikiTitle+'" target="_blank" rel="noopener">📖 Wikipédia</a> &nbsp;·&nbsp; <a class="trivia-link" href="https://www.google.com/search?q='+fandomQ+'+site:fandom.com" target="_blank" rel="noopener">⭐ Fandom</a> &nbsp;·&nbsp; <a class="trivia-link" href="https://www.imdb.com/find/?q='+fandomQ+'&s=tt" target="_blank" rel="noopener">🎬 IMDb (trivia)</a></div>';
     if(!facts.length)facts.push('Pas encore d\'anecdote auto pour ce titre — explore les liens ci-dessous, y\'a souvent des pépites !');
     box.innerHTML='<div class="trivia-block"><h4>💡 Le saviez-tu&nbsp;?</h4>'+facts.map(function(f){return'<div class="trivia-item">'+esc(f).replace('&lt;','<')+'</div>';}).join('')+links+'</div>';
+    try{wikiAnecdotes(item,d,box);}catch(_){}
   }).catch(function(){box.innerHTML='';});
+}
+/* ====== 📖 Anecdotes Wikipédia (page EXACTE via l'identifiant TMDB dans Wikidata) ====== */
+var _wikiCache={};
+function wikiFindTitle(item){
+  var prop=item.tmdbType==='tv'?'P4983':'P4947';
+  return fetch('https://www.wikidata.org/w/api.php?action=query&list=search&srsearch=haswbstatement:'+prop+'='+item.tmdbId+'&format=json&origin=*').then(function(r){return r.json();}).then(function(j){
+    var q=j&&j.query&&j.query.search&&j.query.search[0]&&j.query.search[0].title;if(!q)return null;
+    return fetch('https://www.wikidata.org/w/api.php?action=wbgetentities&ids='+q+'&props=sitelinks&sitefilter=frwiki&format=json&origin=*').then(function(r){return r.json();}).then(function(e){var sl=e&&e.entities&&e.entities[q]&&e.entities[q].sitelinks&&e.entities[q].sitelinks.frwiki;return sl?sl.title:null;});
+  });
+}
+function wikiPickFacts(txt){
+  var parts=txt.split(/\n(?===+ )/);var good=[];
+  var SEC=/tournage|production|anecdote|genèse|développement|autour d|conception|écriture|distribution des rôles|casting|musique|bande originale|effets|réalisation|accueil|box-office|distinction|clins? d.œil|références|easter/i;
+  parts.forEach(function(p){
+    var m=p.match(/^=+\s*([^=]+?)\s*=+/);if(!m||!SEC.test(m[1]))return;
+    var body=p.replace(/^=+[^\n]*\n/,'').replace(/\s+/g,' ').trim();
+    body.split(/(?<=[.!?»])\s+(?=[A-ZÀ-ÝÉ«])/).forEach(function(sn){
+      if(sn.length<70||sn.length>300)return;
+      var sc=0;if(/\d/.test(sn))sc+=1;
+      if(/initialement|à l.origine|refus|improvis|record|inspir|caméo|remplac|premier choix|pressenti|abandonn|secret|coupée|censur|anecdote|clin d|hommage|jamais|réellement|vraiment/i.test(sn))sc+=3;
+      if(/tourn[ée]|budget|rôle|scène/i.test(sn))sc+=1;
+      good.push({t:sn,s:sc,sec:m[1]});
+    });
+  });
+  good.sort(function(a,b){return b.s-a.s;});
+  var seen={};return good.filter(function(g){var k=g.t.slice(0,40);if(seen[k])return false;seen[k]=1;return true;}).slice(0,6);
+}
+function wikiAnecdotes(item,d,box){
+  if(!item.tmdbId)return;
+  var ck=item.tmdbType+'_'+item.tmdbId;
+  var p=_wikiCache[ck]||(_wikiCache[ck]=wikiFindTitle(item).then(function(title){
+    if(!title)return null;
+    return fetch('https://fr.wikipedia.org/w/api.php?action=query&prop=extracts&explaintext=1&redirects=1&titles='+encodeURIComponent(title)+'&format=json&origin=*').then(function(r){return r.json();}).then(function(j){
+      var pg=j&&j.query&&j.query.pages;var txt='';for(var k in pg){txt=pg[k].extract||'';}
+      return {title:title,facts:wikiPickFacts(txt)};
+    });
+  }).catch(function(){return null;}));
+  p.then(function(res){
+    if(!res||!document.body.contains(box))return;
+    var blk=box.querySelector('.trivia-block');if(!blk)return;
+    var url='https://fr.wikipedia.org/wiki/'+encodeURIComponent(res.title.replace(/ /g,'_'));
+    blk.querySelectorAll('a.trivia-link').forEach(function(a){if(/wikipedia\.org/.test(a.href))a.href=url;});
+    if(!res.facts.length)return;
+    var shown=3;
+    var w=document.createElement('div');w.className='wiki-anec';w.style.cssText='margin-top:10px;padding-top:8px;border-top:1px dashed rgba(128,128,128,.35)';
+    function draw(){
+      w.innerHTML='<div style="font-weight:600;margin-bottom:4px">📖 Anecdotes Wikipédia</div>'+res.facts.slice(0,shown).map(function(f){return '<div class="trivia-item">• '+esc(f.t)+'</div>';}).join('')
+        +(res.facts.length>shown?'<button type="button" class="wiki-more" style="background:none;border:none;color:inherit;opacity:.7;cursor:pointer;padding:4px 0;text-decoration:underline">+ '+(res.facts.length-shown)+' autre'+(res.facts.length-shown>1?'s':'')+'</button>':'');
+      var b=w.querySelector('.wiki-more');if(b)b.addEventListener('click',function(){shown=res.facts.length;draw();});
+    }
+    draw();
+    var lk=blk.querySelector('div[style*="margin-top:8px"]');if(lk)blk.insertBefore(w,lk);else blk.appendChild(w);
+  });
 }
 
 /* ====== RECOMMANDATIONS ====== */
@@ -7409,7 +7531,7 @@ function nextEpisodeCountdownHtml(item,opts){
     +'<div class="nep-head"><span class="nep-label">Prochain épisode</span>'+finaleBadge+'</div>'
     +'<div class="nep-ep">'+epLabel+'</div>'
     +body
-    +'<div class="nep-date">'+dateTxt+'</div>'
+    +'<div class="nep-date">'+dateTxt+(tvmHasTime(item,ne.airDate)&&!item.manualTime?' <span title="Heure officielle vérifiée sur TVmaze" style="opacity:.6;font-size:.85em">· ✓ heure vérifiée</span>':'')+'</div>'
     +'</div>';
 }
 // Liste des séries en cours ayant un prochain épisode connu (TMDB), triée par date de diffusion,
