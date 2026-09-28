@@ -2083,6 +2083,7 @@ body.dark .subr-details summary{color:#C9A8FF;}
 
 .ac-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:10px;margin-bottom:12px}.ac-card{border:none;cursor:pointer;border-radius:14px;padding:6px;background:linear-gradient(160deg,#2b1055,#1a0b33);color:#fff;display:flex;flex-direction:column;gap:4px;box-shadow:inset 0 0 0 2px #9aa5b1;transition:transform .15s}.ac-card:hover{transform:translateY(-4px) rotate(-1deg)}.ac-card.r-rare{box-shadow:inset 0 0 0 2px #4dabf7}.ac-card.r-epique{box-shadow:inset 0 0 0 2px #c77dff,0 0 12px rgba(199,125,255,.4)}.ac-card.r-legend{box-shadow:inset 0 0 0 2px #ffd23f,0 0 16px rgba(255,210,63,.5)}.ac-card.r-premium{box-shadow:inset 0 0 0 2px #ff4d6d,0 0 18px rgba(255,77,109,.55)}.ac-img{width:100%;aspect-ratio:2/3;border-radius:10px;background:#0003 center/cover}.ac-n{font-size:.74rem;font-weight:700;line-height:1.15}.ac-r{font-size:.6rem;opacity:.75;text-transform:uppercase;letter-spacing:1px}
 .ac-box{width:min(680px,100%)!important}.ac-big{margin:0 auto 10px;width:190px;border-radius:18px;padding:8px;background:linear-gradient(160deg,#2b1055,#7a1fa2);color:#fff;box-shadow:0 0 0 3px #ffd23f,0 10px 40px rgba(0,0,0,.5);animation:pbCard .8s ease}.ac-big.r-rare{box-shadow:0 0 0 3px #4dabf7}.ac-big.r-epique{box-shadow:0 0 0 3px #c77dff}.ac-big.r-premium{box-shadow:0 0 0 3px #ff4d6d,0 0 40px rgba(255,77,109,.6)}.ac-bimg{width:100%;aspect-ratio:2/3;border-radius:12px;background:#0003 center/cover}.ac-bn{font-family:'Fredoka',sans-serif;font-weight:700;margin-top:6px}.ac-br{font-size:.7rem;opacity:.85}.ac-sub-h{font-weight:700;margin:12px 0 6px;text-align:left}.ac-sub-h small{font-weight:400;color:var(--muted)}.ac-subs{display:flex;gap:8px;overflow-x:auto;padding-bottom:6px}.ac-sub{position:relative;flex:0 0 96px;font-size:.66rem;display:flex;flex-direction:column;gap:2px;text-align:left}.ac-sub small{color:var(--muted)}.ac-simg{width:96px;height:140px;border-radius:10px;background:#0003 center/cover}.ac-simg.tall{height:144px}.ac-sub.lock .ac-simg{filter:grayscale(1) brightness(.35) blur(1px)}.ac-lk{position:absolute;top:52px;left:0;right:0;text-align:center;font-size:1.4rem}
+.pm-unl{text-align:center;margin:10px 0 6px}.pm-unl .soc-btn{font-size:1rem;padding:12px 22px}.pm-unl-s{display:block;font-size:.72rem;color:var(--muted);margin-top:4px}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 </head>
@@ -9420,10 +9421,12 @@ function openProfileModal(){
   ov.innerHTML='<div class="pepite-box profile-box"><button class="pepite-x">✕</button><div class="pepite-tag">👤 Mon profil</div>'
     +pendingNoticeHtml()
     +'<div class="home-profile in-modal" id="pm-preview"></div>'
+    +'<div class="pm-unl"><button class="soc-btn" id="pm-unl">🎁 Tout ce que j\'ai débloqué</button><span class="pm-unl-s">avatars · bannières · titres · cartes · thèmes · cadres…</span></div>'
+    +'<div class="cur-bar" style="justify-content:center">'+Object.keys(CUR).map(function(k){return '<span class="cur-pill big c-'+k+'">'+CUR[k].i+' <b>'+(passState.cur[k]||0)+'</b></span>';}).join('')+'</div>'
     +'<div class="pm-name"><label>✏️ Pseudo</label><input type="text" id="pm-name" maxlength="24" placeholder="Ton pseudo" value="'+esc(passState.name||'')+'"></div>'
     +'<div id="pm-account"></div>'
     +'<div id="pm-connect"></div>'
-    +'<div class="pass-collection-light" id="pm-coll"></div>'
+    +'<div class="pass-collection-light" id="pm-coll" style="display:none"></div>'
     +'<div style="text-align:center;margin-top:14px"><button class="pq-claim" id="pm-pass">🎟️ Aller à mon Pass</button></div></div>';
   ov.classList.add('show');
   function refresh(){var pv=document.getElementById('pm-preview');if(pv){pv.innerHTML=profileCardHtml('modal');pv.querySelectorAll('[data-hp]').forEach(function(b){b.style.display='none';});}}
@@ -9434,6 +9437,7 @@ function openProfileModal(){
   document.getElementById('pm-pass').addEventListener('click',function(){ov.classList.remove('show');var nb=document.querySelector('.nav-btn[data-view="planning"]');if(nb)nb.click();window.scrollTo({top:0,behavior:'smooth'});});
   var coll=document.getElementById('pm-coll');
   renderPassCollection(coll,refresh);
+  document.getElementById('pm-unl').addEventListener('click',function(){var show=coll.style.display==='none';coll.style.display=show?'':'none';this.textContent=show?'🔼 Masquer mes débloquages':'🎁 Tout ce que j\'ai débloqué';if(show)coll.scrollIntoView({behavior:'smooth',block:'start'});});
   try{if(window.CineAccount)window.CineAccount.renderPanel(document.getElementById('pm-account'));}catch(_){}
   try{var pc=document.getElementById('pm-connect');pc.innerHTML=connectPanelHtml();bindConnectPanel(pc);}catch(_){}
 }
@@ -11390,6 +11394,7 @@ function ivPendingSeasons(){
   return out;
 }
 window.CineImport=function(){openImportModal();};
+window.CineMe=function(){var e=passState.equip.avatar,a={t:'emo',v:(PASS_AVATARS[e]||PASS_AVATARS.a0).e};if(e&&e.indexOf('img:')===0&&passState.imgCos&&passState.imgCos[e])a={t:'img',v:passState.imgCos[e].img};else if(e==='photo'){var c=profCustom();if(c.avatarImg&&c.avatarImg.length<60000)a={t:'img',v:c.avatarImg};}return {name:profName(),ava:a};};
 try{Object.assign(PASS_TITLES,passState.customTitles||{});}catch(_){}
 function ivSeasonVerified(tvId,sn){return !!passState.verified[ivKey(tvId,sn)];}
 
@@ -13379,7 +13384,8 @@ setTimeout(function(){try{
       var wl=wi.filter(function(w){return w.tmdbId;}).map(function(w){return (w.tmdbType==='tv'?'tv':'movie')+'_'+w.tmdbId;});
       var name=(pass&&pass.name)||(userDoc&&userDoc.name)||(me&&me.displayName)||((me&&me.email)||'').split('@')[0];
       var nt='';try{var nc=JSON.parse(rget('u_'+uid+'__cineNtfy')||'{}');if(nc&&nc.on&&nc.topic)nt=nc.topic;}catch(_){}
-      db.collection('pub').doc(uid).set({name:name,t:Date.now(),items:list,wish:wl,nt:nt}).then(function(){window._pubOk=true;}).catch(function(e){window._pubErr=(e&&e.code)||'err';});
+      var ava=null;try{if(window.CineMe)ava=window.CineMe().ava;}catch(_){}
+      db.collection('pub').doc(uid).set({name:name,t:Date.now(),items:list,wish:wl,nt:nt,ava:ava}).then(function(){window._pubOk=true;}).catch(function(e){window._pubErr=(e&&e.code)||'err';});
     }catch(_){}
   }
   window.CineCloudPub={
@@ -13403,6 +13409,7 @@ setTimeout(function(){try{
       +'.ch-n{font-size:.7rem;font-weight:700;opacity:.75;margin-bottom:2px}.ch-t{font-size:.64rem;opacity:.6;margin-top:3px;text-align:right}.ch-film{display:flex;gap:8px;align-items:center;margin-top:5px;padding:6px;border-radius:10px;background:rgba(0,0,0,.12);cursor:pointer}.ch-film img{width:36px;height:54px;object-fit:cover;border-radius:5px}'
       +'.ch-del{position:absolute;top:2px;left:-22px;background:none;border:none;opacity:0;cursor:pointer;font-size:.8rem}.ch-m:hover .ch-del{opacity:.6}.ch-day{align-self:center;font-size:.68rem;opacity:.55;margin:6px 0}'
       +'.ch-in{display:flex;gap:6px;padding:8px;border-top:1px solid var(--border,#ddd)}.ch-in input{flex:1;padding:10px 12px;border-radius:12px;border:1px solid var(--border,#ddd);background:var(--input-bg,#fff);color:inherit;font-size:.9rem}.ch-in button{border:none;border-radius:12px;padding:0 14px;background:#FF4D6D;color:#fff;font-weight:700;cursor:pointer}'
+      +'.ch-line{display:flex;align-items:flex-end;gap:6px}.ch-line.mine{flex-direction:row-reverse}.ch-av{flex:0 0 28px;height:28px;border-radius:50%;background:#5B3A8C center/cover;display:flex;align-items:center;justify-content:center;font-size:.95rem;color:#fff}.ch-line .ch-m{max-width:78%}'
       +'.ch-emo{display:flex;gap:4px;padding:6px 8px 0}.ch-emo button{background:none;border:none;font-size:1.15rem;cursor:pointer;padding:2px}.ch-err{padding:14px;font-size:.84rem}';
     document.head.appendChild(st);
     var fab=document.createElement('button');fab.id='chat-fab';fab.title='Salon — discuter avec tes potes';fab.innerHTML='💬<span class="cb"></span>';document.body.appendChild(fab);
@@ -13412,7 +13419,7 @@ setTimeout(function(){try{
     fab.onclick=function(){chatOpen=!chatOpen;pn.classList.toggle('show',chatOpen);if(chatOpen){drawChat(true);setTimeout(function(){var i=document.getElementById('ch-txt');if(i&&window.matchMedia('(pointer:fine)').matches)i.focus();},50);}};
     document.getElementById('ch-x').onclick=function(){chatOpen=false;pn.classList.remove('show');};
     function send(extra){var i=document.getElementById('ch-txt');var t=(i.value||'').trim();if(!t&&!extra)return;
-      var msg={uid:me.uid,name:chatName(),text:t||'',t:Date.now()};if(extra)msg.film=extra;
+      var msg={uid:me.uid,name:chatName(),text:t||'',t:Date.now()};if(extra)msg.film=extra;try{if(window.CineMe){var mm=window.CineMe();msg.ava=mm.ava;}}catch(_){}
       i.value='';db.collection('chat').add(msg).catch(function(e){tst('💬 Envoi impossible : '+((e&&e.code)==='permission-denied'?'règles Firestore à mettre à jour':(e&&e.message)||e));});}
     window.CineChatShare=function(film){if(!chatOpen)fab.onclick();send(film);};
     document.getElementById('ch-send').onclick=function(){send();};
@@ -13431,9 +13438,10 @@ setTimeout(function(){try{
     var atBottom=l.scrollHeight-l.scrollTop-l.clientHeight<60;
     var lastDay='';
     l.innerHTML=chatMsgs.length?chatMsgs.map(function(m){var d=new Date(m.t),day=d.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'});var sep=day!==lastDay?'<div class="ch-day">'+day+'</div>':'';lastDay=day;var mine=m.uid===me.uid;
-      return sep+'<div class="ch-m'+(mine?' mine':'')+'">'+((mine||isAdmin())?'<button class="ch-del" data-chdel="'+m.id+'" title="Supprimer">🗑</button>':'')+(mine?'':'<div class="ch-n">'+esc2(m.name||'?')+'</div>')+esc2(m.text||'')
+      var av=m.ava&&m.ava.v?(m.ava.t==='img'?'<span class="ch-av" style="background-image:url('+esc2(m.ava.v)+')"></span>':'<span class="ch-av emo">'+esc2(m.ava.v)+'</span>'):'<span class="ch-av emo">'+esc2((m.name||'?').charAt(0).toUpperCase())+'</span>';
+      return sep+'<div class="ch-line'+(mine?' mine':'')+'">'+av+'<div class="ch-m'+(mine?' mine':'')+'">'+((mine||isAdmin())?'<button class="ch-del" data-chdel="'+m.id+'" title="Supprimer">🗑</button>':'')+(mine?'':'<div class="ch-n">'+esc2(m.name||'?')+'</div>')+esc2(m.text||'')
         +(m.film?'<div class="ch-film" data-chfilm="'+esc2(m.film.k||'')+'">'+(m.film.p?'<img src="'+esc2(m.film.p)+'">':'')+'<div><b>'+esc2(m.film.t||'')+'</b>'+(m.film.r?'<br>'+'★'.repeat(Math.round(m.film.r))+' ('+(m.film.r*2)+'/10)':'')+'</div></div>':'')
-        +'<div class="ch-t">'+d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})+'</div></div>';}).join(''):'<div class="ch-err">👋 Aucun message pour l\'instant. Dis bonjour !</div>';
+        +'<div class="ch-t">'+d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})+'</div></div></div>';}).join(''):'<div class="ch-err">👋 Aucun message pour l\'instant. Dis bonjour !</div>';
     l.querySelectorAll('[data-chfilm]').forEach(function(b){b.onclick=function(){if(window.CineOpenByKey&&b.dataset.chfilm){chatOpen=false;document.getElementById('chat-pn').classList.remove('show');window.CineOpenByKey(b.dataset.chfilm);}};});
     l.querySelectorAll('[data-chdel]').forEach(function(b){b.onclick=function(){db.collection('chat').doc(b.dataset.chdel).delete().catch(function(){});};});
     if(markRead||atBottom)l.scrollTop=l.scrollHeight;
