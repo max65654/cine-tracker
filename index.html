@@ -2119,6 +2119,8 @@ body.dark .subr-details summary{color:#C9A8FF;}
 @media(max-width:760px){#view-library>.add-card:not(.m-open)>*:not(#form-title):not(.search-box){display:none!important;}#view-library>.add-card:not(.m-open) #form-title::after{content:' ▾';opacity:.6}#view-library>.add-card #form-title{cursor:pointer}#view-library>.add-card{padding:12px!important;}}
 .nd-row{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:8px;border:1px solid var(--border);border-radius:12px;margin:6px 0}.nd-l{font-weight:700;min-width:90px}.nd-stars span{font-size:1.5rem;cursor:pointer;color:#bbb;transition:transform .1s}.nd-stars span.f{color:var(--sun)}.nd-stars span:hover{transform:scale(1.2)}.nd-fav{border:none;background:none;font-size:1.4rem;cursor:pointer}.nd-c{flex-basis:100%;min-height:44px;border-radius:10px;border:1px solid var(--border);background:var(--input-bg);color:inherit;padding:8px;font-family:inherit;box-sizing:border-box}.ep-cmt{font-size:.8rem;cursor:help;margin-left:4px}
 .plan-avail{flex-basis:100%;background:var(--card-bg);border-radius:14px;padding:10px 12px;box-shadow:0 3px 0 var(--shadow);font-size:.82rem}.pa-h{font-weight:700;margin-bottom:6px}.pa-vacs{display:flex;flex-direction:column;gap:6px}.pa-v{padding:6px 8px;border:1px solid var(--border);border-radius:10px}.pa-v small{color:var(--muted)}.pa-ctl{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:4px}.pa-exc{display:flex;flex-wrap:wrap;gap:4px;align-items:center;font-size:.76rem}.pa-chip{display:inline-block;padding:2px 8px;border-radius:999px;background:rgba(255,77,109,.14);cursor:pointer;font-size:.74rem;margin:2px}.pa-off{margin-top:8px}.pa-chips{margin-top:4px}.pa-or{color:var(--muted)}
+.pq-rr{border:none;background:rgba(255,255,255,.15);color:inherit;border-radius:8px;padding:6px 8px;cursor:pointer;font-size:.9rem}.sh-toprow{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:6px}.sh-gift{flex:1;min-width:200px;border:none;border-radius:16px;padding:14px;background:linear-gradient(135deg,#06d6a0,#118ab2);color:#fff;cursor:pointer;display:flex;flex-direction:column;align-items:flex-start;gap:3px;font-size:1rem;animation:pqGlow 1.5s ease-in-out infinite alternate}.sh-gift span{font-size:.75rem;opacity:.9}.sh-gift.done{animation:none;opacity:.6}.sh-deal{position:relative}.sh-dlab{position:absolute;top:-8px;left:8px;background:#ff006e;color:#fff;font-size:.62rem;font-weight:800;padding:2px 8px;border-radius:999px}.sh-old{text-decoration:line-through;opacity:.6;font-size:.7rem}.sh-fx{font-size:1.6rem;letter-spacing:4px}
+#view-pass .pass-wrap{margin-top:0}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 </head>
@@ -2137,6 +2139,7 @@ body.dark .subr-details summary{color:#C9A8FF;}
       <button class="nav-btn" data-view="toku">🥋 Toku</button>
       <button class="nav-btn" data-view="marathon" style="display:none">🏃 Marathon</button>
       <button class="nav-btn" data-view="planning">🗓️ Planning séries</button>
+      <button class="nav-btn" data-view="pass">🎟️ Pass</button>
       <button class="nav-btn" data-view="fun">🎮 Jeux</button>
       <button class="nav-btn" data-view="stats">📊 Wrapped</button>
       <button class="nav-btn" data-view="badges">🏅 Succès</button>
@@ -2432,6 +2435,9 @@ body.dark .subr-details summary{color:#C9A8FF;}
 <div id="view-foryou" style="display:none">
   <div class="section-title"><h2>🍿 Pour toi</h2><div class="deco"></div><button class="pc-mini" onclick="window.CineFyRefresh&&window.CineFyRefresh()">🔄</button></div>
   <div id="foryou-body"></div>
+</div>
+<div id="view-pass" style="display:none">
+  <div class="section-title"><h2>🎟️ Pass</h2><div class="deco"></div></div>
 </div>
 <div id="view-feed" style="display:none">
   <div class="section-title"><h2>📰 Actus</h2><div class="deco"></div></div>
@@ -3721,7 +3727,7 @@ document.addEventListener('click',function(e){
 document.addEventListener('mouseover',function(e){var c=e.target.closest('.movie-card,.wish-card,.nav-btn');if(c&&c!==window._lastHover){window._lastHover=c;sfx.hover();}},true);
 
 var navBtns=document.querySelectorAll('.nav-btn');
-var views={foryou:'view-foryou',feed:'view-feed',library:'view-library',calendar:'view-calendar','top-custom':'view-top-custom',sagas:'view-sagas',toku:'view-toku',marathon:'view-marathon',planning:'view-planning',fun:'view-fun',stats:'view-stats',badges:'view-badges',attentes:'view-attentes',alertes:'view-alertes',actus:'view-actus',trending:'view-trending',books:'view-books',catalog:'view-catalog'};
+var views={pass:'view-pass',foryou:'view-foryou',feed:'view-feed',library:'view-library',calendar:'view-calendar','top-custom':'view-top-custom',sagas:'view-sagas',toku:'view-toku',marathon:'view-marathon',planning:'view-planning',fun:'view-fun',stats:'view-stats',badges:'view-badges',attentes:'view-attentes',alertes:'view-alertes',actus:'view-actus',trending:'view-trending',books:'view-books',catalog:'view-catalog'};
 navBtns.forEach(function(b){b.addEventListener('click',function(){
   navBtns.forEach(function(x){x.classList.remove('active');});b.classList.add('active');
   sfx.nav();
@@ -3738,6 +3744,7 @@ navBtns.forEach(function(b){b.addEventListener('click',function(){
   if(b.dataset.view==='toku')renderToku();
   if(b.dataset.view==='marathon')renderMarathons();
   if(b.dataset.view==='planning')initPlanning();
+  if(b.dataset.view==='pass'){try{initPlanning();renderPass();}catch(_){}}
   if(b.dataset.view==='calendar')renderCalendar();
   if(b.dataset.view==='actus')renderPinnedSearches();
   if(b.dataset.view==='trending')renderTrending();
@@ -9412,7 +9419,7 @@ function addPassXp(xp,label,type){
   svPass();
   var after=passLevel();
   toast('+'+xp+' XP'+(label?' · '+label:''));
-  if(after>before){setTimeout(function(){try{passLevelUpBig(after);}catch(_){}toast('🎉 Niveau '+after+' du Pass ! Une récompense t\'attend dans 🗓️ Planning');},900);try{if(ntfyCfg.pass)ntfySend('🎉 Niveau '+after+' du Pass !','Une récompense t\'attend : ouvre ton Pass pour la révéler 🎁',{tags:'tada'});}catch(_){}}
+  if(after>before){setTimeout(function(){try{passLevelUpBig(after);}catch(_){}toast('🎉 Niveau '+after+' du Pass ! Une récompense t\'attend dans 🎟️ Pass');},900);try{if(ntfyCfg.pass)ntfySend('🎉 Niveau '+after+' du Pass !','Une récompense t\'attend : ouvre ton Pass pour la révéler 🎁',{tags:'tada'});}catch(_){}}
   try{renderPass();renderHeaderAvatar();}catch(_){}
 }
 /* ---------- 👤 PROFIL (avatar, bannière, titre… visibles partout) ---------- */
@@ -9461,7 +9468,7 @@ function renderProfileEverywhere(){
   ['home-profile','wrapped-profile'].forEach(function(id){
     var el=document.getElementById(id);if(!el)return;
     el.innerHTML=profileCardHtml(id==='home-profile'?'home':'wrapped');
-    el.querySelectorAll('[data-hp]').forEach(function(b){b.addEventListener('click',function(){if(b.dataset.hp==='edit')openProfileModal();else{var nb=document.querySelector('.nav-btn[data-view="planning"]');if(nb){nb.click();window.scrollTo({top:0,behavior:'smooth'});}}});});
+    el.querySelectorAll('[data-hp]').forEach(function(b){b.addEventListener('click',function(){if(b.dataset.hp==='edit')openProfileModal();else{var nb=document.querySelector('.nav-btn[data-view="pass"]');if(nb){nb.click();window.scrollTo({top:0,behavior:'smooth'});}}});});
   });
 }
 function openProfileModal(){
@@ -9482,8 +9489,8 @@ function openProfileModal(){
   refresh();
   ov.querySelector('.pepite-x').addEventListener('click',function(){ov.classList.remove('show');});
   document.getElementById('pm-name').addEventListener('input',function(e){passState.name=e.target.value.trim().slice(0,24);svPass();refresh();renderProfileEverywhere();try{renderPassProfile();}catch(_){}});
-  var pg=document.getElementById('pm-goto');if(pg)pg.addEventListener('click',function(){ov.classList.remove('show');var nb=document.querySelector('.nav-btn[data-view="planning"]');if(nb)nb.click();if(pg.dataset.tab){passTab=pg.dataset.tab;try{renderPass();}catch(_){}}setTimeout(function(){var w=document.getElementById('pass-wrap');if(w)w.scrollIntoView({behavior:'smooth',block:'start'});},200);});
-  document.getElementById('pm-pass').addEventListener('click',function(){ov.classList.remove('show');var nb=document.querySelector('.nav-btn[data-view="planning"]');if(nb)nb.click();window.scrollTo({top:0,behavior:'smooth'});});
+  var pg=document.getElementById('pm-goto');if(pg)pg.addEventListener('click',function(){ov.classList.remove('show');var nb=document.querySelector('.nav-btn[data-view="pass"]');if(nb)nb.click();if(pg.dataset.tab){passTab=pg.dataset.tab;try{renderPass();}catch(_){}}setTimeout(function(){var w=document.getElementById('pass-wrap');if(w)w.scrollIntoView({behavior:'smooth',block:'start'});},200);});
+  document.getElementById('pm-pass').addEventListener('click',function(){ov.classList.remove('show');var nb=document.querySelector('.nav-btn[data-view="pass"]');if(nb)nb.click();window.scrollTo({top:0,behavior:'smooth'});});
   var coll=document.getElementById('pm-coll');
   renderPassCollection(coll,refresh);
   document.getElementById('pm-unl').addEventListener('click',function(){var show=coll.style.display==='none';coll.style.display=show?'':'none';this.textContent=show?'🔼 Masquer mes débloquages':'🎁 Tout ce que j\'ai débloqué';if(show)coll.scrollIntoView({behavior:'smooth',block:'start'});});
@@ -11616,6 +11623,7 @@ function ivPendingSeasons(){
   if(sr)sr.addEventListener('click',function(){setTimeout(function(){ac.classList.add('m-open');},50);});
   var mo=new MutationObserver(function(){if(/Modifier/i.test(ft.textContent))ac.classList.add('m-open');});if(ft)mo.observe(ft,{childList:true,characterData:true,subtree:true});
 })();
+
 window.CineImport=function(){openImportModal();};
 window.CineFyRefresh=function(){_fyCache=null;renderForYou(true);};
 window.CineMe=function(){var e=passState.equip.avatar,a={t:'emo',v:(PASS_AVATARS[e]||PASS_AVATARS.a0).e};if(e&&e.indexOf('img:')===0&&passState.imgCos&&passState.imgCos[e])a={t:'img',v:passState.imgCos[e].img};else if(e==='photo'){var c=profCustom();if(c.avatarImg&&c.avatarImg.length<60000)a={t:'img',v:c.avatarImg};}return {name:profName(),ava:a};};
@@ -11713,13 +11721,13 @@ function renderQuests(){
   function qHtml(q){
     var c=questProgress(q),ok=c>=q.goal,cl=!!passState.qclaim[q.id];
     return '<div class="pq d-'+q.diff+(cl?' claimed':ok?' ready':'')+'"><div class="pq-ico">'+q.ico+'</div><div class="pq-main"><div class="pq-t">'+esc(q.t)+' <span class="pq-diff">'+QDIFF[q.diff].n+'</span></div><div class="pq-bar"><div style="width:'+Math.round(c/q.goal*100)+'%"></div><span>'+c+'/'+q.goal+'</span></div><div class="pq-rw">+'+q.xp+' XP '+curHtml(q.c)+(q.diff==='e'?'<span class="cur-pill">🃏 carte</span>':'')+'</div></div>'
-      +(cl?'<div class="pq-xp">✓</div>':ok?'<button class="pq-claim" data-qc="'+q.id+'">🎁 Récupérer</button>':'<div class="pq-xp">🔒</div>')+'</div>';
+      +(cl?'<div class="pq-xp">✓</div>':ok?'<button class="pq-claim" data-qc="'+q.id+'">🎁 Récupérer</button>':'<button class="pq-rr" data-qrr="'+q.id+'" title="Changer cette quête (40 🍿)">🔄</button>')+'</div>';
   }
   var pend=ivPendingSeasons();
-  var pendHtml=pend.length?'<div class="pq-head">🏁 Saisons finies à valider <small>(le quiz débloque les récompenses « saison validée »)</small></div><div class="pq-list">'+pend.map(function(p){
+  var pendHtml=pend.length?'<div class="pq-head">🧠 Quiz <small>(le quiz de la série Premium débloque le Pass Premium · 1 quiz bonus max par semaine)</small></div><div class="pq-list">'+pend.map(function(p){
     var lock=p.lock>Date.now(),tm=p.tm;
     var st=lock?'🔒 Raté — réessaie après minuit':!tm.ok?'⏱️ Dispo le '+new Date(tm.ready).toLocaleDateString('fr-FR',{day:'numeric',month:'short'})+' à '+new Date(tm.ready).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})+' (la saison dure '+fmtMin(tm.totalMin)+')':'';
-    return '<div class="pq verify'+(!lock&&tm.ok?' ready':'')+'"><div class="pq-ico">🧠</div><div class="pq-main"><div class="pq-t">'+esc(p.it.title)+' — saison '+p.sn+'</div><div class="pq-rw">'+(st||'5 questions sur les épisodes · 4 bonnes réponses pour valider')+'</div></div>'+(!lock&&tm.ok?'<button class="pq-claim" data-vq="'+p.it.id+'|'+p.sn+'">🧠 Quiz</button>':'')+'</div>';
+    return '<div class="pq verify'+(!lock&&tm.ok?' ready':'')+'"><div class="pq-ico">'+(p.prem?'👑':'🧠')+'</div><div class="pq-main"><div class="pq-t">'+(p.prem?'<b>PREMIUM</b> · ':'Bonus (+2 💎) · ')+esc(p.it.title)+' — saison '+p.sn+'</div><div class="pq-rw">'+(st||'5 questions sur les épisodes · 4 bonnes réponses pour valider')+'</div></div>'+(!lock&&tm.ok?'<button class="pq-claim" data-vq="'+p.it.id+'|'+p.sn+'">🧠 Quiz</button>':'')+'</div>';
   }).join('')+'</div>':'';
   el.innerHTML='<div class="cur-bar" id="cur-bar"></div>'
     +(Q.sprint?'<div class="pq-sprint">🔓 <b>DERNIER SPRINT !</b> Toutes les quêtes du mois sont ouvertes — de quoi finir le Pass (et même plus).</div>':'<div class="pq-info">📅 4 nouvelles quêtes chaque jour · le Pass n\'avance qu\'avec les quêtes · le '+(Q.D-4)+' toutes les quêtes restantes s\'ouvrent</div>')
@@ -11729,6 +11737,8 @@ function renderQuests(){
     +monthBadgesHtml();
   renderCurBar();
   el.querySelectorAll('[data-qc]').forEach(function(b){b.addEventListener('click',function(){claimQuest(b.dataset.qc,b);});});
+  el.querySelectorAll('[data-qrr]').forEach(function(b){b.addEventListener('click',function(){if(confirm('Changer cette quête contre une autre pour 40 🍿 ?'))rerollQuest(b.dataset.qrr);});});
+  if(_premLast===undefined)try{premiumResolve();}catch(_){}
   el.querySelectorAll('[data-vq]').forEach(function(b){b.addEventListener('click',function(){var p=b.dataset.vq.split('|');openSeasonQuiz(parseInt(p[0]),parseInt(p[1]),function(){renderQuests();});});});
   var dot=document.getElementById('pass-quest-dot');if(dot)dot.style.display=questClaimableCount()?'':'none';
 }
@@ -12396,6 +12406,123 @@ function renderTierList(){
   st.parentNode.insertBefore(tabs,st.nextSibling);tabs.parentNode.insertBefore(tw,tabs.nextSibling);
   var old=v.querySelector('.top10-wrap');if(old)old.style.display='none';
   tabs.querySelectorAll('[data-tlv]').forEach(function(b){b.onclick=function(){tabs.querySelectorAll('button').forEach(function(x){x.classList.toggle('on',x===b);});var tier=b.dataset.tlv==='tier';tw.style.display=tier?'':'none';if(old)old.style.display=tier?'none':'';if(tier)renderTierList();};});
+})();
+
+/* ====== Quiz : seulement pour la série Premium (+ au plus 1 quiz bonus par semaine) ====== */
+var _premLast;
+ivPendingSeasons=function(){
+  var out=[],today=todayStr();
+  var bonusOk=!passState.bonusQuizAt||Date.now()-passState.bonusQuizAt>7*86400000,bonus=null;
+  items.forEach(function(it){
+    if(it.type!=='serie'||!it.tmdbId||it.locked)return;
+    var m=episodes[it.id]||{};
+    Object.keys(m).forEach(function(sn){
+      if(sn==='0'||!Array.isArray(m[sn])||!m[sn].length)return;
+      var rel=m[sn].filter(function(e){return !e.airDate||e.airDate<=today;});
+      if(!rel.length||rel.length<m[sn].length||!rel.every(function(e){return e.seen;}))return;
+      var key=ivKey(it.tmdbId,sn);if(passState.verified[key])return;
+      var isPrem=_premLast&&String(_premLast.tv)===String(it.tmdbId)&&+_premLast.season===+sn;
+      var o={it:it,sn:parseInt(sn),key:key,lock:passState.quizLock[key]||0,tm:ivSeasonTiming(it,sn),prem:isPrem};
+      if(isPrem)out.push(o);
+      else if(bonusOk){var last=Math.max.apply(null,rel.map(function(e){return e.seenTs||0;}));if(Date.now()-last<10*86400000&&(!bonus||last>bonus._t)){o._t=last;bonus=o;}}
+    });
+  });
+  if(bonus){bonus.bonus=true;out.push(bonus);}
+  return out;
+};
+// Quiz réussi : Premium → déblocage ; bonus → 2 💎 (et plus de quiz bonus pendant 7 jours)
+(function(){var orig=openSeasonQuiz;openSeasonQuiz=function(itemId,sn,onDone){
+  var it=items.find(function(i){return i.id===itemId;});var isPrem=it&&_premLast&&String(_premLast.tv)===String(it.tmdbId)&&+_premLast.season===+sn;
+  orig(itemId,sn,function(ok){
+    if(ok){if(isPrem){passEventLog('premium_unlock',1);passCelebrate('👑','PASS PREMIUM DÉBLOQUÉ !','Va récupérer tes récompenses Premium','legend');}else{passState.bonusQuizAt=Date.now();curAdd({dm:2});svPass();toast('🧠 Quiz bonus réussi : +2 💎');}}
+    else if(!isPrem){passState.bonusQuizAt=Date.now();svPass();}
+    if(onDone)onDone(ok);
+  });
+};})();
+// La série Premium est ajoutée toute seule à tes Attentes
+function premiumToWish(r){
+  if(!r)return;var cs=currentSeason();passState.premWish=passState.premWish||{};
+  if(passState.premWish[cs.id])return;
+  var has=wishlist.some(function(w){return String(w.tmdbId)===String(r.tv)&&w.tmdbType==='tv'&&(!w.season||+w.season===+r.season);});
+  var inColl=items.find(function(i){return i.tmdbType==='tv'&&String(i.tmdbId)===String(r.tv);});
+  if(!has){try{pushWish({tmdbId:r.tv,tmdbType:'tv',title:r.name,year:'',releaseDate:r.air||'',season:r.season,poster:r.poster?r.poster.replace('/w342/','/w500/'):'',weekly:false,epLabel:'',synopsis:'👑 Série du Pass Premium de '+cs.def.name,networkName:''});}catch(_){}}
+  if(!inColl){items.unshift({id:Date.now()+Math.floor(Math.random()*999),title:r.name,year:'',type:'serie',status:'a_voir',rating:0,fav:false,tags:['👑 Premium'],review:'',personalNotes:'',quote:'',poster:r.poster?r.poster.replace('/w342/','/w500/'):'',director:'',cast:'',watchedDate:'',addedAt:Date.now(),synopsis:'',seriesStatus:'',nbSeasons:0,tmdbId:r.tv,tmdbType:'tv',progress:null,lastEpDate:null,runtime:0,epRuntime:0,tmdbRating:0,rewatchCount:0});sv();}
+  passState.premWish[cs.id]=1;svPass();
+  if(!has)setTimeout(function(){toast('👑 « '+r.name+' » (série du Premium) ajoutée à tes Attentes');},2500);
+}
+(function(){var orig=premiumResolve;premiumResolve=function(){return orig().then(function(r){var changed=(_premLast&&_premLast.tv)!==(r&&r.tv);_premLast=r;if(r)premiumToWish(r);if(changed&&typeof passTab!=='undefined'&&passTab==='quests')try{renderQuests();}catch(_){}return r;});};})();
+setTimeout(function(){try{premiumResolve();}catch(_){}},6000);
+// Plus de quête « valide une saison » ; le badge devient « Premium débloqué »
+QTPL=QTPL.filter(function(t){return t.id!=='season_verified';});
+MONTH_BADGES=MONTH_BADGES.map(function(b){return b.id==='v3'?{id:'prem',ico:'👑',n:'Membre Premium',d:'Pass Premium débloqué ce mois',ev:'premium_unlock',goal:1,r:'legend'}:b;});
+/* ---------- 🔄 Changer une quête (40 🍿) ---------- */
+passState.qrr=passState.qrr||{};
+questsForDay=function(day){
+  var cs=currentSeason(),pat=['f','f','m',day%3===0?'e':'d'],used={},out=[],cloud=!!window.CineSocial;
+  var y=cs.id.split('-'),date=y[0]+'-'+y[1]+'-'+String(day).padStart(2,'0');
+  pat.forEach(function(df,k){
+    var id=cs.id+'_d'+day+'_'+k,rr=passState.qrr[id]||0;
+    var R=qRand(cs.id+'_q_'+day+'_'+k+(rr?'_r'+rr:''));
+    var cands=QTPL.filter(function(t){return t.g[df]&&!used[t.id]&&(!t.cloud||cloud);});if(!cands.length)return;
+    var t=cands[Math.floor(R()*cands.length)];used[t.id]=1;
+    var n=t.g[df];var txt=t.t.replace('{n}',n).replace(/\{s\}/g,n>1?'s':'').replace('{x}',n>1?'x':'');
+    out.push({id:id,tpl:t,ico:t.ico,t:txt,goal:n,diff:df,xp:QDIFF[df].xp,c:QDIFF[df].c,day:day,date:date});
+  });
+  return out;
+};
+function rerollQuest(id){if(passState.qclaim[id])return;if(!curSpend({pc:40})){toast('Il faut 40 🍿');return;}passState.qrr[id]=(passState.qrr[id]||0)+1;delete (passState.qnotified||{})[id];svPass();renderQuests();toast('🔄 Nouvelle quête !');}
+/* ---------- 🛒 Boutique plus complète ---------- */
+var SH_FX_SETS=[['🍕','🍔','🌭'],['🦄','🌈','✨'],['👻','🎃','🕸️'],['💰','💸','🤑'],['🌸','🌺','🌷'],['❄️','⛄','🌨️'],['🔥','💥','⚡'],['🎉','🎊','🥳'],['🐱','🐶','🐰'],['👽','🛸','🪐'],['💎','👑','🏆'],['🍩','🧁','🍭'],['🎸','🥁','🎤'],['⚽','🏀','🎾'],['🌊','🐠','🐚']];
+var _origShGen=shGen;
+shGen=function(cat,seed){
+  if(cat==='effect'){var R=qRand(seed),rar=R()<0.62?SH_RAR[0]:R()<0.8?SH_RAR[1]:SH_RAR[2];var set=shPick(R,SH_FX_SETS);return {id:'she_'+shHash(seed),cat:'effect',rar:rar.k,seed:seed,e:set,n:'Effet « pluie de '+set[0]+' »',price:{pc:Math.round(80*rar.m)}};}
+  if(cat==='sticker'){var R2=qRand(seed),rar2=R2()<0.7?SH_RAR[0]:R2()<0.85?SH_RAR[1]:SH_RAR[2];var e=shPick(R2,SH_EMO);return {id:'shs_'+shHash(seed),cat:'sticker',rar:rar2.k,seed:seed,e:e,n:'Sticker '+e,price:{tk:Math.round(60*rar2.m)}};}
+  return _origShGen(cat,seed);
+};
+var _origShReg=shRegister;
+shRegister=function(d){if(d.cat==='effect'){PASS_EFFECTS[d.id]={n:d.n.replace(/^Effet /,''),e:d.e};return;}if(d.cat==='sticker'){PASS_STICKERS[d.id]=d.e;return;}_origShReg(d);};
+Object.keys(passState.shopDefs).forEach(function(id){var d=passState.shopDefs[id];if(d.cat==='effect'||d.cat==='sticker')try{shRegister(d);}catch(_){}});
+var _origShPrev=shPreview;
+shPreview=function(d){if(d.cat==='effect')return '<div class="sh-prev sh-fx">'+d.e.join(' ')+'</div>';if(d.cat==='sticker')return '<div class="sh-prev" style="font-size:2.6rem">'+d.e+'</div>';return _origShPrev(d);};
+SH_CATS=SH_CATS.concat([{k:'effect',n:'✨ Effets d\'ajout'},{k:'sticker',n:'🌟 Stickers'}]);
+shDaily=function(){var d=todayStr(),out={};SH_CATS.forEach(function(c){out[c.k]=[0,1,2,3].map(function(i){return shGen(c.k,'day_'+d+'_'+c.k+'_'+i);});});return out;};
+var SH_PACKS=[
+  {id:'pk_c',n:'Paquet de 3 cartes',ico:'🃏',price:{tk:250},nb:3,d:'3 cartes d\'actrices / acteurs au hasard'},
+  {id:'pk_r',n:'Paquet rare',ico:'🎴',price:{dm:6},nb:3,min:'epique',d:'3 cartes dont 1 épique ou mieux garantie'},
+  {id:'pk_l',n:'Paquet légendaire',ico:'👑',price:{st:2},nb:2,min:'legend',d:'2 cartes dont 1 légendaire garantie'}
+];
+function shOpenPack(pk){
+  if(!curSpend(pk.price)){toast('Pas assez de '+Object.keys(pk.price).map(function(k){return CUR[k].i;}).join(' '));return;}
+  var got=[],i=0;
+  function next(){if(i>=pk.nb){var best=got.filter(Boolean).sort(function(a,b){var o={commune:0,rare:1,epique:2,legend:3,premium:4};return o[b.rar]-o[a.rar];})[0];if(best)passCelebrate('🃏',got.filter(Boolean).map(function(c){return c.name;}).join(' · '),pk.n+' ouvert !',best.rar==='legend'?'legend':best.rar==='epique'?'epic':'rare',best.photo);renderShop();return;}
+    i++;grantRandomActorCard(true).then(function(c){if(c&&i===1&&pk.min){var o={commune:0,rare:1,epique:2,legend:3};if(o[c.rar]<o[pk.min]){c.rar=pk.min;passState.cards[c.id].rar=pk.min;svPass();}}got.push(c);next();});}
+  next();
+}
+var SH_EXCH=[{id:'x1',n:'1 💎 → 80 🎟️',from:{dm:1},to:{tk:80}},{id:'x2',n:'100 🎟️ → 1 💎',from:{tk:100},to:{dm:1}},{id:'x3',n:'50 🍿 → 60 🎟️',from:{pc:50},to:{tk:60}},{id:'x4',n:'80 🎟️ → 50 🍿',from:{tk:80},to:{pc:50}},{id:'x5',n:'15 💎 → 1 ⭐',from:{dm:15},to:{st:1}},{id:'x6',n:'5 💗 → 2 💎',from:{hc:5},to:{dm:2}}];
+function shDailyGift(){var d=todayStr();if(passState.giftDay===d){toast('🎁 Déjà récupéré aujourd\'hui, reviens demain !');return;}passState.giftDay=d;var R=qRand('gift_'+d+'_'+(passState.name||''));var g={tk:20+Math.floor(R()*40),pc:10+Math.floor(R()*20)};if(R()<0.2)g.dm=1;curAdd(g);svPass();passCelebrate('🎁','Cadeau du jour',Object.keys(g).map(function(k){return g[k]+' '+CUR[k].i;}).join(' · '),'rare');renderShop();}
+function shDealOfDay(){var d=todayStr(),R=qRand('deal_'+d),cat=shPick(R,['frame','theme','avatar','banner','effect']);var it=shGen(cat,'deal_'+d);it.rar='legend';var p={};Object.keys(it.price).forEach(function(k){p[k]=Math.max(1,Math.round(it.price[k]*1.5));});it.priceOld=p;var q={};Object.keys(p).forEach(function(k){q[k]=Math.max(1,Math.round(p[k]*0.5));});it.price=q;it.n='🔥 '+it.n;return it;}
+var _origRenderShop=renderShop;
+renderShop=function(){
+  _origRenderShop();
+  var el=document.getElementById('pass-shop');if(!el)return;
+  var deal=shDealOfDay();_shIndex[deal.id]=deal;
+  var top=document.createElement('div');
+  top.innerHTML='<div class="sh-toprow"><button class="sh-gift'+(passState.giftDay===todayStr()?' done':'')+'" id="sh-gift">🎁 <b>Cadeau du jour</b><span>'+(passState.giftDay===todayStr()?'Récupéré ✓ — reviens demain':'Gratuit ! Touche pour l\'ouvrir')+'</span></button>'
+    +'<div class="sh-deal">'+shItemHtml(deal).replace('<button class="sh-buy"','<div class="sh-old">'+curHtml(deal.priceOld)+'</div><button class="sh-buy"')+'<div class="sh-dlab">🔥 OFFRE DU JOUR -50 %</div></div></div>'
+    +'<div class="sh-sec">🃏 Paquets de cartes</div><div class="sh-row">'+SH_PACKS.map(function(p){return '<div class="sh-it r-'+(p.id==='pk_l'?'legend':p.id==='pk_r'?'epic':'rare')+'"><div class="sh-prev sh-chest">'+p.ico+'</div><div class="sh-n">'+p.n+'</div><div class="sh-dd">'+p.d+'</div><button class="sh-buy" data-shpk="'+p.id+'">'+curHtml(p.price)+'</button></div>';}).join('')+'</div>';
+  var after=el.querySelector('.sh-top');if(after&&after.nextSibling)el.insertBefore(top,after.nextSibling);else el.appendChild(top);
+  var ex=document.createElement('div');
+  ex.innerHTML='<div class="sh-sec">💱 Bureau de change</div><div class="sh-row">'+SH_EXCH.map(function(x){return '<div class="sh-it r-rare"><div class="sh-prev" style="font-size:1.1rem">'+x.n+'</div><button class="sh-buy" data-shx="'+x.id+'">Échanger</button></div>';}).join('')+'</div><div class="sh-sec">🔄 Astuce</div><div class="soc-t" style="text-align:left;color:#fff;opacity:.85">Une quête ne te plaît pas ? Dans l\'onglet QUÊTES, touche 🔄 à côté d\'elle pour la changer (40 🍿).</div>';
+  el.appendChild(ex);
+  el.querySelector('#sh-gift').onclick=shDailyGift;
+  el.querySelectorAll('[data-shpk]').forEach(function(b){b.onclick=function(){shOpenPack(SH_PACKS.find(function(p){return p.id===b.dataset.shpk;}));};});
+  el.querySelectorAll('[data-shx]').forEach(function(b){b.onclick=function(){var x=SH_EXCH.find(function(y){return y.id===b.dataset.shx;});if(!curSpend(x.from)){toast('Pas assez');return;}curAdd(x.to);toast('💱 '+x.n);renderShop();};});
+  el.querySelectorAll('[data-shbuy]').forEach(function(b){b.onclick=function(){var d=_shIndex[b.dataset.shbuy];if(d)shBuy(d);};});
+};
+/* ---------- 🎟️ Le Pass a sa propre page ---------- */
+(function(){
+  var pw=document.getElementById('pass-wrap'),v=document.getElementById('view-pass');
+  if(pw&&v){v.appendChild(pw);}
 })();
 
 /* ---------- 👥 SOIRÉE À DEUX ---------- */
