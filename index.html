@@ -2076,6 +2076,11 @@ body.dark .subr-details summary{color:#C9A8FF;}
 .plvl{position:fixed;inset:0;z-index:10061;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(10,5,25,.8);color:#fff;pointer-events:auto;animation:pbIn .3s}.plvl.out{animation:pbOut .5s forwards}.plvl-t{font-family:'Fredoka',sans-serif;letter-spacing:10px;font-size:1.4rem;color:#ffd23f}.plvl-n{font-family:'Fredoka',sans-serif;font-size:10rem;line-height:1;font-weight:800;background:linear-gradient(180deg,#fff,#ffd23f 60%,#ff8c42);-webkit-background-clip:text;background-clip:text;color:transparent;animation:plvlZoom .8s cubic-bezier(.2,1.7,.4,1)}@keyframes plvlZoom{0%{transform:scale(3);opacity:0}100%{transform:none;opacity:1}}.plvl-s{font-size:1rem;opacity:.9}
 .pt-card.ready{animation:ptReady 1.5s ease-in-out infinite alternate}@keyframes ptReady{from{box-shadow:0 0 0 2px #ffd23f}to{box-shadow:0 0 0 2px #ffd23f,0 0 26px rgba(255,210,63,.75)}}
 
+.sh-top{font-size:.82rem;padding:8px 12px;border-radius:12px;background:rgba(0,0,0,.22);margin-bottom:10px}.sh-sec{font-family:'Fredoka',sans-serif;font-weight:700;margin:14px 0 8px;font-size:1rem}.sh-row{display:flex;gap:10px;overflow-x:auto;padding-bottom:6px}.sh-it{position:relative;flex:0 0 140px;border-radius:16px;padding:10px;background:rgba(0,0,0,.28);display:flex;flex-direction:column;align-items:center;gap:5px;text-align:center;color:#fff}.sh-it.r-rare{box-shadow:inset 0 0 0 2px #4dabf7}.sh-it.r-epic{box-shadow:inset 0 0 0 2px #c77dff}.sh-it.r-legend{box-shadow:inset 0 0 0 2px #ffd23f;background:linear-gradient(160deg,rgba(255,210,63,.25),rgba(0,0,0,.35))}.sh-it.own{opacity:.6}.sh-prev{width:100%;height:78px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:2rem;background:rgba(255,255,255,.08)}.sh-frame{width:56px;height:78px;background:#222}.sh-ava{width:70px;height:70px;border-radius:50%;font-size:2.2rem}.sh-title{font-size:.78rem;font-weight:700;padding:6px;font-style:italic}.sh-sound{cursor:pointer}.sh-chest{font-size:2.8rem;animation:pbBob 2s ease-in-out infinite}.sh-n{font-size:.75rem;font-weight:700;line-height:1.2}.sh-r{font-size:.62rem;opacity:.75;text-transform:uppercase;letter-spacing:1px}.sh-dd{font-size:.66rem;opacity:.85}.sh-odds{font-size:.62rem;opacity:.85}.sh-buy{margin-top:auto;border:none;border-radius:10px;padding:6px 8px;background:linear-gradient(135deg,#06d6a0,#118ab2);color:#fff;font-weight:700;cursor:pointer;display:flex;gap:3px;flex-wrap:wrap;justify-content:center}.sh-own{margin-top:auto;font-size:.75rem;font-weight:700;color:#06d6a0}.sh-flash{border-radius:14px;padding:8px 12px;margin:8px 0;background:rgba(0,0,0,.2);font-size:.82rem}.sh-flash.on{background:linear-gradient(90deg,#ff006e,#fb5607,#ffbe0b);color:#fff;animation:pqGlow 1.2s ease-in-out infinite alternate}.sh-fh{font-weight:700;margin-bottom:6px}.sh-chest-shake{animation:shShake .15s linear infinite}@keyframes shShake{0%{transform:rotate(-8deg)}50%{transform:rotate(8deg)}100%{transform:rotate(-8deg)}}@keyframes shSpin{to{--sha:360deg}}@property --sha{syntax:'<angle>';inherits:false;initial-value:0deg}
+.po-f{display:flex;flex-wrap:wrap;gap:8px;font-size:.8rem;text-align:left}.po-g{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0;text-align:left}.po-gc{font-size:.75rem;padding:4px 8px;border:1px solid var(--border);border-radius:999px}.tr-stk{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin:8px 0}.tr-s{font-size:1.6rem;background:none;border:2px solid transparent;border-radius:10px;cursor:pointer}.tr-s.on{border-color:var(--raspberry)}
+.bt-list{display:flex;flex-direction:column;gap:8px}.bt{display:flex;gap:10px;align-items:center;background:rgba(0,0,0,.22);border-radius:12px;padding:8px;font-size:.8rem;color:#fff}.bt img{width:40px;height:60px;object-fit:cover;border-radius:6px}.bt-m{flex:1}.bt-act{display:flex;gap:6px;align-items:center;margin-top:6px;flex-wrap:wrap}.bt-act .soc-btn,.bt-act .soc-btn2{padding:5px 10px;color:#fff}.bt.win{box-shadow:inset 0 0 0 2px #06d6a0}.bt.lose{opacity:.6}.bt.exp{opacity:.5}
+.pt-voy{position:absolute;top:28px;left:6px;right:6px;font-size:.62rem;background:rgba(123,44,191,.9);color:#fff;border-radius:6px;padding:2px 4px;text-align:center}.hdr-troll{position:absolute;top:-10px;left:-8px;font-size:1.3rem;animation:pbBob 1.5s ease-in-out infinite;pointer-events:none}.pass-tabs{flex-wrap:wrap}
+
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 </head>
@@ -2396,11 +2401,13 @@ body.dark .subr-details summary{color:#C9A8FF;}
         <div class="pass-xp"><span class="pass-xp-lbl">XP</span><div class="pass-xp-bar"><div class="pass-xp-fill" id="pass-xp-fill"></div><span id="pass-xp-txt"></span></div><span class="pass-lvl" id="pass-lvl"></span></div>
         <div class="pass-streak" id="pass-streak"></div>
       </div>
-      <div class="pass-tabs"><button class="pass-tab active" data-ptab="rewards">RÉCOMPENSES</button><button class="pass-tab" data-ptab="quests">QUÊTES<span class="pass-dot" id="pass-quest-dot" style="display:none"></span></button><button class="pass-tab" data-ptab="collection">MA COLLECTION</button></div>
+      <div class="pass-tabs"><button class="pass-tab active" data-ptab="rewards">RÉCOMPENSES</button><button class="pass-tab" data-ptab="quests">QUÊTES<span class="pass-dot" id="pass-quest-dot" style="display:none"></span></button><button class="pass-tab" data-ptab="shop">🛒 BOUTIQUE</button><button class="pass-tab" data-ptab="bets">🔮 PARIS</button><button class="pass-tab" data-ptab="collection">MA COLLECTION</button></div>
     </div>
     <div id="pass-rewards" class="pass-panel"><div class="pass-track" id="pass-track"></div></div>
     <div id="pass-quests" class="pass-panel" style="display:none"></div>
     <div id="pass-collection" class="pass-panel" style="display:none"></div>
+    <div id="pass-shop" class="pass-panel" style="display:none"></div>
+    <div id="pass-bets" class="pass-panel" style="display:none"></div>
     <div class="pass-how">📅 Un nouveau Pass chaque mois, avec son thème. 🎬 Les films et épisodes regardés hors planning rapportent aussi un peu d'XP (+40 par film, +12 par épisode, 300 max/jour). 💡 Gagne de l'XP en suivant ton planning : <b>✓ soirée faite</b> +100 XP (+30 si à l'heure), <b>fin de saison</b> +150, <b>série terminée</b> +300, chaque épisode coché ailleurs d'une série du planning +35, et les quêtes de la semaine.</div>
   </div>
 
@@ -9437,7 +9444,7 @@ function pendingNoticeHtml(){
 function renderHeaderAvatar(){
   var el=document.getElementById('hdr-avatar');if(!el)return;
   var pending=passPendingCount();
-  el.innerHTML=profAvatarInner()+'<span class="hdr-lvl" title="Ton niveau dans le Pass">Niv.'+passLevel()+'</span>'+(pending?'<span class="hdr-pend" title="Récompenses à récupérer">🎁'+pending+'</span>':'');
+  el.innerHTML=profAvatarInner()+(passState.troll&&passState.troll.until>Date.now()?'<span class="hdr-troll" title="Trollé par '+esc(passState.troll.from||'')+'">'+passState.troll.s+'</span>':'')+'<span class="hdr-lvl" title="Ton niveau dans le Pass">Niv.'+passLevel()+'</span>'+(pending?'<span class="hdr-pend" title="Récompenses à récupérer">🎁'+pending+'</span>':'');
   el.title='Mon profil — niveau '+passLevel()+(pending?' · '+pending+' récompense(s) à récupérer':'');
   try{renderProfileEverywhere();}catch(_){}
   try{if(window.CineProfiles){var ae=passState.equip.avatar==='photo'?'📷':(PASS_AVATARS[passState.equip.avatar]||PASS_AVATARS.a0).e;window.CineProfiles.updateMeta(passState.name||'',ae);}}catch(_){}
@@ -10155,7 +10162,9 @@ function renderPass(){
     +'<b>Niveau '+L+'</b> · encore <b>'+(LI.need-inLvl)+' XP</b> pour le niveau '+(L+1)+' · total '+xp+' XP';
   renderPassProfile();renderHeaderAvatar();
   document.querySelectorAll('.pass-tab').forEach(function(b){b.classList.toggle('active',b.dataset.ptab===passTab);});
-  ['rewards','quests','collection'].forEach(function(k){var p=document.getElementById('pass-'+k);if(p)p.style.display=passTab===k?'':'none';});
+  ['rewards','quests','collection','shop','bets'].forEach(function(k){var p=document.getElementById('pass-'+k);if(p)p.style.display=passTab===k?'':'none';});
+  if(passTab==='shop'){renderShop();return;}
+  if(passTab==='bets'){renderBets();return;}
   var dot=document.getElementById('pass-quest-dot');if(dot)dot.style.display=questClaimableCount()?'':'none';
   if(passTab==='quests'){renderQuests();return;}
   if(passTab==='collection'){renderPassCollection();return;}
@@ -10184,6 +10193,7 @@ function renderPass(){
       +(t.bonus?'<div class="pt-bonus">+ 👑</div>':'')
       +(t.fallback?'<div class="pt-fb">'+esc(t.fallback)+'</div>':'')
       +'<div class="pt-cur">'+curHtml(tierCur(n))+'</div>'
+      +(passState.voyance&&passState.voyance[n]&&!claimed?'<div class="pt-voy">🔮 '+esc(passState.voyance[n].title)+'</div>':'')
       +'</div><div class="pt-num'+(unlocked?' on':'')+'">'+n+'</div></div>';
   }
   track.innerHTML=html;
@@ -10204,7 +10214,7 @@ function claimTier(n,btn){
   if(PEP_KINDS[t.k]){
     if(btn){btn.disabled=true;btn.textContent='✨ Recherche…';}
     var card=document.querySelector('.pt-card[data-tier="'+n+'"]');if(card)card.classList.add('shaking');
-    genForTier(n).then(function(p){
+    (passState.voyance&&passState.voyance[n]&&passState.pepites[n]?Promise.resolve(passState.pepites[n]):genForTier(n)).then(function(p){
       if(!p){toast('Impossible de trouver une pépite pour l\'instant (note quelques titres 4-5/5 et réessaie).');if(btn){btn.disabled=false;btn.textContent='💎 Retourner';}if(card)card.classList.remove('shaking');return;}
       p.tier=n;passState.pepites[n]=p;passState.claimed[n]=true;
       passState.log.unshift({d:todayStr(),t:'pepite',xp:0,l:p.title});svPass();
@@ -11048,7 +11058,10 @@ function openRecoDialog(item){
 // Recos reçues : grosse carte, une à la fois (jamais si tu l'as déjà)
 var _recoQueue=[],_recoShowing=false,_recoLater={};
 function handleRecos(list){
+  passState.recoDone=passState.recoDone||{};
   list.filter(function(r){return !r.seen;}).forEach(function(r){
+    if(passState.recoDone[r.id])return;
+    if(r.k==='troll'||/^(troll|duel:|force:)/.test(r.msg||'')){passState.recoDone[r.id]=1;svPass();try{socSpecialReco(r);}catch(_){}return;}
     if(socOwnedKey(r.k)){window.CineSocial.markReco(r.id,'owned');return;}
     if(_recoLater[r.id]||_recoQueue.some(function(x){return x.id===r.id;}))return;
     _recoQueue.push(r);
@@ -11083,7 +11096,7 @@ function activityScan(){
   items.forEach(function(i){
     var o=_actSnap[i.id],s=i.status,r=+i.rating||0,v=(i.review||'').length;_actSnap[i.id]={s:s,r:r,v:v};
     if(o&&!i.locked){try{
-      if(s==='termine'&&o.s!=='termine')passEventLog(i.type==='film'?'film':'series_end',1,{t:i.title});
+      if(s==='termine'&&o.s!=='termine'){passEventLog(i.type==='film'?'film':'series_end',1,{t:i.title});try{socFinishHooks(i);}catch(_){}}
       if(r>0&&r!==o.r)passEventLog('rate',1);
       if(v>=20&&o.v<20)passEventLog('review',1);
     }catch(_){}}
@@ -11132,7 +11145,7 @@ function socNews(){
 function socialInit(){
   if(!window.CineSocial||socialInit.done)return;socialInit.done=true;
   window.CineSocial.onReco(function(l){handleRecos(l);});
-  window.CineSocial.onActivity(function(l){_actList=l;renderActivity();});
+  window.CineSocial.onActivity(function(l){_actList=l;renderActivity();try{socActivityHooks(l);}catch(_){}});
   socNews();
 }
 window.addEventListener('cine-social-ready',socialInit);
@@ -11614,6 +11627,308 @@ function passLevelUpBig(L){
   document.body.appendChild(o);try{confetti();setTimeout(confetti,350);}catch(_){}
   setTimeout(function(){o.classList.add('out');setTimeout(function(){o.remove();},500);},2200);
   o.onclick=function(){o.remove();};
+}
+
+/* ================================================================
+   🛒 BOUTIQUE — exclusivités (jamais dans le Pass), générées par millions :
+   3 nouveautés par rayon chaque jour, ventes flash (vendredi soir, samedi midi,
+   dimanche matin), boutique du mois, coffres, spéciaux entre potes.
+   🔮 PARIS — tu mises tes jetons sur de vrais événements (renouvellements…).
+   ================================================================ */
+passState.shopDefs=passState.shopDefs||{};passState.shopBought=passState.shopBought||{};passState.bets=passState.bets||[];passState.voyance=passState.voyance||{};
+var _shopCss=document.createElement('style');_shopCss.id='shop-css';document.head.appendChild(_shopCss);
+function shHash(s){var h=0;for(var i=0;i<s.length;i++){h=(h*31+s.charCodeAt(i))|0;}return Math.abs(h).toString(36);}
+function shPick(R,a){return a[Math.floor(R()*a.length)];}
+function shHsl(R,s,l){return 'hsl('+Math.floor(R()*360)+','+(s||80)+'%,'+(l||55)+'%)';}
+var SH_ADJ=['Néon','Doré','Glitch','Cosmique','Holo','Rétro','Givré','Volcanique','Toxique','Royal','Spectral','Solaire','Lunaire','Cyber','Vintage','Électrique','Astral','Pixel','Velours','Chrome','Aurore','Abyssal','Sakura','Turbo','Mystique'];
+var SH_NOUN=['Éclipse','Tempête','Comète','Nébuleuse','Pellicule','Projecteur','Clap','Pop-corn','Tapis rouge','Générique','Oscar','Cinémascope','Hologramme','Vortex','Mirage','Phénix','Dragon','Kraken','Titan','Odyssée','Matrix','Blockbuster','Nanar','Twist','Cliffhanger'];
+var SH_TIT1=['Critique','Seigneur','Maître','Chasseur','Oracle','Baron','Prince','Légende','Gardien','Pirate','Ninja','Dompteur','Sorcier','Roi','Reine','Boss','Empereur','Architecte','Fantôme','Capitaine'];
+var SH_TIT2=['redouté','du binge','des twists','du canapé','des génériques','des cliffhangers','des nanars','de minuit','du pop-corn','des spoilers','des sagas','du grand écran','des séries oubliées','du dimanche soir','des pépites','de la télécommande','du dernier épisode','des VOSTFR','des trilogies','de l\'ombre'];
+var SH_EMO=['🦄','🐉','🦊','🐺','🦅','🦉','🐙','🦈','🐯','🦁','🐼','🐸','👾','🤖','👽','🧛','🧟','🧙','🥷','🦸','🧜','🧞','💀','🎃','👑','💎','🔮','🪐','☄️','🌋','⚡','🔥','🌈','🍄','🌵','🎭','🎬','🍿','📼','🕹️','🎲','🃏','🗿','🛸','🚀','🏴‍☠️','🦖','🐲','🌸','❄️'];
+var SH_RAR=[{k:'rare',n:'Rare',m:1},{k:'epic',n:'Épique',m:1.8},{k:'legend',n:'Légendaire',m:3}];
+function shGen(cat,seed){
+  var R=qRand(seed),rar=R()<0.62?SH_RAR[0]:R()<0.8?SH_RAR[1]:SH_RAR[2],id='sh'+cat[0]+'_'+shHash(seed);
+  var d={id:id,cat:cat,rar:rar.k,seed:seed};
+  if(cat==='frame'){d.c1=shHsl(R,90,58);d.c2=shHsl(R,90,58);d.anim=shPick(R,['spin','pulse','glitch','flicker','wave']);d.n='Cadre '+shPick(R,SH_ADJ)+' '+shPick(R,SH_NOUN);d.price={tk:Math.round(150*rar.m)};}
+  if(cat==='theme'){d.h=Math.floor(R()*360);d.h2=(d.h+60+Math.floor(R()*120))%360;d.dark=R()<0.55;d.n='Thème '+shPick(R,SH_NOUN)+' '+shPick(R,SH_ADJ).toLowerCase();d.price={dm:Math.round(3*rar.m)};}
+  if(cat==='sound'){d.base=220+Math.floor(R()*660);d.wave=shPick(R,['sine','square','triangle','sawtooth']);d.pat=[0,1,2,3].map(function(){return shPick(R,[0,3,4,5,7,9,12,-5]);});d.n='Sons '+shPick(R,SH_ADJ).toLowerCase()+' « '+shPick(R,SH_NOUN)+' »';d.price={pc:Math.round(70*rar.m)};}
+  if(cat==='title'){d.t=shPick(R,SH_TIT1)+' '+shPick(R,SH_TIT2);d.n='Titre « '+d.t+' »';d.price={tk:Math.round(90*rar.m)};}
+  if(cat==='avatar'){d.e=shPick(R,SH_EMO);d.c1=shHsl(R,85,55);d.c2=shHsl(R,85,45);d.n='Avatar '+shPick(R,SH_NOUN)+' '+d.e;d.price=rar.k==='legend'?{st:1}:{dm:Math.round(2*rar.m)};}
+  if(cat==='banner'){d.c1=shHsl(R,85,50);d.c2=shHsl(R,85,40);d.c3=shHsl(R,85,60);d.pat=shPick(R,['diag','stripes','dots','radial','conic','waves']);d.n='Bannière '+shPick(R,SH_ADJ)+' '+shPick(R,SH_NOUN);d.price=rar.k==='legend'?{dm:4}:{pc:Math.round(90*rar.m)};}
+  return d;
+}
+function shBannerCss(d){
+  if(d.pat==='stripes')return 'repeating-linear-gradient(45deg,'+d.c1+' 0 16px,'+d.c2+' 16px 32px)';
+  if(d.pat==='dots')return 'radial-gradient(circle at 20% 30%,'+d.c3+' 0 6px,transparent 7px) 0 0/40px 40px,linear-gradient(135deg,'+d.c1+','+d.c2+')';
+  if(d.pat==='radial')return 'radial-gradient(circle at 70% 30%,'+d.c3+','+d.c1+' 45%,'+d.c2+')';
+  if(d.pat==='conic')return 'conic-gradient(from 45deg,'+d.c1+','+d.c2+','+d.c3+','+d.c1+')';
+  if(d.pat==='waves')return 'radial-gradient(ellipse at 50% 120%,'+d.c3+' 0 30%,transparent 31%),radial-gradient(ellipse at 50% 140%,'+d.c1+' 0 45%,transparent 46%),linear-gradient(180deg,'+d.c2+','+d.c1+')';
+  return 'linear-gradient(135deg,'+d.c1+','+d.c2+' 55%,'+d.c3+')';
+}
+function shFrameCss(d){
+  var sel='.movie-card.pframe-'+d.id,base=sel+'{position:relative;box-shadow:0 0 0 3px '+d.c1+',0 0 18px '+d.c2+'!important;';
+  if(d.anim==='pulse')return base+'animation:shPulse_'+d.id+' 1.6s ease-in-out infinite alternate}@keyframes shPulse_'+d.id+'{to{box-shadow:0 0 0 3px '+d.c2+',0 0 30px '+d.c1+'}}';
+  if(d.anim==='glitch')return base+'animation:shGl_'+d.id+' 2.2s steps(2) infinite}@keyframes shGl_'+d.id+'{0%,90%{transform:none}92%{transform:translate(2px,-1px)}94%{transform:translate(-2px,1px)}96%{transform:none}}';
+  if(d.anim==='flicker')return base+'animation:shFl_'+d.id+' 3s linear infinite}@keyframes shFl_'+d.id+'{0%,19%,21%,60%,62%,100%{box-shadow:0 0 0 3px '+d.c1+',0 0 22px '+d.c2+'}20%,61%{box-shadow:0 0 0 3px #0000}}';
+  if(d.anim==='wave')return base+'animation:shWv_'+d.id+' 2.4s ease-in-out infinite}@keyframes shWv_'+d.id+'{50%{box-shadow:0 0 0 5px '+d.c2+',0 0 26px '+d.c1+'}}';
+  return base+'}'+sel+'::after{content:"";position:absolute;inset:-3px;border-radius:inherit;padding:3px;background:conic-gradient(from var(--sha,0deg),'+d.c1+','+d.c2+','+d.c1+');-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;animation:shSpin 2.5s linear infinite;pointer-events:none}';
+}
+function shThemeCss(d){
+  var h=d.h,h2=d.h2,cls='body.ptheme-'+d.id;
+  return cls+'{--raspberry:hsl('+h+',85%,58%);--violet:hsl('+h2+',60%,'+(d.dark?'72%':'38%')+');--mint:hsl('+((h+150)%360)+',70%,50%);--sun:hsl('+((h+40)%360)+',95%,60%);'+(d.dark?'--cream:hsl('+h2+',30%,9%);--card-bg:hsl('+h2+',28%,15%);--ink:#f3eefc;--border:hsl('+h2+',25%,24%);--input-bg:hsl('+h2+',28%,18%);--muted:hsl('+h2+',18%,65%);':'--cream:hsl('+h2+',60%,97%);--card-bg:#fff;')+'}'+cls+'{background-image:radial-gradient(ellipse at 20% -10%,hsla('+h+',90%,60%,.18),transparent 55%)!important}';
+}
+function shRegister(d){
+  if(d.cat==='frame'){PASS_FRAMES[d.id]={n:d.n};_shopCss.textContent+=shFrameCss(d);}
+  if(d.cat==='theme'){PASS_THEMES[d.id]={n:d.n.replace(/^Thème /,''),ico:'🎨',sw:'hsl('+d.h+',85%,58%)'};_shopCss.textContent+=shThemeCss(d);}
+  if(d.cat==='sound'){PASS_SOUNDS[d.id]={n:d.n,ico:'🎵'};var f=function(k){return function(){d.pat.slice(0,k).forEach(function(st,i){blip(d.base*Math.pow(2,st/12),0.09,d.wave,0.03,i*0.07);});};};PASS_SOUND_PACKS[d.id]={click:f(1),add:f(3),success:f(4)};}
+  if(d.cat==='title'){PASS_TITLES[d.id]=d.t;}
+  if(d.cat==='avatar'){PASS_AVATARS[d.id]={e:d.e,n:d.n,r:d.rar==='legend'?'légendaire':d.rar==='epic'?'épique':'rare'};_shopCss.textContent+='.r-shx.'+d.id+'{}';}
+  if(d.cat==='banner'){PASS_BANNERS[d.id]={n:d.n.replace(/^Bannière /,''),css:shBannerCss(d)};}
+}
+Object.keys(passState.shopDefs).forEach(function(id){try{shRegister(passState.shopDefs[id]);}catch(_){}});
+function shPreview(d){
+  if(d.cat==='frame')return '<div class="sh-prev sh-frame" style="box-shadow:0 0 0 3px '+d.c1+',0 0 16px '+d.c2+'">🎬</div>';
+  if(d.cat==='theme')return '<div class="sh-prev" style="background:linear-gradient(135deg,hsl('+d.h+',85%,58%),hsl('+d.h2+',60%,'+(d.dark?'25%':'80%')+'))">🎨</div>';
+  if(d.cat==='sound')return '<div class="sh-prev sh-sound" data-shplay="'+d.id+'">🔊</div>';
+  if(d.cat==='title')return '<div class="sh-prev sh-title">« '+esc(d.t)+' »</div>';
+  if(d.cat==='avatar')return '<div class="sh-prev sh-ava" style="background:linear-gradient(135deg,'+d.c1+','+d.c2+')">'+d.e+'</div>';
+  if(d.cat==='banner')return '<div class="sh-prev" style="background:'+shBannerCss(d)+'"></div>';
+  return '<div class="sh-prev">'+(d.ico||'🎁')+'</div>';
+}
+var SH_CATS=[{k:'frame',n:'🖼️ Cadres animés'},{k:'theme',n:'🎨 Thèmes'},{k:'sound',n:'🔊 Packs de sons'},{k:'title',n:'🏷️ Titres rares'},{k:'avatar',n:'🧑‍🎤 Avatars exclusifs'},{k:'banner',n:'🌈 Bannières exclusives'}];
+function shDaily(){var d=todayStr(),out={};SH_CATS.forEach(function(c){out[c.k]=[0,1,2].map(function(i){return shGen(c.k,'day_'+d+'_'+c.k+'_'+i);});});return out;}
+// ⚡ Ventes flash : vendredi soir, samedi midi, dimanche matin
+var SH_FLASH=[{day:5,from:18,to:24,n:'🌙 Vendredi soir',ico:'🌙'},{day:6,from:12,to:15,n:'☀️ Samedi midi',ico:'☀️'},{day:0,from:8,to:12,n:'🥐 Dimanche matin',ico:'🥐'}];
+function shFlashNow(){var d=new Date(),h=d.getHours()+d.getMinutes()/60;return SH_FLASH.find(function(f){return d.getDay()===f.day&&h>=f.from&&h<f.to;})||null;}
+function shFlashNext(){var now=new Date();for(var i=0;i<8;i++){var d=new Date(now);d.setDate(d.getDate()+i);var f=SH_FLASH.find(function(x){return x.day===d.getDay();});if(f){d.setHours(f.from,0,0,0);if(d>now)return {f:f,at:d};}}return null;}
+function shFlashItems(f){var key=todayStr()+'_'+f.day;return ['frame','avatar','banner'].map(function(cat,i){var d=shGen(cat,'flash_'+key+'_'+i);d.rar='legend';d.flash=true;var p={};Object.keys(d.price).forEach(function(k){p[k]=Math.max(1,Math.round(d.price[k]*0.6));});d.price=p;d.n='⚡ '+d.n;return d;});}
+function shMonthItems(){var cs=currentSeason(),M=cs.def;return ['avatar','banner','frame'].map(function(cat,i){var d=shGen(cat,'month_'+cs.id+'_'+i);if(cat==='avatar')d.e=(M.stickers&&M.stickers[i%M.stickers.length])||d.e;d.n=d.n+' · '+M.name.replace(/^\S+\s/,'');d.month=true;return d;});}
+function shOwnedId(id){return !!passState.shopDefs[id];}
+function shBuy(d){
+  if(shOwnedId(d.id)){toast('Déjà à toi !');return;}
+  if(!curSpend(d.price)){toast('Pas assez de '+Object.keys(d.price).map(function(k){return CUR[k].i;}).join(' ')+' — fais des quêtes !');return;}
+  passState.shopDefs[d.id]=d;shRegister(d);grantOwned(d.cat,d.id);svPass();
+  passCelebrate(d.cat==='avatar'?d.e:'🛍️',d.n,'Exclusivité boutique · '+(SH_RAR.find(function(r){return r.k===d.rar;})||{n:''}).n+' · équipe-le dans MA COLLECTION',d.rar==='legend'?'legend':d.rar==='epic'?'epic':'rare');
+  renderShop();
+}
+/* ---------- 🎁 Coffres ---------- */
+var SH_CHESTS=[
+  {id:'c_tk',n:'Coffre ticket',ico:'🧰',price:{tk:300},odds:[['Monnaies',70],['Objet rare',25],['Objet épique',5]]},
+  {id:'c_dm',n:'Coffre diamant',ico:'💠',price:{dm:8},odds:[['Objet rare',45],['Objet épique',40],['Objet légendaire',15]]},
+  {id:'c_lg',n:'Coffre légendaire',ico:'👑',price:{st:3},odds:[['Objet épique',40],['Objet légendaire',55],['JACKPOT ⭐⭐⭐',5]]}
+];
+function shOpenChest(c){
+  if(!curSpend(c.price)){toast('Pas assez de '+Object.keys(c.price).map(function(k){return CUR[k].i;}).join(' '));return;}
+  var roll=Math.random()*100,acc=0,res='';c.odds.forEach(function(o){if(!res){acc+=o[1];if(roll<acc)res=o[0];}});
+  var o=document.createElement('div');o.className='pbig r-'+(res.indexOf('gendaire')>=0||res.indexOf('JACKPOT')>=0?'legend':res.indexOf('pique')>=0?'epic':'rare');
+  o.innerHTML='<div class="pbig-rays"></div><div class="pbig-in"><div class="pbig-ico sh-chest-shake">'+c.ico+'</div><div class="pbig-d">Ouverture…</div></div>';document.body.appendChild(o);
+  setTimeout(function(){
+    var title='',sub='',ico='🎁';
+    if(res==='Monnaies'){var g={tk:80+Math.floor(Math.random()*120),pc:30+Math.floor(Math.random()*40)};if(Math.random()<.3)g.dm=1;curAdd(g);title='Monnaies !';sub=Object.keys(g).map(function(k){return g[k]+' '+CUR[k].i;}).join(' · ');ico='💰';}
+    else if(res.indexOf('JACKPOT')>=0){curAdd({st:3,dm:10});title='JACKPOT !!!';sub='3 ⭐ + 10 💎';ico='🎰';}
+    else{var cat=shPick(Math.random,['frame','theme','sound','title','avatar','banner']);var d=shGen(cat,'chest_'+Date.now()+'_'+Math.random());d.rar=res.indexOf('gendaire')>=0?'legend':res.indexOf('pique')>=0?'epic':'rare';passState.shopDefs[d.id]=d;shRegister(d);grantOwned(d.cat,d.id);title=d.n;sub=res+' · dans MA COLLECTION';ico=d.cat==='avatar'?d.e:'✨';}
+    svPass();o.remove();passCelebrate(ico,title,sub,res.indexOf('gendaire')>=0||res.indexOf('JACKPOT')>=0?'legend':res.indexOf('pique')>=0?'epic':'rare');renderShop();
+  },1500);
+}
+/* ---------- Spéciaux ---------- */
+var SH_SPECIALS=[
+  {id:'sp_pep',ico:'💎',n:'Pépite sur commande',d:'Tu choisis genre, époque, pays, durée… je te trouve un film ou une série méconnu(e) fait(e) pour toi.',price:{dm:5}},
+  {id:'sp_voy',ico:'🔮',n:'Voyance',d:'Révèle d\'avance la prochaine pépite cachée de ton Pass.',price:{dm:6,st:1}},
+  {id:'sp_troll',ico:'🎭',n:'Troll',d:'Colle un sticker marrant sur le profil de ton pote pendant 24 h.',price:{pc:60},cloud:true},
+  {id:'sp_duel',ico:'🏆',n:'Défi en duel',d:'Pariez des pop-corn : le premier qui finit la série gagne tout.',price:{},cloud:true},
+  {id:'sp_force',ico:'📨',n:'Reco imposée',d:'Ton pote DOIT regarder ton film/ta série. S\'il le fait : 5 💎 pour lui ET pour toi.',price:{st:3,dm:10},cloud:true},
+  {id:'sp_joker',ico:'🃏',n:'Joker',d:'Sauve ta série de soirées quand tu en rates une.',price:{tk:120}},
+  {id:'sp_boost',ico:'⚡',n:'Double XP 24 h',d:'Toutes tes quêtes rapportent ×2 pendant 24 h.',price:{dm:4}},
+  {id:'sp_conv',ico:'🔨',n:'Échange',d:'100 🎟️ → 1 💎 (pour ne jamais être bloqué).',price:{tk:100}}
+];
+function shSpecial(sp){
+  if(sp.cloud&&!window.CineSocial){toast('Connecte-toi à ton compte pour ça');return;}
+  if(sp.id==='sp_pep'){openPepiteOrder();return;}
+  if(sp.id==='sp_duel'){openDuelDialog();return;}
+  if(sp.id==='sp_troll'){openTrollDialog();return;}
+  if(sp.id==='sp_force'){openForceDialog();return;}
+  if(sp.id==='sp_voy'){voyance();return;}
+  if(!curSpend(sp.price)){toast('Pas assez de '+Object.keys(sp.price).map(function(k){return CUR[k].i;}).join(' '));return;}
+  if(sp.id==='sp_joker'){passState.inv=passState.inv||{};passState.inv.joker=(passState.inv.joker||0)+1;passCelebrate('🃏','Joker','Dans ton inventaire','rare');}
+  if(sp.id==='sp_boost'){passState.boostUntil=Math.max(Date.now(),passState.boostUntil||0)+86400000;passCelebrate('⚡','Double XP !','Pendant 24 h','epic');}
+  if(sp.id==='sp_conv'){curAdd({dm:1});toast('🔨 +1 💎');}
+  svPass();renderShop();
+}
+function voyance(){
+  var L=passLevel(),n=null;for(var i=1;i<=60;i++){var t=passTier(i);if(PEP_KINDS[t.k]&&t.k!=='chest'&&t.k!=='trailer'&&!passState.claimed[i]&&!passState.voyance[i]){n=i;break;}}
+  if(!n){toast('Aucune pépite cachée à révéler');return;}
+  var sp=SH_SPECIALS.find(function(x){return x.id==='sp_voy';});if(!curSpend(sp.price)){toast('Pas assez de 💎 / ⭐');return;}
+  toast('🔮 La boule de cristal s\'illumine…');
+  genForTier(n).then(function(p){if(!p){curAdd(sp.price);toast('La boule reste floue… (remboursé)');return;}passState.voyance[n]={id:p.id,media_type:p.media_type,title:p.title||p.name,poster:p.poster_path};passState.pepites[n]=p;svPass();passCelebrate('🔮','Palier '+n+' : '+(p.title||p.name),'Tu la retourneras quand tu atteindras le palier','epic',p.poster_path?'https://image.tmdb.org/t/p/w342'+p.poster_path:'');});
+}
+var TMDB_GENRES={movie:[[28,'Action'],[12,'Aventure'],[16,'Animation'],[35,'Comédie'],[80,'Crime'],[99,'Documentaire'],[18,'Drame'],[10751,'Familial'],[14,'Fantastique'],[36,'Histoire'],[27,'Horreur'],[10402,'Musique'],[9648,'Mystère'],[10749,'Romance'],[878,'Science-fiction'],[53,'Thriller'],[10752,'Guerre'],[37,'Western']],tv:[[10759,'Action & Aventure'],[16,'Animation'],[35,'Comédie'],[80,'Crime'],[99,'Documentaire'],[18,'Drame'],[10751,'Familial'],[9648,'Mystère'],[10765,'SF & Fantastique'],[10768,'Guerre & Politique'],[37,'Western']]};
+function openPepiteOrder(){
+  var o=socOverlay('<div class="soc-h">💎 Pépite sur commande</div><div class="soc-t">Sois précis, je cherche un titre méconnu mais bien noté qui colle à tes goûts.</div>'
+    +'<div class="po-f"><label>Type <select id="po-t"><option value="movie">🎬 Film</option><option value="tv">📺 Série</option></select></label>'
+    +'<label>Époque <select id="po-dec"><option value="">Peu importe</option>'+[1950,1960,1970,1980,1990,2000,2010,2020].map(function(y){return '<option value="'+y+'">Années '+String(y).slice(2)+(y>=2000?' ('+y+')':'')+'</option>';}).join('')+'</select></label>'
+    +'<label>Pays <select id="po-c"><option value="">Peu importe</option><option value="US">🇺🇸 USA</option><option value="FR">🇫🇷 France</option><option value="GB">🇬🇧 Royaume-Uni</option><option value="JP">🇯🇵 Japon</option><option value="KR">🇰🇷 Corée</option><option value="ES">🇪🇸 Espagne</option><option value="IT">🇮🇹 Italie</option><option value="DE">🇩🇪 Allemagne</option><option value="IN">🇮🇳 Inde</option><option value="MX">🇲🇽 Mexique</option></select></label>'
+    +'<label>Durée max <select id="po-d"><option value="">Peu importe</option><option value="100">1h40</option><option value="120">2h</option><option value="150">2h30</option></select></label>'
+    +'<label>Note min <select id="po-n"><option value="6.5">6,5+</option><option value="7" selected>7+</option><option value="7.5">7,5+</option><option value="8">8+</option></select></label></div>'
+    +'<div class="po-g" id="po-g"></div><div class="soc-row"><button class="soc-btn2" id="po-x">Annuler</button><button class="soc-btn" id="po-go">💎 Trouver (5 💎)</button></div><div id="po-res"></div>');
+  function drawG(){var t=o.querySelector('#po-t').value;o.querySelector('#po-g').innerHTML=TMDB_GENRES[t].map(function(g){return '<label class="po-gc"><input type="checkbox" value="'+g[0]+'"> '+g[1]+'</label>';}).join('');}
+  drawG();o.querySelector('#po-t').onchange=drawG;o.querySelector('#po-x').onclick=function(){o.remove();};
+  o.querySelector('#po-go').onclick=function(){
+    var t=o.querySelector('#po-t').value,dec=o.querySelector('#po-dec').value,c=o.querySelector('#po-c').value,du=o.querySelector('#po-d').value,nm=o.querySelector('#po-n').value;
+    var gs=[].slice.call(o.querySelectorAll('#po-g input:checked')).map(function(x){return x.value;});
+    if(!curCan({dm:5})){toast('Il faut 5 💎');return;}
+    var dk=t==='movie'?'primary_release_date':'first_air_date';
+    var u='https://api.themoviedb.org/3/discover/'+t+'?api_key='+TMDB+'&language=fr-FR&sort_by=vote_average.desc&vote_count.gte=40&vote_count.lte=2500&vote_average.gte='+nm+(gs.length?'&with_genres='+gs.join(','):'')+(c?'&with_origin_country='+c:'')+(dec?'&'+dk+'.gte='+dec+'-01-01&'+dk+'.lte='+(+dec+9)+'-12-31':'')+(du&&t==='movie'?'&with_runtime.lte='+du:'');
+    o.querySelector('#po-res').innerHTML='<div class="soc-t">🔎 Je fouille les archives…</div>';
+    var owned=getOwnedCatKeys();
+    Promise.all([1,2,3].map(function(pg){return ivJson(u+'&page='+pg);})).then(function(rs){
+      var l=[];rs.forEach(function(r){((r&&r.results)||[]).forEach(function(x){if(x.poster_path&&!owned[t+'_'+x.id])l.push(x);});});
+      if(!l.length){o.querySelector('#po-res').innerHTML='<div class="soc-t">😕 Rien trouvé avec ces critères — élargis un peu (pas de 💎 dépensé).</div>';return;}
+      var x=l[Math.floor(Math.random()*Math.min(l.length,25))];curSpend({dm:5});
+      var poster='https://image.tmdb.org/t/p/w500'+x.poster_path;
+      o.querySelector('.soc-box').innerHTML='<div class="soc-big">💎</div><div class="soc-h">Ta pépite sur mesure</div><img class="soc-poster" src="'+poster+'"><div class="soc-title">'+esc(x.title||x.name)+' <small>('+((x.release_date||x.first_air_date||'').slice(0,4))+')</small></div><div class="soc-t" style="text-align:left;margin-top:6px">'+esc(ivCut(x.overview||'',320))+'</div><div class="soc-t">⭐ '+(x.vote_average||0).toFixed(1)+'/10 · seulement '+x.vote_count+' votes</div><div class="soc-row"><button class="soc-btn2" id="po-no">Fermer</button><button class="soc-btn" id="po-add">➕ À voir</button></div>';
+      o.querySelector('#po-no').onclick=function(){o.remove();};
+      o.querySelector('#po-add').onclick=function(){items.unshift({id:Date.now()+Math.floor(Math.random()*999),title:x.title||x.name,year:(x.release_date||x.first_air_date||'').slice(0,4),type:t==='tv'?'serie':'film',status:'a_voir',rating:0,fav:false,tags:['💎 Pépite sur commande'],review:'',personalNotes:'',quote:'',poster:poster,director:'',cast:'',watchedDate:'',addedAt:Date.now(),synopsis:x.overview||'',seriesStatus:'',nbSeasons:0,tmdbId:x.id,tmdbType:t,progress:null,lastEpDate:null,runtime:0,epRuntime:0,tmdbRating:x.vote_average||0,rewatchCount:0});sv();try{renderAll();}catch(_){}toast('➕ Ajouté à À voir');o.remove();};
+    });
+  };
+}
+/* ---------- Spéciaux entre potes (troll, duel, reco imposée) ---------- */
+function shPickFriend(o,cb){window.CineSocial.friends().then(function(fr){if(!fr.length){o.querySelector('.soc-box').innerHTML='<div class="soc-t">Aucun pote trouvé.</div>';return;}cb(fr);});}
+var TROLL_STK=['🤡','💩','🐔','🦆','🥔','🍆','🐌','🤓','🧻','🐷','👶','🦖'];
+function openTrollDialog(){
+  var o=socOverlay('<div class="soc-h">🎭 Troll (60 🍿)</div><div class="soc-t">⏳…</div>');
+  shPickFriend(o,function(fr){
+    o.querySelector('.soc-box').innerHTML='<div class="soc-h">🎭 Troll (60 🍿)</div><div class="soc-fr">'+fr.map(function(f,i){return '<label class="soc-f"><input type="radio" name="tf" value="'+i+'"'+(i?'':' checked')+'> '+esc(f.name)+'</label>';}).join('')+'</div><div class="tr-stk">'+TROLL_STK.map(function(s,i){return '<button class="tr-s'+(i?'':' on')+'" data-s="'+s+'">'+s+'</button>';}).join('')+'</div><div class="soc-row"><button class="soc-btn2" id="tr-x">Annuler</button><button class="soc-btn" id="tr-go">🎭 Troller</button></div>';
+    var stk=TROLL_STK[0];o.querySelectorAll('.tr-s').forEach(function(b){b.onclick=function(){stk=b.dataset.s;o.querySelectorAll('.tr-s').forEach(function(x){x.classList.toggle('on',x===b);});};});
+    o.querySelector('#tr-x').onclick=function(){o.remove();};
+    o.querySelector('#tr-go').onclick=function(){var f=fr[+o.querySelector('input[name=tf]:checked').value];if(!curSpend({pc:60})){toast('Il faut 60 🍿');return;}
+      window.CineSocial.recommend(f.uid,{k:'troll',t:stk,p:''},'troll').then(function(){socNtfy(f.nt,'🎭 '+window.CineSocial.name()+' t\'a trollé !','Un '+stk+' est collé sur ton profil pendant 24 h 😂');o.remove();toast('🎭 '+stk+' collé sur le profil de '+f.name+' pour 24 h 😂');});};
+  });
+}
+function openDuelDialog(){
+  var mine=items.filter(function(i){return i.type==='serie'&&i.tmdbId&&(i.status==='a_voir'||i.status==='en_cours');});
+  if(!mine.length){toast('Ajoute d\'abord une série « À voir » ou « En cours »');return;}
+  var o=socOverlay('<div class="soc-h">🏆 Défi en duel</div><div class="soc-t">⏳…</div>');
+  shPickFriend(o,function(fr){
+    o.querySelector('.soc-box').innerHTML='<div class="soc-h">🏆 Défi en duel</div><div class="soc-t">Le premier qui finit la série gagne toute la mise.</div><div class="soc-fr">'+fr.map(function(f,i){return '<label class="soc-f"><input type="radio" name="df" value="'+i+'"'+(i?'':' checked')+'> '+esc(f.name)+'</label>';}).join('')+'</div><label>Série <select id="du-s">'+mine.map(function(i){return '<option value="'+i.id+'">'+esc(i.title)+'</option>';}).join('')+'</select></label><label style="margin-left:8px">Mise <select id="du-m"><option>20</option><option selected>50</option><option>100</option><option>200</option></select> 🍿</label><div class="soc-row"><button class="soc-btn2" id="du-x">Annuler</button><button class="soc-btn" id="du-go">🏆 Défier</button></div>';
+    o.querySelector('#du-x').onclick=function(){o.remove();};
+    o.querySelector('#du-go').onclick=function(){var f=fr[+o.querySelector('input[name=df]:checked').value],it=items.find(function(i){return i.id===+o.querySelector('#du-s').value;}),m=+o.querySelector('#du-m').value;
+      if(!curSpend({pc:m})){toast('Pas assez de 🍿');return;}
+      window.CineSocial.recommend(f.uid,{k:friendKey(it),t:it.title,p:it.poster||''},'duel:'+m).then(function(){passState.duels=passState.duels||{};passState.duels[friendKey(it)]={with:f.uid,name:f.name,stake:m,t:it.title,ts:Date.now(),mine:true};svPass();socNtfy(f.nt,'🏆 '+window.CineSocial.name()+' te défie !','Qui finit « '+it.title+' » en premier ? Mise : '+m+' 🍿');o.remove();toast('🏆 Défi envoyé à '+f.name);});};
+  });
+}
+function openForceDialog(){
+  var cand=items.filter(function(i){return i.tmdbId&&!i.locked;}).slice(0,300);
+  var o=socOverlay('<div class="soc-h">📨 Reco imposée (3 ⭐ + 10 💎)</div><div class="soc-t">⏳…</div>');
+  shPickFriend(o,function(fr){
+    o.querySelector('.soc-box').innerHTML='<div class="soc-h">📨 Reco imposée</div><div class="soc-t">Il DOIT la regarder. S\'il la finit : 5 💎 pour lui ET pour toi.</div><div class="soc-fr">'+fr.map(function(f,i){return '<label class="soc-f"><input type="radio" name="ff" value="'+i+'"'+(i?'':' checked')+'> '+esc(f.name)+'</label>';}).join('')+'</div><select id="fo-i" style="width:100%">'+cand.map(function(i){return '<option value="'+i.id+'">'+(i.type==='serie'?'📺 ':'🎬 ')+esc(i.title)+'</option>';}).join('')+'</select><textarea id="fo-m" placeholder="Ton message (obligatoire de le regarder 😈)" style="width:100%;margin-top:8px;min-height:60px;border-radius:10px;border:1px solid var(--border);background:var(--input-bg);color:inherit;padding:8px;box-sizing:border-box"></textarea><div class="soc-row"><button class="soc-btn2" id="fo-x">Annuler</button><button class="soc-btn" id="fo-go">📨 Imposer</button></div>';
+    o.querySelector('#fo-x').onclick=function(){o.remove();};
+    o.querySelector('#fo-go').onclick=function(){var f=fr[+o.querySelector('input[name=ff]:checked').value],it=items.find(function(i){return i.id===+o.querySelector('#fo-i').value;});
+      if(!curSpend({st:3,dm:10})){toast('Il faut 3 ⭐ + 10 💎');return;}
+      window.CineSocial.recommend(f.uid,{k:friendKey(it),t:it.title,p:it.poster||'',y:it.year||''},'force:'+(o.querySelector('#fo-m').value||'')).then(function(){passState.forcedSent=passState.forcedSent||{};passState.forcedSent[friendKey(it)+'_'+f.uid]={name:f.name,t:it.title};svPass();socNtfy(f.nt,'📨 RECO IMPOSÉE par '+window.CineSocial.name(),'Tu DOIS regarder « '+it.title+' » 😈 (5 💎 à la clé)');o.remove();toast('📨 Imposé à '+f.name+' 😈');});};
+  });
+}
+// Réception : troll / duel / reco imposée passent par les recos (type dans le message)
+function socSpecialReco(r){
+  var m=r.msg||'';
+  if(r.k==='troll'||m==='troll'){passState.troll={s:r.t,from:r.fromName,until:Date.now()+86400000};svPass();window.CineSocial.markReco(r.id,'troll');try{renderHeaderAvatar();}catch(_){}passCelebrate(r.t,(r.fromName||'Ton pote')+' t\'a trollé !','Ce sticker reste sur ton profil pendant 24 h 😂','rare');return true;}
+  if(m.indexOf('duel:')===0){
+    var stake=+m.slice(5)||0;
+    var o=socOverlay('<div class="soc-big">🏆</div><div class="soc-h"><b>'+esc(r.fromName)+'</b> te défie !</div><div class="soc-title">« '+esc(r.t)+' »</div><div class="soc-t">Le premier qui finit la série gagne <b>'+(stake*2)+' 🍿</b>. Mise : '+stake+' 🍿 (tu as '+(passState.cur.pc||0)+')</div><div class="soc-row"><button class="soc-btn2" data-du="no">Refuser</button><button class="soc-btn" data-du="yes">⚔️ J\'accepte</button></div>');
+    o.querySelectorAll('[data-du]').forEach(function(b){b.onclick=function(){if(b.dataset.du==='yes'){if(!curSpend({pc:stake})){toast('Pas assez de 🍿');return;}passState.duels=passState.duels||{};passState.duels[r.k]={with:r.from,name:r.fromName,stake:stake,t:r.t,ts:Date.now()};svPass();
+      var parts=r.k.split('_');if(!items.some(function(i){return friendKey(i)===r.k;})){items.unshift({id:Date.now()+Math.floor(Math.random()*999),title:r.t,year:'',type:'serie',status:'a_voir',rating:0,fav:false,tags:['🏆 Duel'],review:'',personalNotes:'',quote:'',poster:r.p||'',director:'',cast:'',watchedDate:'',addedAt:Date.now(),synopsis:'',seriesStatus:'',nbSeasons:0,tmdbId:+parts[1],tmdbType:'tv',progress:null,lastEpDate:null,runtime:0,epRuntime:0,tmdbRating:0,rewatchCount:0});sv();}
+      window.CineSocial.markReco(r.id,'duel_ok');toast('⚔️ Duel accepté ! Que le meilleur gagne');}else window.CineSocial.markReco(r.id,'duel_no');o.remove();};});
+    return true;
+  }
+  if(m.indexOf('force:')===0){
+    passState.forced=passState.forced||{};passState.forced[r.k]={from:r.from,name:r.fromName,t:r.t};svPass();
+    var parts2=r.k.split('_'),tv=parts2[0]==='tv';
+    if(!items.some(function(i){return friendKey(i)===r.k;})){items.unshift({id:Date.now()+Math.floor(Math.random()*999),title:r.t,year:String(r.y||''),type:tv?'serie':'film',status:'a_voir',rating:0,fav:false,tags:['📨 IMPOSÉ par '+(r.fromName||'un pote')],review:'',personalNotes:'',quote:'',poster:r.p||'',director:'',cast:'',watchedDate:'',addedAt:Date.now(),synopsis:'',seriesStatus:'',nbSeasons:0,tmdbId:+parts2[1],tmdbType:tv?'tv':'movie',progress:null,lastEpDate:null,runtime:0,epRuntime:0,tmdbRating:0,rewatchCount:0});sv();try{renderAll();}catch(_){}}
+    if(tv)try{planAdd(+parts2[1],r.t,r.p,true);svPlan();}catch(_){}
+    window.CineSocial.markReco(r.id,'forced');
+    passCelebrate('📨','RECO IMPOSÉE : '+r.t,(r.fromName||'Ton pote')+' t\'oblige à la regarder 😈'+(m.length>6?' — « '+m.slice(6)+' »':'')+' · 5 💎 quand tu la finis','epic',r.p&&r.p.indexOf('http')===0?r.p:'');
+    return true;
+  }
+  return false;
+}
+// Fin d'un titre : duel gagné ? reco imposée honorée ?
+function socFinishHooks(it){
+  var k=friendKey(it);if(!k)return;
+  var du=passState.duels&&passState.duels[k];
+  if(du&&!du.done){du.done='win';curAdd({pc:du.stake*2});svPass();passCelebrate('🏆','Duel gagné !','« '+du.t+' » fini avant '+du.name+' · +'+(du.stake*2)+' 🍿','legend');if(window.CineSocial)window.CineSocial.post({type:'duel_win',k:k,t:it.title,to:du.with});}
+  var fo=passState.forced&&passState.forced[k];
+  if(fo&&!fo.done){fo.done=1;curAdd({dm:5});svPass();passCelebrate('📨','Reco imposée honorée','+5 💎 (et '+fo.name+' aussi)','epic');if(window.CineSocial)window.CineSocial.post({type:'forced_done',k:k,t:it.title,to:fo.from});}
+}
+function socActivityHooks(list){
+  var me=window.CineSocial&&window.CineSocial.uid();passState.actPaid=passState.actPaid||{};
+  list.forEach(function(a){
+    if(a.to!==me||passState.actPaid[a.id])return;
+    if(a.type==='forced_done'){passState.actPaid[a.id]=1;curAdd({dm:5});svPass();passCelebrate('📨',(a.name||'Ton pote')+' a regardé ta reco imposée','« '+a.t+' » · +5 💎','epic');}
+    if(a.type==='duel_win'){passState.actPaid[a.id]=1;var du=passState.duels&&passState.duels[a.k];if(du&&!du.done){du.done='lose';svPass();toast('😭 '+(a.name||'Ton pote')+' a fini « '+a.t+' » avant toi : duel perdu');}}
+  });
+}
+/* ---------- Rendu de la boutique ---------- */
+function shCountdown(){var d=new Date();d.setHours(24,0,0,0);var ms=d-Date.now(),h=Math.floor(ms/3600000),m=Math.floor(ms%3600000/60000);return h+'h'+String(m).padStart(2,'0');}
+function shItemHtml(d){var own=shOwnedId(d.id);return '<div class="sh-it r-'+d.rar+(own?' own':'')+'">'+shPreview(d)+'<div class="sh-n">'+esc(d.n)+'</div><div class="sh-r">'+(SH_RAR.find(function(r){return r.k===d.rar;})||{n:''}).n+'</div>'+(own?'<div class="sh-own">✔ À toi</div>':'<button class="sh-buy" data-shbuy="'+d.id+'">'+curHtml(d.price)+'</button>')+'</div>';}
+var _shIndex={};
+function renderShop(){
+  var el=document.getElementById('pass-shop');if(!el)return;
+  var daily=shDaily(),fl=shFlashNow(),nx=shFlashNext(),month=shMonthItems();_shIndex={};
+  Object.keys(daily).forEach(function(k){daily[k].forEach(function(d){_shIndex[d.id]=d;});});month.forEach(function(d){_shIndex[d.id]=d;});
+  var flashHtml='';
+  if(fl){var fi=shFlashItems(fl);fi.forEach(function(d){_shIndex[d.id]=d;});var end=new Date();end.setHours(fl.to,0,0,0);flashHtml='<div class="sh-flash on"><div class="sh-fh">⚡ VENTE FLASH '+fl.n+' · -40 % · encore '+Math.max(1,Math.round((end-Date.now())/60000))+' min</div><div class="sh-row">'+fi.map(shItemHtml).join('')+'</div></div>';}
+  else if(nx)flashHtml='<div class="sh-flash"><div class="sh-fh">⚡ Prochaine vente flash : '+nx.f.n+' — '+nx.at.toLocaleDateString('fr-FR',{weekday:'long'})+' à '+nx.f.from+'h</div></div>';
+  el.innerHTML='<div class="cur-bar" id="cur-bar"></div><div class="sh-top">🛒 Exclusivités introuvables dans le Pass · nouveaux articles dans <b>'+shCountdown()+'</b></div>'+flashHtml
+    +'<div class="sh-sec">📅 Boutique du mois · '+esc(currentSeason().def.name)+'</div><div class="sh-row">'+month.map(shItemHtml).join('')+'</div>'
+    +SH_CATS.map(function(c){return '<div class="sh-sec">'+c.n+'</div><div class="sh-row">'+daily[c.k].map(shItemHtml).join('')+'</div>';}).join('')
+    +'<div class="sh-sec">🎁 Coffres <small>(chances affichées)</small></div><div class="sh-row">'+SH_CHESTS.map(function(c){return '<div class="sh-it r-epic"><div class="sh-prev sh-chest">'+c.ico+'</div><div class="sh-n">'+c.n+'</div><div class="sh-odds">'+c.odds.map(function(o){return o[0]+' '+o[1]+' %';}).join('<br>')+'</div><button class="sh-buy" data-shchest="'+c.id+'">'+curHtml(c.price)+'</button></div>';}).join('')+'</div>'
+    +'<div class="sh-sec">✨ Spéciaux</div><div class="sh-row sh-spec">'+SH_SPECIALS.filter(function(sp){return !sp.cloud||window.CineSocial;}).map(function(sp){return '<div class="sh-it r-rare"><div class="sh-prev">'+sp.ico+'</div><div class="sh-n">'+sp.n+'</div><div class="sh-dd">'+esc(sp.d)+'</div><button class="sh-buy" data-shsp="'+sp.id+'">'+(Object.keys(sp.price).length?curHtml(sp.price):'Choisir la mise')+'</button></div>';}).join('')+'</div>';
+  renderCurBar();
+  el.querySelectorAll('[data-shbuy]').forEach(function(b){b.onclick=function(){var d=_shIndex[b.dataset.shbuy];if(d)shBuy(d);};});
+  el.querySelectorAll('[data-shchest]').forEach(function(b){b.onclick=function(){shOpenChest(SH_CHESTS.find(function(c){return c.id===b.dataset.shchest;}));};});
+  el.querySelectorAll('[data-shsp]').forEach(function(b){b.onclick=function(){shSpecial(SH_SPECIALS.find(function(x){return x.id===b.dataset.shsp;}));};});
+  el.querySelectorAll('[data-shplay]').forEach(function(b){b.onclick=function(){var d=_shIndex[b.dataset.shplay];if(!d)return;d.pat.forEach(function(st,i){blip(d.base*Math.pow(2,st/12),0.12,d.wave,0.04,i*0.09);});};});
+}
+/* ---------- 🔮 PARIS ---------- */
+var _betCands=null;
+function betCandidates(){
+  if(_betCands)return _betCands;
+  var series=items.filter(function(i){return i.type==='serie'&&i.tmdbId&&!i.locked;}).slice(0,40);
+  var films=wishlist.filter(function(w){return w.tmdbType==='movie'&&w.tmdbId&&w.releaseDate&&w.releaseDate>=shiftDate(todayStr(),-20);}).slice(0,10);
+  _betCands=Promise.all(series.map(function(i){return ivJson('https://api.themoviedb.org/3/tv/'+i.tmdbId+'?api_key='+TMDB+'&language=fr-FR').then(function(d){
+    if(!d||d.status!=='Returning Series'||d.next_episode_to_air)return null;
+    var ns=(d.seasons||[]).filter(function(s){return s.season_number>0;}).length;
+    return {kind:'renew',k:'tv_'+i.tmdbId,tv:i.tmdbId,t:d.name,poster:d.poster_path?'https://image.tmdb.org/t/p/w185'+d.poster_path:'',q:'« '+d.name+' » aura-t-elle une saison '+(ns+1)+' annoncée d\'ici 6 mois ?',base:ns};
+  });})).then(function(a){
+    return Promise.all(films.map(function(w){return ivJson('https://api.themoviedb.org/3/movie/'+w.tmdbId+'?api_key='+TMDB+'&language=fr-FR').then(function(d){if(!d)return null;var pop=d.popularity||0,th=pop>150?500:pop>60?200:pop>25?100:50;return {kind:'box',k:'movie_'+w.tmdbId,mv:w.tmdbId,t:d.title,poster:d.poster_path?'https://image.tmdb.org/t/p/w185'+d.poster_path:'',q:'« '+d.title+' » dépassera-t-il '+th+' M$ au box-office ?',th:th*1e6,rel:d.release_date||w.releaseDate};});})).then(function(b){return a.concat(b).filter(Boolean);});
+  });
+  return _betCands;
+}
+function betResolve(){
+  var now=Date.now(),changed=false;
+  var open=passState.bets.filter(function(b){return !b.res;});
+  return Promise.all(open.map(function(b){
+    if(now-b.ts>183*86400000){b.res='expired';curAdd(b.stakeC);changed=true;return null;}
+    if(b.kind==='renew')return ivJson('https://api.themoviedb.org/3/tv/'+b.tv+'?api_key='+TMDB).then(function(d){if(!d)return;var ns=(d.seasons||[]).filter(function(s){return s.season_number>0;}).length;var r=ns>b.base||d.next_episode_to_air?'oui':(d.status==='Ended'||d.status==='Canceled')?'non':null;if(r){b.res=r;b.win=r===b.pick;if(b.win)curAdd({pc:b.stake*2});changed=true;}});
+    if(b.kind==='box'&&b.rel&&new Date(b.rel+'T12:00').getTime()+75*86400000<now)return ivJson('https://api.themoviedb.org/3/movie/'+b.mv+'?api_key='+TMDB).then(function(d){if(!d||!d.revenue)return;var r=d.revenue>=b.th?'oui':'non';b.res=r;b.win=r===b.pick;b.rev=d.revenue;if(b.win)curAdd({pc:b.stake*2});changed=true;});
+    return null;
+  })).then(function(){if(changed){svPass();passState.bets.filter(function(b){return b.res&&!b.told;}).forEach(function(b){b.told=1;if(b.res==='expired')toast('🔮 Pari expiré (6 mois sans nouvelle) : « '+b.t+' » — mise remboursée');else passCelebrate(b.win?'🤑':'😭',b.win?'Pari gagné !':'Pari perdu…','« '+b.t+' » : '+b.res.toUpperCase()+(b.win?' · +'+(b.stake*2)+' 🍿':''),b.win?'epic':'rare');});svPass();}});
+}
+setTimeout(function(){try{betResolve();}catch(_){}},20000);
+function renderBets(){
+  var el=document.getElementById('pass-bets');if(!el)return;
+  var mine=passState.bets.slice().reverse();
+  el.innerHTML='<div class="cur-bar" id="cur-bar"></div><div class="sh-top">🔮 Mise tes 🍿 sur de vrais événements. Gagné = mise ×2. Vérifié tout seul ; sans nouvelle au bout de 6 mois, le pari s\'annule (remboursé).</div>'
+    +(mine.length?'<div class="sh-sec">🎲 Mes paris</div><div class="bt-list">'+mine.map(function(b){return '<div class="bt'+(b.res?(b.win?' win':b.res==='expired'?' exp':' lose'):'')+'"><img src="'+(b.poster||'')+'" alt=""><div class="bt-m"><b>'+esc(b.q)+'</b><div>Ton choix : <b>'+b.pick.toUpperCase()+'</b> · mise '+b.stake+' 🍿 · '+(b.res?(b.res==='expired'?'⌛ annulé (remboursé)':b.win?'✅ gagné +'+(b.stake*2)+' 🍿':'❌ perdu ('+b.res+')'):'⏳ en attente')+'</div></div></div>';}).join('')+'</div>':'')
+    +'<div class="sh-sec">🆕 Paris ouverts</div><div id="bt-cands" class="bt-list"><div class="soc-t">⏳ Je cherche des paris sur tes séries et tes films attendus…</div></div>';
+  renderCurBar();
+  betCandidates().then(function(c){
+    var box=document.getElementById('bt-cands');if(!box)return;
+    var taken={};passState.bets.forEach(function(b){if(!b.res)taken[b.k]=1;});
+    c=c.filter(function(x){return !taken[x.k];});
+    if(!c.length){box.innerHTML='<div class="soc-t">Aucun pari possible pour l\'instant (il faut des séries en attente de renouvellement ou des films attendus).</div>';return;}
+    box.innerHTML=c.map(function(x,i){return '<div class="bt"><img src="'+x.poster+'" alt=""><div class="bt-m"><b>'+esc(x.q)+'</b><div class="bt-act"><select data-bst="'+i+'"><option>20</option><option selected>50</option><option>100</option><option>200</option></select> 🍿 <button class="soc-btn" data-bp="'+i+'|oui">👍 Oui</button><button class="soc-btn2" data-bp="'+i+'|non">👎 Non</button></div></div></div>';}).join('');
+    box.querySelectorAll('[data-bp]').forEach(function(b){b.onclick=function(){var p=b.dataset.bp.split('|'),x=c[+p[0]],st=+box.querySelector('[data-bst="'+p[0]+'"]').value;if(!curSpend({pc:st})){toast('Pas assez de 🍿');return;}passState.bets.push(Object.assign({},x,{pick:p[1],stake:st,stakeC:{pc:st},ts:Date.now()}));svPass();toast('🔮 Pari enregistré !');renderBets();};});
+  });
 }
 
 /* ---------- 👥 SOIRÉE À DEUX ---------- */
