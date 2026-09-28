@@ -2149,12 +2149,13 @@ body.dark .subr-details summary{color:#C9A8FF;}
       <button class="nav-btn" data-view="feed">📰 Actus</button>
       <button class="nav-btn" data-view="calendar">📅 Calendrier</button>
       <button class="nav-btn" data-view="top-custom">🏆 Mon Top</button>
-      <button class="nav-btn" data-view="sagas">🎬 Sagas</button>
+      <button class="nav-btn" data-view="sagas" style="display:none">🎬 Sagas</button>
       <button class="nav-btn" data-view="toku">🥋 Toku</button>
       <button class="nav-btn" data-view="marathon" style="display:none">🏃 Marathon</button>
       <button class="nav-btn" data-view="planning">🗓️ Planning séries</button>
       <button class="nav-btn" data-view="pass">🎟️ Pass</button>
       <button class="nav-btn" data-view="fun">🎮 Jeux</button>
+      <button class="nav-btn" data-view="badges">🏅 Succès</button>
       <button class="nav-btn" data-view="attentes">🔥 Attentes</button>
       <button class="nav-btn" data-view="alertes">🔔 Alertes<span id="alert-nav-badge" class="nav-badge" style="display:none"></span></button>
       <button class="nav-btn" data-view="actus">📰 Actus</button>
@@ -9318,7 +9319,7 @@ function svPlan(){try{localStorage.setItem('cinePlanList',JSON.stringify(planLis
 function svPass(){try{localStorage.setItem('cinePass',JSON.stringify(passState));}catch(e){}}
 // 🔄 Remise à zéro complète du Pass : il repart de zéro le 1er octobre 2026 (récompenses, niveau, monnaies, cartes…)
 (function(){if(passState.reset2610)return;
-  passState={xp:0,log:[],claimed:{},pepites:{},owned:{avatar:['a0'],banner:['b0'],title:['t0']},equip:{avatar:'a0',banner:'b0',title:'t0'},name:passState.name||'',welcome:false,quests:{},
+  passState={xp:0,log:[],claimed:{},pepites:{},owned:{avatar:['a0'],banner:['b0'],title:['t0'],badge:(passState.owned&&passState.owned.badge)||[]},mbadges:passState.mbadges||{},equip:{avatar:'a0',banner:'b0',title:'t0'},name:passState.name||'',welcome:false,quests:{},
     verified:passState.verified||{},quizLock:passState.quizLock||{},bonusQuizAt:passState.bonusQuizAt||0,premWish:passState.premWish||{},
     cur:{tk:0,pc:0,dm:0,st:0,hc:0},season:'2026-10',reset2610:1};
   svPass();
@@ -11778,7 +11779,6 @@ function tierCur(n){var c={tk:20+n*2};if(n%3===0)c.pc=15;if(n%5===0)c.dm=1+(n>=2
 function grantTierCurrencies(){Object.keys(passState.claimed||{}).forEach(function(n){if(passState.claimed[n]&&!passState.curClaimed[n]){passState.curClaimed[n]=1;curAdd(tierCur(+n));}});}
 /* ---------- 👑 PASS PREMIUM : la série du mois ---------- */
 var PREMIUM_DEF={
-  sep:{q:'House of the Dragon',tv:94997,season:3,label:'House of the Dragon — Saison 3',hint:'🐉 Des dragons, un trône de fer… la saison 3 est la clé du Pass Premium de septembre. 🔥'},
   oct:{q:'Lupin',tv:96677,season:4,label:'Lupin — Partie 4',phrase:'Louloute et son gros PIF !!',hint:'🕵️ Un gentleman cambrioleur préparerait un nouveau coup… et ce serait la clé du Pass Premium d\'octobre. 🎩'},
   nov:{q:'The Body',label:'The Body',phrase:'Maxan et son 0.25 en maths',hint:'🩻 On dit que le Premium de novembre parle d\'un corps… 👀'},
   dec:{q:'Harry Potter',label:'Harry Potter (la série)',phrase:'Maxan & Claud = amis',hint:'⚡ Une lettre de Poudlard serait arrivée pour le Premium de décembre… 🦉'},
@@ -12329,6 +12329,7 @@ function buildFeed(){
   (_actList||[]).slice(0,20).forEach(function(a){if(window.CineSocial&&a.uid===window.CineSocial.uid())return;var verb=a.type==='finish'?'a fini':a.type==='start'?'a commencé':a.type==='rate'?'a noté':null;if(!verb)return;posts.push({acc:'friend',fname:a.name,ts:a.ts,text:verb+' <b>'+esc(a.t)+'</b>'+(a.r&&a.type!=='start'?' ⭐ '+(a.r*2).toFixed(a.r%0.5?1:0).replace('.0','')+'/10':''),img:a.p||'',id:'a_'+a.id});});
   return posts;
 }
+(function(){var oB=buildFeed;buildFeed=function(){var l=oB();return passNotStarted()?l.filter(function(p){return !/^(prem_|flash_|nx_|mb_)/.test(p.id);}):l;};})();
 function feedExtra(){
   if(buildFeed._ex)return buildFeed._ex;
   buildFeed._ex=ivJson('https://api.themoviedb.org/3/trending/all/day?api_key='+TMDB+'&language=fr-FR').then(function(d){
@@ -12473,7 +12474,7 @@ ivPendingSeasons=function(){
 };})();
 // La série Premium est ajoutée toute seule à tes Attentes
 function premiumToWish(r){
-  if(!r)return;var cs=currentSeason();passState.premWish=passState.premWish||{};
+  if(!r||passNotStarted())return;var cs=currentSeason();passState.premWish=passState.premWish||{};
   if(passState.premWish[cs.id])return;
   var has=wishlist.some(function(w){return String(w.tmdbId)===String(r.tv)&&w.tmdbType==='tv'&&(!w.season||+w.season===+r.season);});
   var inColl=items.find(function(i){return i.tmdbType==='tv'&&String(i.tmdbId)===String(r.tv);});
@@ -12931,6 +12932,354 @@ function addListSearch(container,rowSel,ph){
   var oQ=questClaimableCount;questClaimableCount=function(){if(passNotStarted())return 0;return oQ.apply(this,arguments);};
   var st=document.createElement('style');st.textContent='.pass-soon{max-width:620px;margin:30px auto;padding:34px 24px;border-radius:26px;text-align:center;color:#fff;background:linear-gradient(135deg,#2b1055,#7597de 60%,#ff4d6d);box-shadow:0 10px 30px #0004}.ps-big{font-size:3.4rem}.ps-h{font-family:Fredoka,sans-serif;font-size:1.6rem;font-weight:700;margin:8px 0}.ps-t{font-size:.95rem;margin:6px 0}.ps-cd{display:inline-block;margin:14px 0 6px;padding:8px 18px;border-radius:99px;background:#fff2;font-family:Fredoka,sans-serif;font-size:1.2rem;font-weight:700}';document.head.appendChild(st);
   setTimeout(function(){var dot=document.getElementById('pass-quest-dot');if(dot&&passNotStarted())dot.style.display='none';},3000);
+})();
+
+/* ====== 😀 EMOTES CINÉ (personnages originaux : Pop, Ticket, Clap, Télé, Bobine, Soda) ====== */
+var EMO_CHARS={pop:{n:'Pop',r:'commun'},ticket:{n:'Ticket',r:'commun'},clap:{n:'Clap',r:'rare'},tv:{n:'Télé',r:'rare'},reel:{n:'Bobine',r:'épique'},soda:{n:'Soda',r:'légendaire'}};
+var EMO_EXPR={joie:'Joie',mdr:'MDR',snif:'Snif',grr:'Grr',love:'Love',choc:'Choc',dodo:'Dodo',hmm:'Hmm',clin:'Clin d\'œil',cool:'Stylé',spoil:'Spoil !'};
+var EMO_START=['pop_joie','pop_mdr','pop_snif','pop_grr'];
+var EMO_RAR_CLS={'commun':'rare','rare':'rare','épique':'epic','légendaire':'legend'};
+function emoAll(){var l=[];Object.keys(EMO_CHARS).forEach(function(c){Object.keys(EMO_EXPR).forEach(function(e){l.push(c+'_'+e);});});return l;}
+function emoInfo(id){var p=String(id||'').split('_'),c=EMO_CHARS[p[0]]||EMO_CHARS.pop;return {c:p[0],e:p[1],n:c.n+' · '+(EMO_EXPR[p[1]]||''),r:c.r};}
+function emoHeart(cx,cy,s,f){return '<path d="M'+cx+' '+(cy+4*s)+' C'+(cx-9*s)+' '+(cy-3*s)+' '+(cx-5*s)+' '+(cy-9*s)+' '+cx+' '+(cy-4*s)+' C'+(cx+5*s)+' '+(cy-9*s)+' '+(cx+9*s)+' '+(cy-3*s)+' '+cx+' '+(cy+4*s)+'Z" fill="'+(f||'#ff2e63')+'"/>';}
+function emoDrop(cx,cy){return '<path d="M'+cx+' '+(cy-5)+' q5 7 0 10 q-5 -3 0 -10z" fill="#4dabf7"/>';}
+function emoFace(x,y,ex,E){
+  var s='',sw=' stroke="'+E+'" stroke-width="3" stroke-linecap="round" fill="none"',dot=function(cx,cy,r){return '<circle cx="'+cx+'" cy="'+cy+'" r="'+(r||2.8)+'" fill="'+E+'"/>';};
+  var smile='<path d="M'+(x-10)+' '+(y+5)+' q10 13 20 0z" fill="'+E+'"/><ellipse cx="'+x+'" cy="'+(y+11)+'" rx="4.5" ry="2.6" fill="#ff7b9c"/>';
+  switch(ex){
+    case 'joie':s='<path d="M'+(x-15)+' '+(y-3)+' q4 -6 8 0"'+sw+'/><path d="M'+(x+7)+' '+(y-3)+' q4 -6 8 0"'+sw+'/>'+smile;break;
+    case 'mdr':s='<path d="M'+(x-16)+' '+(y-8)+' l7 4 l-7 4"'+sw+'/><path d="M'+(x+16)+' '+(y-8)+' l-7 4 l7 4"'+sw+'/><path d="M'+(x-12)+' '+(y+2)+' h24 q0 15 -12 15 q-12 0 -12 -15z" fill="'+E+'"/><ellipse cx="'+x+'" cy="'+(y+13)+'" rx="5" ry="3" fill="#ff7b9c"/>'+emoDrop(x-21,y-1)+emoDrop(x+21,y-1);break;
+    case 'snif':s='<path d="M'+(x-15)+' '+(y-5)+' q4 5 8 0"'+sw+'/><path d="M'+(x+7)+' '+(y-5)+' q4 5 8 0"'+sw+'/><rect class="emo-tear" x="'+(x-13.5)+'" y="'+(y-1)+'" width="5" height="17" rx="2.5" fill="#4dabf7"/><rect class="emo-tear" x="'+(x+8.5)+'" y="'+(y-1)+'" width="5" height="17" rx="2.5" fill="#4dabf7"/><path d="M'+(x-8)+' '+(y+14)+' q8 -9 16 0"'+sw+'/>';break;
+    case 'grr':s='<circle cx="'+x+'" cy="'+y+'" r="21" fill="#ff3b3b" opacity=".28"/><path d="M'+(x-18)+' '+(y-12)+' l10 5"'+sw+'/><path d="M'+(x+18)+' '+(y-12)+' l-10 5"'+sw+'/>'+dot(x-11,y-2)+dot(x+11,y-2)+'<path d="M'+(x-9)+' '+(y+13)+' q9 -8 18 0"'+sw+'/><text x="'+(x+14)+'" y="'+(y-16)+'" font-size="15">💢</text>';break;
+    case 'love':s=emoHeart(x-11,y-3,1.25)+emoHeart(x+11,y-3,1.25)+'<path d="M'+(x-9)+' '+(y+7)+' q9 9 18 0"'+sw+'/>'+'<g class="emo-float">'+emoHeart(x+22,y-20,.8)+'</g>';break;
+    case 'choc':s='<circle cx="'+(x-11)+'" cy="'+(y-4)+'" r="6.5" fill="#fff" stroke="'+E+'" stroke-width="2"/><circle cx="'+(x+11)+'" cy="'+(y-4)+'" r="6.5" fill="#fff" stroke="'+E+'" stroke-width="2"/>'+dot(x-11,y-4,2.2)+dot(x+11,y-4,2.2)+'<ellipse cx="'+x+'" cy="'+(y+12)+'" rx="5" ry="7" fill="'+E+'"/>';break;
+    case 'dodo':s='<path d="M'+(x-15)+' '+(y-3)+' h8"'+sw+'/><path d="M'+(x+7)+' '+(y-3)+' h8"'+sw+'/><circle cx="'+x+'" cy="'+(y+11)+'" r="3" fill="'+E+'"/><text class="emo-float" x="'+(x+14)+'" y="'+(y-14)+'" font-size="13" font-weight="800" fill="#5c7cfa" font-family="Fredoka,sans-serif">Zz</text>';break;
+    case 'hmm':s='<path d="M'+(x-17)+' '+(y-12)+' q5 -5 10 0"'+sw+'/>'+dot(x-11,y-3)+dot(x+11,y-3)+'<path d="M'+(x-6)+' '+(y+11)+' h12"'+sw+'/><text class="emo-float" x="'+(x+17)+'" y="'+(y-12)+'" font-size="18" font-weight="900" fill="#ff9f1c" font-family="Fredoka,sans-serif">?</text>';break;
+    case 'clin':s=dot(x-11,y-3,3)+'<path d="M'+(x+7)+' '+(y-3)+' q4 -5 8 0"'+sw+'/>'+smile;break;
+    case 'cool':s='<rect x="'+(x-20)+'" y="'+(y-9)+'" width="16" height="10" rx="4" fill="#111"/><rect x="'+(x+4)+'" y="'+(y-9)+'" width="16" height="10" rx="4" fill="#111"/><path d="M'+(x-4)+' '+(y-6)+' h8" stroke="#111" stroke-width="2.5"/><path d="M'+(x-16)+' '+(y-7)+' l4 0" stroke="#fff" stroke-width="1.6" opacity=".8"/><path d="M'+(x-6)+' '+(y+11)+' q8 6 14 -3"'+sw+'/>';break;
+    case 'spoil':s=dot(x-11,y-4,3.2)+dot(x+11,y-4,3.2)+'<path d="M'+(x-11)+' '+(y+11)+' h22"'+sw+'/>'+[-8,-4,0,4,8].map(function(d){return '<path d="M'+(x+d)+' '+(y+8)+' v6" stroke="'+E+'" stroke-width="1.6"/>';}).join('')+'<text x="'+(x-16)+'" y="'+(y+27)+'" font-size="8" font-weight="900" fill="#e63946" font-family="Fredoka,sans-serif">CHUT !</text>';break;
+  }
+  return s;
+}
+function emoBody(c){
+  switch(c){
+    case 'ticket':return {b:'<rect x="17" y="33" width="66" height="42" rx="6" fill="#ffb703" stroke="#e85d04" stroke-width="2.5"/><circle cx="17" cy="54" r="6.5" fill="#fff"/><circle cx="83" cy="54" r="6.5" fill="#fff"/><path d="M69 36 v36" stroke="#e85d04" stroke-width="2" stroke-dasharray="3 3"/><text x="72" y="58" font-size="7" font-weight="900" fill="#e85d04" transform="rotate(90 75 54)" font-family="Fredoka,sans-serif">CINÉ</text>',x:44,y:55,E:'#3a1d00',k:1};
+    case 'clap':return {b:'<g transform="rotate(-13 22 42)"><rect x="20" y="30" width="60" height="11" rx="2" fill="#2b2d42"/>'+[0,1,2,3].map(function(i){return '<polygon points="'+(26+i*14)+',30 '+(33+i*14)+',30 '+(29+i*14)+',41 '+(22+i*14)+',41" fill="#fff"/>';}).join('')+'</g><rect x="20" y="42" width="60" height="40" rx="5" fill="#2b2d42"/><rect x="20" y="42" width="60" height="7" fill="#fff"/>'+[0,1,2,3].map(function(i){return '<polygon points="'+(26+i*14)+',42 '+(33+i*14)+',42 '+(29+i*14)+',49 '+(22+i*14)+',49" fill="#2b2d42"/>';}).join(''),x:50,y:64,E:'#fff',k:1};
+    case 'tv':return {b:'<path d="M42 30 L33 15 M58 30 L67 15" stroke="#555" stroke-width="2.5" stroke-linecap="round"/><circle cx="33" cy="15" r="3" fill="#e63946"/><circle cx="67" cy="15" r="3" fill="#e63946"/><rect x="18" y="29" width="64" height="52" rx="10" fill="#f4a261" stroke="#b5651d" stroke-width="2.5"/><rect x="25" y="36" width="40" height="38" rx="8" fill="#bde0fe" stroke="#b5651d" stroke-width="1.5"/><circle cx="73" cy="45" r="3.5" fill="#6d4c41"/><circle cx="73" cy="57" r="3.5" fill="#6d4c41"/><path d="M30 81 l-4 6 M70 81 l4 6" stroke="#6d4c41" stroke-width="3" stroke-linecap="round"/>',x:45,y:56,E:'#1b1330',k:.95};
+    case 'reel':return {b:'<circle cx="50" cy="54" r="31" fill="#adb5bd" stroke="#6c757d" stroke-width="3"/>'+[0,1,2,3,4,5].map(function(i){var a=i*Math.PI/3-Math.PI/2;return '<circle cx="'+(50+25*Math.cos(a)).toFixed(1)+'" cy="'+(54+25*Math.sin(a)).toFixed(1)+'" r="4" fill="#495057"/>';}).join('')+'<circle cx="50" cy="54" r="19" fill="#e9ecef"/><path d="M78 68 q12 6 10 18" stroke="#343a40" stroke-width="4" fill="none"/>',x:50,y:54,E:'#1b1330',k:.72};
+    case 'soda':return {b:'<path d="M55 33 L64 11" stroke="#ff006e" stroke-width="5" stroke-linecap="round"/><polygon points="31,38 69,38 63,84 37,84" fill="#4361ee"/><polygon points="33,50 67,50 66,58 34,58" fill="#fff" opacity=".9"/><rect x="28" y="32" width="44" height="8" rx="3" fill="#e5e5e5" stroke="#adb5bd"/><text x="41" y="56.5" font-size="6.5" font-weight="900" fill="#4361ee" font-family="Fredoka,sans-serif">COLA</text>',x:50,y:68,E:'#fff',k:.85};
+    default:return {b:'<rect x="25" y="36" width="50" height="7" rx="3" fill="#e63946"/><polygon points="28,42 72,42 66,84 34,84" fill="#fff" stroke="#ced4da"/><polygon points="34,42 42,42 41,84 37,84" fill="#e63946"/><polygon points="46,42 54,42 53,84 47,84" fill="#e63946"/><polygon points="58,42 66,42 63,84 59,84" fill="#e63946"/>'+[[32,33,7],[41,27,8],[52,25,8],[62,28,8],[69,34,6],[46,34,7],[58,35,7]].map(function(p){return '<circle cx="'+p[0]+'" cy="'+p[1]+'" r="'+p[2]+'" fill="#fff3bf" stroke="#e9c46a" stroke-width="1.5"/>';}).join('')+'<ellipse cx="50" cy="63" rx="18" ry="14" fill="#fff"/>',x:50,y:63,E:'#1b1330',k:.8};
+  }
+}
+function emoteSvg(id,size,noBubble){
+  var inf=emoInfo(id),B=emoBody(inf.c),k=B.k;
+  var face='<g transform="translate('+B.x+' '+B.y+') scale('+k+') translate('+(-B.x)+' '+(-B.y)+')">'+emoFace(B.x,B.y,inf.e,B.E)+'</g>';
+  var bub=noBubble?'':'<path d="M10 6 h80 a8 8 0 0 1 8 8 v66 a8 8 0 0 1 -8 8 h-52 l-15 11 l3 -11 h-16 a8 8 0 0 1 -8 -8 v-66 a8 8 0 0 1 8 -8z" fill="#fff" stroke="#1b1330" stroke-width="3"/>';
+  return '<span class="emo-w e-'+inf.e+'" style="width:'+(size||64)+'px" title="'+esc(inf.n)+'"><svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">'+bub+'<g class="emo-c">'+B.b+face+'</g></svg></span>';
+}
+(function(){if(!ownedList('emote').length){passState.owned.emote=EMO_START.slice();svPass();}})();
+window.CineEmote={svg:emoteSvg,owned:function(){return ownedList('emote').slice();},picker:function(cb){emotePicker(cb);}};
+function emotePicker(cb){
+  var own=ownedList('emote');
+  var o=socOverlay('<div class="soc-h">😀 Tes emotes</div><div class="emo-grid">'+emoAll().map(function(id){var h=own.indexOf(id)>=0;return '<button class="emo-pick'+(h?'':' lock')+'" data-emp="'+id+'"'+(h?'':' disabled')+'>'+emoteSvg(id,62)+(h?'':'<i>🔒</i>')+'</button>';}).join('')+'</div><div class="soc-t">'+own.length+' / '+emoAll().length+' emotes · gagne-en dans le Pass et à la Boutique</div><div class="soc-row"><button class="soc-btn2" id="emp-x">Fermer</button></div>');
+  o.querySelector('#emp-x').onclick=function(){o.remove();};
+  o.querySelectorAll('[data-emp]').forEach(function(b){b.onclick=function(){o.remove();if(cb)cb(b.dataset.emp);};});
+}
+function emoteBig(id,title,sub){
+  var inf=emoInfo(id),o=document.createElement('div');o.className='pbig r-'+(EMO_RAR_CLS[inf.r]||'rare');
+  o.innerHTML='<div class="pbig-rays"></div><div class="pbig-in"><div class="pbig-top">'+(title||'NOUVELLE EMOTE !')+'</div><div class="emo-bigwrap">'+emoteSvg(id,170)+'</div><div class="pbig-n">'+esc(inf.n)+'</div><div class="pbig-d">'+esc(sub||inf.r.toUpperCase()+' · utilisable dans le salon et en battle')+'</div><button class="soc-btn">Trop stylé 😎</button></div>';
+  document.body.appendChild(o);try{confetti();}catch(_){}try{sfx.success();}catch(_){}
+  o.querySelector('button').onclick=function(){o.classList.add('out');setTimeout(function(){o.remove();},400);};
+}
+/* Paliers emotes dans le Pass */
+var EMO_TIERS={2:'commun',5:'commun',9:'rare',13:'rare',17:'épique',21:'rare',25:'épique',29:'légendaire'};
+(function(){
+  var oT=passTier;passTier=function(n){var t=oT(n);var r=EMO_TIERS[n];if(!r||t.k==='recap'||t.k==='chest'||t.k==='badge'||t.k==='theme')return t;
+    var id=passState.claimedIds&&passState.claimedIds[n]&&String(passState.claimedIds[n]).indexOf('_')>0&&passState.claimed[n]?passState.claimedIds[n]:null;
+    if(!id){var pool=emoAll().filter(function(e){return emoInfo(e).r===r&&!isOwned('emote',e);});if(!pool.length)pool=emoAll().filter(function(e){return !isOwned('emote',e);});var R=qRand(currentSeason().id+'_emo_'+n);id=pool.length?pool[Math.floor(R()*pool.length)]:null;}
+    if(!id)return t;return {k:'emote',id:id,rar:emoInfo(id).r};};
+  var oF=rewardFaceHtml;rewardFaceHtml=function(n,t){if(t&&t.k==='emote'){var inf=emoInfo(t.id);return '<div class="pr-emo">'+emoteSvg(t.id,92)+'</div><div class="pr-lbl">Emote<br><b>'+esc(inf.n)+'</b></div>';}return oF(n,t);};
+  var oC=claimTier;claimTier=function(n,btn){var t=passTier(n);if(t.k!=='emote')return oC(n,btn);if(passState.claimed[n]||passNotStarted())return;
+    passState.claimed[n]=true;passState.claimedIds[n]=t.id;grantOwned('emote',t.id);svPass();renderPass();emoteBig(t.id);};
+})();
+/* ====== ⏳ Gros compte à rebours avant le nouveau Pass ====== */
+(function(){
+  var oR=renderPass;renderPass=function(){
+    var r=oR.apply(this,arguments);var soon=document.getElementById('pass-soon');if(!soon)return r;
+    var fl=['pop_joie','clap_mdr','tv_choc','reel_love','ticket_clin','soda_cool','pop_hmm','clap_grr'];
+    soon.innerHTML='<div class="ps-emos">'+fl.map(function(e,i){return '<div class="ps-emo" style="--i:'+i+'">'+emoteSvg(e,70)+'</div>';}).join('')+'</div><div class="ps-top">🎟️ NOUVEAU PASS DANS :</div><div class="ps-timer" id="ps-timer"></div><div class="ps-t">Le Pass d\'octobre démarre à zéro pour tout le monde. D\'ici là, aucune récompense ne peut être récupérée.</div><div class="ps-t" style="opacity:.8">Au programme : de nouvelles emotes ciné animées 😀, des paliers, la boutique, et la série Premium 🕵️</div>';
+    function tick(){var el=document.getElementById('ps-timer');if(!el){clearInterval(soon._iv);return;}var ms=Math.max(0,new Date(2026,9,1)-Date.now());if(ms<=0){clearInterval(soon._iv);renderPass();return;}var d=Math.floor(ms/864e5),h=Math.floor(ms/36e5)%24,m=Math.floor(ms/6e4)%60,s=Math.floor(ms/1e3)%60;
+      el.innerHTML=[[d,'jours'],[h,'heures'],[m,'min'],[s,'sec']].map(function(x){return '<div class="ps-blk"><b>'+String(x[0]).padStart(2,'0')+'</b><span>'+x[1]+'</span></div>';}).join('<i>:</i>');}
+    clearInterval(soon._iv);tick();soon._iv=setInterval(tick,1000);
+    return r;
+  };
+})();
+/* ====== 🎟️ Pass plus vivant : mascotte qui avance, emotes qui popent, carte héros ====== */
+(function(){
+  var oR=renderPass;renderPass=function(){
+    var r=oR.apply(this,arguments);
+    if(passNotStarted()||passTab!=='rewards')return r;
+    var track=document.getElementById('pass-track');if(!track)return r;
+    var L=passLevel(),col=track.querySelector('[data-tier="'+Math.max(1,L)+'"]');
+    if(col&&!track.querySelector('.pt-mascot')){var m=document.createElement('div');m.className='pt-mascot';m.innerHTML=emoteSvg(passState.equip.emote||'pop_joie',58,true);col.parentNode.style.position='relative';col.parentNode.appendChild(m);}
+    if(!track.querySelector('.pt-hero')){var h=document.createElement('div');h.className='pt-hero';var pr=_premLast;
+      h.innerHTML=(pr&&pr.poster?'<div class="pth-img" style="background-image:url('+pr.poster+')"></div>':'<div class="pth-img pth-emo">'+emoteSvg('soda_cool',110,true)+'</div>')+'<div class="pth-tag">SAISON '+esc(currentSeason().def.name.replace(/^\S+\s/,'').toUpperCase())+'</div><div class="pth-n">'+(premiumUnlocked(pr)?'👑 PREMIUM ACTIVÉ':'👑 PASS PREMIUM')+'</div><button class="pth-b" id="pth-b">'+(premiumUnlocked(pr)?'Voir':'Débloquer')+'</button>';
+      track.insertBefore(h,track.firstChild);if(L<=3&&!track._heroSc){track._heroSc=1;setTimeout(function(){track.scrollLeft=0;},80);}h.querySelector('#pth-b').onclick=function(){openPremiumOffer(true);};}
+    var num=track.querySelectorAll('.pt-num');num.forEach(function(x,i){x.classList.toggle('cur',i+1===L);});
+    if(!document.getElementById('pass-emopop')){var ep=document.createElement('div');ep.id='pass-emopop';ep.className='pass-emopop';var head=document.querySelector('#pass-wrap .pass-head');if(head){head.style.position='relative';head.appendChild(ep);}}
+    return r;
+  };
+  setInterval(function(){var ep=document.getElementById('pass-emopop');if(!ep||!ep.offsetParent||passNotStarted())return;var own=ownedList('emote');var id=own[Math.floor(Math.random()*own.length)];var b=document.createElement('div');b.className='pe-b';b.style.left=(8+Math.random()*80)+'%';b.innerHTML=emoteSvg(id,54);ep.appendChild(b);setTimeout(function(){b.remove();},3200);},4200);
+})();
+/* ====== 👑 Offre Pass Premium (façon « Best Deal ») ====== */
+function openPremiumOffer(force){
+  if(passNotStarted())return;
+  premiumResolve().then(function(r){
+    var cs=currentSeason();if(premiumUnlocked(r)&&!force)return;
+    var d=premiumDef(),rw=PREMIUM_TIERS.map(function(n){return premiumReward(n,r||{cast:[]});});
+    var o=document.createElement('div');o.className='poffer-ov';
+    o.innerHTML='<div class="poffer"><div class="po-rib">🍿 Meilleure offre du Ciné Tracker !<button class="po-x">✕</button></div><div class="po-top"><div class="po-art" style="'+(r&&r.backdrop?'background-image:url('+r.backdrop+')':'')+'">'+(r&&r.poster?'<img src="'+r.poster+'">':emoteSvg('soda_cool',120,true))+'<div class="po-emo">'+emoteSvg('clap_cool',70)+'</div></div><div class="po-side"><div class="po-crown">👑</div><div class="po-t">Pass Premium</div><div class="po-s">'+(r?esc(r.label)+(r.season?' · saison '+r.season:''):'Série secrète 🤫')+'</div></div></div>'
+      +'<div class="po-grid">'+rw.map(function(x){return '<div class="po-it"><div class="po-ic">'+x.ico+'</div><small>'+esc(x.n)+'</small></div>';}).join('')+'<div class="po-it"><div class="po-ic">😎</div><small>Emote exclusive</small></div></div>'
+      +'<div class="po-how">'+(premiumUnlocked(r)?'✅ Tu l\'as déjà débloqué !':'Regarde la série en entier, puis réussis le <b>quiz de 10 questions</b> (ou importe ton historique Netflix).')+'</div><button class="po-go">'+(premiumUnlocked(r)?'👑 Voir mes récompenses':'🧠 Débloquer gratuitement')+'</button></div>';
+    document.body.appendChild(o);try{sfx.success();}catch(_){}
+    var close=function(){o.classList.add('out');setTimeout(function(){o.remove();},300);};
+    o.querySelector('.po-x').onclick=close;o.addEventListener('click',function(e){if(e.target===o)close();});
+    o.querySelector('.po-go').onclick=function(){close();passTab=premiumUnlocked(r)?'rewards':'quests';renderPass();};
+    passState.offerDay=todayStr();svPass();
+  });
+}
+(function(){var oR=renderPass;renderPass=function(){var r=oR.apply(this,arguments);if(!passNotStarted()&&passState.offerDay!==todayStr()&&document.getElementById('view-pass').style.display!=='none'){passState.offerDay=todayStr();svPass();(function w(k){if(document.querySelector('.plvl,.pbig')&&k<20)return setTimeout(function(){w(k+1);},1200);openPremiumOffer(false);})(0);}return r;};})();
+/* ====== 🛒 Boutique : rayon emotes ====== */
+var EMO_PRICE={'commun':{pc:60},'rare':{pc:130},'épique':{dm:4},'légendaire':{dm:9}};
+(function(){var oS=renderShop;renderShop=function(){var r=oS.apply(this,arguments);var el=document.getElementById('pass-shop');if(!el||el.querySelector('.sh-emos'))return r;
+  var R=qRand('emoshop_'+todayStr()),pool=emoAll().filter(function(e){return !isOwned('emote',e);}),pick=[];while(pool.length&&pick.length<4){pick.push(pool.splice(Math.floor(R()*pool.length),1)[0]);}
+  var box=document.createElement('div');box.className='sh-emos';
+  box.innerHTML='<div class="sh-sec">😀 Emotes du jour</div><div class="sh-row">'+(pick.length?pick.map(function(id){var inf=emoInfo(id);return '<div class="sh-it r-'+(EMO_RAR_CLS[inf.r]||'rare')+'"><div class="sh-n">'+esc(inf.n)+'</div><div class="sh-prev">'+emoteSvg(id,86)+'</div><div class="sh-r">'+inf.r+'</div><button class="sh-buy" data-shemo="'+id+'">'+curHtml(EMO_PRICE[inf.r])+'</button></div>';}).join(''):'<div class="soc-t">Tu as toutes les emotes 😎</div>')+'</div>';
+  var first=el.querySelector('.sh-sec');if(first)first.parentNode.insertBefore(box,first);else el.appendChild(box);
+  box.querySelectorAll('[data-shemo]').forEach(function(b){b.onclick=function(){var id=b.dataset.shemo,p=EMO_PRICE[emoInfo(id).r];if(passNotStarted())return toast('🎟️ La boutique ouvre le 1er octobre');if(!curSpend(p))return toast('Pas assez de monnaie');grantOwned('emote',id);svPass();emoteBig(id,'EMOTE ACHETÉE !');renderShop();};});
+  return r;};})();
+/* ====== 🧳 Collection : mes emotes ====== */
+(function(){var oC=renderPassCollection;renderPassCollection=function(target,onChange){var r=oC.apply(this,arguments);var el=target||document.getElementById('pass-collection');if(!el)return r;var own=ownedList('emote');
+  var s=document.createElement('div');s.innerHTML='<div class="pc-sec">😀 Mes emotes ('+own.length+'/'+emoAll().length+') <small>touche-en une pour qu\'elle suive ta progression dans le Pass</small></div><div class="emo-grid">'+emoAll().map(function(id){var h=own.indexOf(id)>=0;return '<button class="emo-pick'+(h?'':' lock')+(passState.equip.emote===id?' on':'')+'" data-emeq="'+id+'"'+(h?'':' disabled')+'>'+emoteSvg(id,58)+(h?'':'<i>🔒</i>')+'</button>';}).join('')+'</div>';
+  el.appendChild(s);s.querySelectorAll('[data-emeq]').forEach(function(b){b.onclick=function(){passState.equip.emote=b.dataset.emeq;svPass();toast('😀 Emote mascotte équipée');renderPassCollection(target,onChange);};});return r;};})();
+/* ====== ⚔️ Emotes en battle ====== */
+var _btEmoSeen={};
+(function(){var oB=battleRender;battleRender=function(b){oB(b);var ov=document.getElementById('battle-ov');if(!ov||!window.CineSocial)return;var me=window.CineSocial.uid(),opp=b.a===me?b.b:b.a,box=ov.querySelector('.battle-box');if(!box)return;
+  if(!box.querySelector('.bt-emo')){var bar=document.createElement('div');bar.className='bt-emo';bar.innerHTML=ownedList('emote').slice(0,6).map(function(id){return '<button data-bte="'+id+'">'+emoteSvg(id,40)+'</button>';}).join('')+'<button class="bt-more" data-btemore="1">➕</button>';box.appendChild(bar);
+    var send=function(id){var o={};o['emo.'+me]={e:id,t:Date.now()};window.CineSocial.battleUpdate(b.id,o);btEmoShow(id,true);};
+    bar.querySelectorAll('[data-bte]').forEach(function(x){x.onclick=function(){send(x.dataset.bte);};});bar.querySelector('[data-btemore]').onclick=function(){emotePicker(send);};}
+  var e=b.emo&&b.emo[opp];if(e&&e.t&&_btEmoSeen[b.id]!==e.t){var first=_btEmoSeen[b.id]===undefined&&Date.now()-e.t>8000;_btEmoSeen[b.id]=e.t;if(!first)btEmoShow(e.e,false);}
+};})();
+function btEmoShow(id,mine){var d=document.createElement('div');d.className='bt-emopop'+(mine?' mine':'');d.innerHTML=emoteSvg(id,110);document.body.appendChild(d);try{sfx.nav();}catch(_){}setTimeout(function(){d.classList.add('out');},1900);setTimeout(function(){d.remove();},2400);}
+(function(){var st=document.createElement('style');st.textContent=
+ '.emo-w{display:inline-block;line-height:0;vertical-align:middle}.emo-w svg{width:100%;height:auto;overflow:visible}.emo-c{transform-box:view-box;transform-origin:50px 82px;animation:emoBob 1.8s ease-in-out infinite}'
++'.e-mdr .emo-c{animation:emoShake .45s ease-in-out infinite}.e-grr .emo-c{animation:emoRage .16s linear infinite}.e-love .emo-c{animation:emoPulse .9s ease-in-out infinite}.e-choc .emo-c{animation:emoJump .9s ease-in-out infinite}.e-dodo .emo-c{animation:emoBreath 2.8s ease-in-out infinite}.e-hmm .emo-c{animation:emoTilt 2.2s ease-in-out infinite}.e-snif .emo-c{animation:emoSob 1s ease-in-out infinite}.e-cool .emo-c,.e-clin .emo-c{animation:emoSwag 1.4s ease-in-out infinite}.e-spoil .emo-c{animation:emoShake 1.2s ease-in-out infinite}'
++'.emo-tear{animation:emoTear 1s linear infinite;transform-box:fill-box;transform-origin:top}.emo-float{animation:emoFloat 1.6s ease-in-out infinite;transform-box:fill-box}'
++'@keyframes emoBob{50%{transform:translateY(-3px) scale(1.03)}}@keyframes emoShake{25%{transform:rotate(-7deg)}75%{transform:rotate(7deg)}}@keyframes emoRage{25%{transform:translateX(-1.5px)}75%{transform:translateX(1.5px)}}@keyframes emoPulse{50%{transform:scale(1.09)}}@keyframes emoJump{30%{transform:translateY(-9px) scale(1.05,.95)}55%{transform:translateY(0) scale(1.06,.92)}}@keyframes emoBreath{50%{transform:scale(1.04,.97)}}@keyframes emoTilt{50%{transform:rotate(-9deg)}}@keyframes emoSob{50%{transform:translateY(2px) scale(1.02,.97)}}@keyframes emoSwag{50%{transform:rotate(5deg) translateY(-2px)}}@keyframes emoTear{0%{transform:scaleY(.2)}60%{transform:scaleY(1)}100%{transform:scaleY(1);opacity:0}}@keyframes emoFloat{50%{transform:translateY(-4px)}}'
++'.emo-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(74px,1fr));gap:8px;margin:10px 0}.emo-pick{position:relative;border:none;border-radius:14px;padding:6px;background:rgba(255,255,255,.1);cursor:pointer;transition:transform .15s}.emo-pick:hover{transform:scale(1.08)}.emo-pick.on{box-shadow:0 0 0 3px #ffd23f}.emo-pick.lock{filter:grayscale(1) brightness(.55);cursor:default}.emo-pick i{position:absolute;right:4px;bottom:2px;font-style:normal}.soc-box .emo-grid{max-height:55vh;overflow:auto}'
++'.emo-bigwrap{margin:8px auto;animation:emoIn .6s cubic-bezier(.2,1.6,.4,1)}@keyframes emoIn{from{transform:scale(0) rotate(-30deg)}}.pr-emo{margin-bottom:4px}'
++'.pass-soon{max-width:900px;margin:24px auto;padding:40px 130px 32px;border-radius:30px;position:relative;overflow:hidden;background:radial-gradient(circle at 50% 0,#ff4d6d55,transparent 60%),linear-gradient(160deg,#1a0b3d,#3c1a78 55%,#7b2cbf)}.ps-top{font-family:Fredoka,sans-serif;font-weight:800;font-size:clamp(1.3rem,4vw,2.1rem);letter-spacing:1px;position:relative;z-index:1;text-shadow:0 3px 0 #0006}'
++'.ps-timer{display:flex;justify-content:center;align-items:center;gap:6px;margin:18px 0 16px;position:relative;z-index:1}.ps-timer i{font-style:normal;font-family:Fredoka,sans-serif;font-size:2.4rem;font-weight:800;opacity:.7;animation:psBlink 1s steps(1) infinite}.ps-blk{background:linear-gradient(180deg,#ffffff26,#ffffff0d);border:2px solid #ffffff40;border-radius:18px;padding:10px 6px 6px;min-width:clamp(62px,15vw,112px);box-shadow:0 6px 0 #0005}.ps-blk b{display:block;font-family:Fredoka,sans-serif;font-size:clamp(2.2rem,8vw,4.4rem);line-height:1;color:#ffd23f;text-shadow:0 4px 0 #b8860b}.ps-blk span{font-size:.75rem;text-transform:uppercase;letter-spacing:1px;opacity:.85}@keyframes psBlink{50%{opacity:.15}}'
++'.pass-soon .ps-t{position:relative;z-index:1}.ps-emos{position:absolute;inset:0;pointer-events:none}.ps-emo{position:absolute;opacity:.9;animation:psFly 7s ease-in-out infinite;animation-delay:calc(var(--i)*-.9s)}.ps-emo:nth-child(1){left:18px;top:14px}.ps-emo:nth-child(2){right:18px;top:14px}.ps-emo:nth-child(3){left:30px;bottom:14px}.ps-emo:nth-child(4){right:30px;bottom:14px}.ps-emo:nth-child(5){left:14px;top:40%}.ps-emo:nth-child(6){right:14px;top:40%}.ps-emo:nth-child(n+7){display:none}@keyframes psFly{50%{transform:translateY(-14px) rotate(6deg)}}@media(max-width:700px){.pass-soon{padding:70px 16px 26px}.ps-emo:nth-child(n+3){display:none}.ps-emo .emo-w{width:48px!important}}'
++'.pt-mascot{position:absolute;left:50%;top:-50px;transform:translateX(-50%);z-index:3;animation:mascotHop 1.1s ease-in-out infinite;filter:drop-shadow(0 4px 3px #0006);pointer-events:none}@keyframes mascotHop{0%,100%{transform:translate(-50%,0)}40%{transform:translate(-50%,-10px) rotate(-6deg)}60%{transform:translate(-50%,-10px) rotate(6deg)}}.pass-track{padding-top:58px!important;position:relative}'
++'.pt-num{position:relative}.pt-num.cur{background:#ffd23f!important;color:#2b1a00!important;box-shadow:0 0 0 4px #ffd23f55,0 0 18px #ffd23f;animation:ptNumPulse 1.2s ease-in-out infinite}@keyframes ptNumPulse{50%{transform:scale(1.15)}}'
++'.pt-card{border:3px solid #1b1330;box-shadow:0 6px 0 #1b1330!important;transition:transform .2s}.pt-card:hover{transform:translateY(-6px) rotate(-1deg)}.pt-card.claimed .pt-check{background:#2fbf71;color:#fff;border:3px solid #1b1330;width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900;animation:ckPop .4s}@keyframes ckPop{from{transform:scale(0)}}'
++'.pt-hero{scroll-snap-align:start;flex:0 0 190px;height:250px;border-radius:18px;border:3px solid #1b1330;box-shadow:0 6px 0 #1b1330;position:relative;overflow:hidden;background:linear-gradient(180deg,#7b2cbf,#3c096c);display:flex;flex-direction:column;justify-content:flex-end;align-items:center;padding:10px;align-self:flex-end;animation:heroFloat 3s ease-in-out infinite}.pth-img{position:absolute;inset:0;background:center/cover}.pth-img::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,transparent 35%,#1b1330ee);}.pth-img::before{content:"";position:absolute;top:-40%;left:-60%;width:40%;height:180%;background:linear-gradient(90deg,transparent,#fff6,transparent);transform:rotate(20deg);animation:heroShine 3.2s ease-in-out infinite;z-index:1}.pth-emo{display:flex;align-items:center;justify-content:center}.pth-tag,.pth-n,.pth-b{position:relative;z-index:2}.pth-tag{font-size:.65rem;font-weight:800;letter-spacing:1px;background:#ffd23f;color:#2b1a00;padding:2px 8px;border-radius:6px}.pth-n{font-family:Fredoka,sans-serif;font-weight:800;margin:6px 0;color:#fff;text-shadow:0 2px 0 #000}.pth-b{border:3px solid #1b1330;border-radius:12px;background:linear-gradient(180deg,#8ce99a,#2fbf71);font-weight:800;padding:6px 16px;cursor:pointer;box-shadow:0 4px 0 #1b1330}@keyframes heroFloat{50%{transform:translateY(-5px)}}@keyframes heroShine{0%,60%{left:-60%}100%{left:130%}}'
++'.pass-emopop{position:absolute;inset:0;pointer-events:none;overflow:visible;z-index:5}.pe-b{position:absolute;top:10px;animation:peUp 3.2s ease-out forwards}@keyframes peUp{0%{transform:translateY(20px) scale(0);opacity:0}15%{transform:translateY(0) scale(1.1);opacity:1}25%{transform:scale(1)}80%{opacity:1}100%{transform:translateY(-40px);opacity:0}}'
++'.poffer-ov{position:fixed;inset:0;z-index:10050;background:#0009;display:flex;align-items:center;justify-content:center;padding:14px;animation:fadeIn .25s}.poffer-ov.out{opacity:0;transition:.3s}.poffer{width:min(430px,100%);border-radius:22px;border:4px solid #ffd23f;background:linear-gradient(180deg,#9b5de5,#5a189a);box-shadow:0 20px 60px #000a;overflow:hidden;animation:poIn .5s cubic-bezier(.2,1.5,.4,1);color:#fff}@keyframes poIn{from{transform:scale(.6) translateY(40px);opacity:0}}'
++'.po-rib{position:relative;background:linear-gradient(180deg,#c77dff,#7b2cbf);font-family:Fredoka,sans-serif;font-weight:800;font-size:1.15rem;text-align:center;padding:10px 40px;border-bottom:3px solid #3c096c;text-shadow:0 2px 0 #3c096c;color:#ffe066}.po-x{position:absolute;right:8px;top:7px;width:30px;height:30px;border-radius:8px;border:2px solid #fff;background:#e63946;color:#fff;font-weight:900;cursor:pointer}'
++'.po-top{display:flex;gap:10px;padding:12px}.po-art{flex:1.3;height:190px;border-radius:14px;background:#3c096c center/cover;position:relative;display:flex;align-items:center;justify-content:center;overflow:hidden;border:3px solid #3c096c}.po-art img{height:88%;border-radius:10px;box-shadow:0 8px 20px #000a;animation:heroFloat 3s ease-in-out infinite}.po-emo{position:absolute;left:4px;bottom:4px;animation:emoBob 1.4s infinite}.po-side{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}.po-crown{font-size:3rem;animation:ptNumPulse 1.4s infinite}.po-t{font-family:Fredoka,sans-serif;font-weight:800;font-size:1.3rem}.po-s{font-size:.8rem;opacity:.9}'
++'.po-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;padding:0 12px}.po-it{background:linear-gradient(180deg,#7b2cbf,#48128a);border:2px solid #3c096c;border-radius:12px;padding:8px 4px;text-align:center}.po-ic{font-size:1.6rem}.po-it small{font-size:.62rem;display:block;line-height:1.1;opacity:.95}.po-how{font-size:.8rem;text-align:center;padding:10px 14px;opacity:.95}.po-go{display:block;margin:0 auto 16px;width:78%;padding:14px;border-radius:14px;border:3px solid #1b1330;background:linear-gradient(180deg,#8ce99a,#2fbf71);font-family:Fredoka,sans-serif;font-weight:800;font-size:1.15rem;color:#fff;text-shadow:0 2px 0 #1b6b3e;box-shadow:0 5px 0 #1b1330;cursor:pointer;animation:ptNumPulse 1.6s infinite}'
++'.bt-emo{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin-top:12px;padding-top:10px;border-top:1px dashed #fff3}.bt-emo button{border:none;background:rgba(255,255,255,.1);border-radius:10px;padding:3px;cursor:pointer}.bt-emo .bt-more{font-size:1.1rem;width:44px}.bt-emopop{position:fixed;z-index:10060;top:14%;right:8%;animation:emoIn .5s cubic-bezier(.2,1.6,.4,1);pointer-events:none;filter:drop-shadow(0 8px 12px #0008)}.bt-emopop.mine{right:auto;left:8%}.bt-emopop.out{opacity:0;transform:translateY(-30px);transition:.5s}'
++'.ch-emote{padding:2px}.ch-m.emo-only{background:none!important;padding:0}';
+document.head.appendChild(st);})();
+
+/* ====== 🎬 Sagas en grandes cases dans « Pour toi » (la page Sagas disparaît du menu) ====== */
+function fySagaTiles(el){
+  if(!el||el.querySelector('#fy-sagas')||el.querySelector('.trend-loading'))return;
+  try{buildAutoSagas();}catch(_){}
+  var list=sagas.filter(function(s){return (s.films||[]).length;}).sort(function(a,b){return (b.films||[]).length-(a.films||[]).length;});
+  var box=document.createElement('div');box.id='fy-sagas';box.className='fy-sagas';
+  box.innerHTML='<div class="fy-rh">🎬 Tes sagas <small>'+list.length+'</small></div><div class="fys-row">'+list.map(function(sg){
+    var f=(sg.films||[]).map(function(x){return items.find(function(i){return i.id===x.id;});}).filter(Boolean);
+    var seen=f.filter(function(i){return i.status==='termine';}).length,img=(f[0]&&(f[0].banner||f[0].poster))||'';
+    return '<button class="fys" data-fys="'+sg.id+'"><div class="fys-bg" style="background-image:url('+esc(img)+')"'+(sg.collId?' data-fysc="'+sg.collId+'"':'')+'></div><div class="fys-n">'+esc(sg.name)+'</div><div class="fys-p"><i style="width:'+(f.length?Math.round(seen/f.length*100):0)+'%"></i><span>'+seen+' / '+f.length+' vus</span></div></button>';
+  }).join('')+'<button class="fys fys-new" data-fysnew="1"><div class="fys-n">➕<br>Nouvelle saga</div></button></div>';
+  var hero=el.querySelector('.fy-hero');if(hero&&hero.nextSibling)el.insertBefore(box,hero.nextSibling);else el.insertBefore(box,el.firstChild);
+  box.querySelectorAll('[data-fysc]').forEach(function(b){var cid=b.dataset.fysc;var p=_collCache[cid]||(_collCache[cid]=fetch('https://api.themoviedb.org/3/collection/'+cid+'?api_key='+TMDB+'&language=fr-FR').then(function(r){return r.json();}).catch(function(){return null;}));p.then(function(c){if(c&&c.backdrop_path)b.style.backgroundImage='url(https://image.tmdb.org/t/p/w780'+c.backdrop_path+')';});});
+  box.querySelectorAll('[data-fys]').forEach(function(b){b.onclick=function(){openSagaModal(+b.dataset.fys);};});
+  box.querySelector('[data-fysnew]').onclick=function(){var n=prompt('Nom de la nouvelle saga (ex : Marvel, Harry Potter…)');if(!n||!n.trim())return;n=n.trim();if(sagas.find(function(s){return s.name.toLowerCase()===n.toLowerCase();}))return toast('Saga déjà existante !');var sg={id:Date.now(),name:n,films:[]};sagas.push(sg);svSG();refreshFySagas();openSagaModal(sg.id);};
+}
+function refreshFySagas(){var el=document.getElementById('foryou-body');if(!el)return;var o=el.querySelector('#fy-sagas');if(o)o.remove();fySagaTiles(el);}
+function openSagaModal(id){
+  currentSaga=sagas.find(function(s){return s.id===id;});if(!currentSaga)return;
+  var dp=document.getElementById('saga-detail'),home=dp.parentNode;
+  var o=document.createElement('div');o.className='saga-ov';o.innerHTML='<div class="saga-box"><button class="saga-x">✕</button></div>';
+  document.body.appendChild(o);o.querySelector('.saga-box').appendChild(dp);renderSagaDetail();
+  var close=function(){o.classList.add('out');setTimeout(function(){home.appendChild(dp);o.remove();refreshFySagas();},250);clearInterval(iv);};
+  o.querySelector('.saga-x').onclick=close;o.addEventListener('click',function(e){if(e.target===o)close();});
+  var iv=setInterval(function(){if(!currentSaga)close();},500);
+}
+(function(){var oB=fyBind;fyBind=function(el){oB(el);try{fySagaTiles(el);}catch(_){}};})();
+(function(){var b=document.querySelector('.nav-btn[data-view="sagas"]');if(b)b.style.display='none';})();
+/* ====== ✨ Transitions entre les pages ====== */
+(function(){
+  var order=function(){return [].slice.call(document.querySelectorAll('header nav .nav-btn')).filter(function(b){return b.offsetParent!==null||b.classList.contains('active');});};
+  var prev=null;
+  var sw=document.createElement('div');sw.className='page-sweep';document.body.appendChild(sw);
+  document.querySelectorAll('header nav .nav-btn').forEach(function(b){
+    b.addEventListener('click',function(){
+      var l=order(),i=l.indexOf(b),pi=prev?l.indexOf(prev):-1;prev=b;
+      var v=document.getElementById(views[b.dataset.view]);if(!v)return;
+      v.dataset.dir=pi<0||i===pi?'up':i>pi?'l':'r';
+      sw.classList.remove('go');void sw.offsetWidth;sw.classList.add('go');
+    });
+    if(b.classList.contains('active'))prev=b;
+  });
+  var st=document.createElement('style');st.textContent=
+   '.view-anim{animation:vIn .5s cubic-bezier(.2,.9,.25,1) both}.view-anim[data-dir="l"]{animation-name:vInL}.view-anim[data-dir="r"]{animation-name:vInR}'
+  +'.view-anim>*{animation:vChild .55s cubic-bezier(.2,.9,.25,1) both}.view-anim>*:nth-child(2){animation-delay:.05s}.view-anim>*:nth-child(3){animation-delay:.1s}.view-anim>*:nth-child(4){animation-delay:.15s}.view-anim>*:nth-child(5){animation-delay:.2s}.view-anim>*:nth-child(n+6){animation-delay:.25s}'
+  +'@keyframes vIn{from{opacity:0;transform:translateY(24px) scale(.985);filter:blur(4px)}}@keyframes vInL{from{opacity:0;transform:translateX(70px) scale(.98);filter:blur(5px)}}@keyframes vInR{from{opacity:0;transform:translateX(-70px) scale(.98);filter:blur(5px)}}@keyframes vChild{from{opacity:0;transform:translateY(18px)}}'
+  +'.page-sweep{position:fixed;left:0;top:0;height:4px;width:100%;z-index:10070;pointer-events:none;background:linear-gradient(90deg,transparent,#ff4d6d,#ffd23f,#7b2cbf,transparent);transform:translateX(-100%);opacity:0}.page-sweep.go{animation:sweep .7s ease-out}@keyframes sweep{0%{transform:translateX(-100%);opacity:1}100%{transform:translateX(100%);opacity:0}}'
+  +'@media (prefers-reduced-motion:reduce){.view-anim,.view-anim>*{animation:none!important}}'
+  +'.fy-sagas{margin:18px 0 8px}.fys-row{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(220px,1fr);gap:18px;overflow-x:auto;padding:6px 4px 14px;scroll-snap-type:x mandatory}.fys{position:relative;aspect-ratio:16/9;border-radius:14px;border:2px solid rgba(255,255,255,.12);background:#2a2d38;overflow:hidden;cursor:pointer;color:#fff;box-shadow:0 10px 24px rgba(0,0,0,.35);transition:transform .3s cubic-bezier(.2,.9,.3,1.3),box-shadow .3s,border-color .3s;scroll-snap-align:start;display:flex;align-items:center;justify-content:center;padding:0}'
+  +'.fys-bg{position:absolute;inset:0;background:center/cover;filter:brightness(.45) saturate(1.1);transition:filter .35s,transform .6s}.fys:hover{transform:scale(1.06);border-color:#fff;box-shadow:0 18px 40px rgba(0,0,0,.55)}.fys:hover .fys-bg{filter:brightness(.85);transform:scale(1.08)}'
+  +'.fys-n{position:relative;font-family:Fredoka,sans-serif;font-weight:800;font-size:clamp(1rem,2vw,1.45rem);text-transform:uppercase;letter-spacing:1px;text-align:center;padding:0 10px;text-shadow:0 3px 12px #000,0 1px 0 #000;line-height:1.1}.fys-p{position:absolute;left:10px;right:10px;bottom:8px;height:16px;border-radius:99px;background:#0007;overflow:hidden;font-size:.66rem;display:flex;align-items:center;justify-content:center}.fys-p i{position:absolute;left:0;top:0;bottom:0;background:linear-gradient(90deg,#06d6a0,#3a86ff)}.fys-p span{position:relative}.fys-new{background:linear-gradient(135deg,#3c1a78,#ff4d6d55);border-style:dashed}'
+  +'.saga-ov{position:fixed;inset:0;z-index:10040;background:rgba(10,6,20,.75);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;padding:14px;animation:fadeInOv .25s}.saga-ov.out{opacity:0;transition:.25s}@keyframes fadeInOv{from{opacity:0}}.saga-box{position:relative;width:min(920px,100%);max-height:90vh;overflow:auto;background:var(--card-bg);border-radius:22px;padding:18px;box-shadow:0 24px 70px #000a;animation:poIn .45s cubic-bezier(.2,1.3,.4,1)}.saga-box .saga-detail-panel{width:100%;max-width:none;border:none;box-shadow:none;background:none;padding:0}.saga-x{position:absolute;right:12px;top:12px;z-index:2;width:34px;height:34px;border-radius:50%;border:none;background:var(--raspberry,#ff4d6d);color:#fff;font-weight:900;cursor:pointer}'
+  /* 🛒 Boutique façon Clash */
+  +'#pass-shop .sh-row{display:grid!important;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:16px;overflow:visible;padding:4px 2px 10px}#pass-shop .sh-row.sh-spec{grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}'
+  +'#pass-shop .sh-sec{display:block;width:fit-content;min-width:min(360px,90%);margin:26px auto 14px;text-align:center;font-family:Fredoka,sans-serif;font-weight:800;font-size:1.35rem;color:#fff;padding:9px 34px;background:linear-gradient(180deg,#ff6b8b,#e5364f);border:3px solid #1b1330;border-radius:12px;box-shadow:0 5px 0 #1b1330;text-shadow:0 2px 0 #7a1024;position:relative}#pass-shop .sh-sec small{font-size:.7rem;opacity:.9}'
+  +'#pass-shop .sh-it{flex:none;width:auto;border:3px solid #1b1330;border-radius:16px;padding:10px 10px 12px;gap:8px;background:linear-gradient(180deg,#c3d0ea,#8397bf);box-shadow:0 6px 0 #1b1330;color:#1b1330;transition:transform .18s}#pass-shop .sh-it:hover{transform:translateY(-5px)}'
+  +'#pass-shop .sh-it.r-epic{background:linear-gradient(180deg,#d9b8ff,#9d6be0)}#pass-shop .sh-it.r-legend{background:linear-gradient(180deg,#ffe38a,#e0a526)}#pass-shop .sh-it.own{opacity:.55}'
+  +'#pass-shop .sh-n{order:-1;font-family:Fredoka,sans-serif;font-weight:800;font-size:1rem;color:#fff;text-shadow:0 2px 0 #1b1330,1px 0 0 #1b1330,-1px 0 0 #1b1330,0 -1px 0 #1b1330;min-height:2.4em;display:flex;align-items:center;justify-content:center}'
+  +'#pass-shop .sh-prev{height:130px;border:3px solid #1b1330;border-radius:12px;background:radial-gradient(circle at 50% 40%,#7b9bd1,#3d5a8f);font-size:3.4rem;box-shadow:inset 0 -6px 0 #0003}#pass-shop .r-epic .sh-prev{background:radial-gradient(circle at 50% 40%,#b388ff,#5a189a)}#pass-shop .r-legend .sh-prev{background:radial-gradient(circle at 50% 40%,#ffd166,#b5651d)}'
+  +'#pass-shop .sh-r,#pass-shop .sh-dd,#pass-shop .sh-odds{color:#1b1330;font-weight:700;font-size:.72rem;opacity:.85}#pass-shop .sh-buy{width:100%;padding:10px;border:3px solid #1b1330;border-radius:12px;background:linear-gradient(180deg,#8ce99a,#2fbf71);box-shadow:0 4px 0 #1b1330;color:#fff;font-family:Fredoka,sans-serif;font-weight:800;font-size:1.05rem;text-shadow:0 2px 0 #1b6b3e;cursor:pointer}#pass-shop .sh-buy:active{transform:translateY(3px);box-shadow:0 1px 0 #1b1330}#pass-shop .sh-buy .cur-pill{background:#0003;color:#fff;font-size:.95rem}'
+  +'#pass-shop .sh-toprow{display:grid;grid-template-columns:1fr 1fr;gap:16px}@media(max-width:700px){#pass-shop .sh-toprow{grid-template-columns:1fr}#pass-shop .sh-row{grid-template-columns:repeat(2,1fr)}#pass-shop .sh-prev{height:100px}}';
+  document.head.appendChild(st);
+})();
+
+/* ====== 📰 ACTUS v2 : 2 fils, défilement naturel et infini, tout mélangé (actus, anecdotes, potes, pubs « à venir », shorts YouTube) ====== */
+Object.assign(FEED_ACC,{an:{n:'Le savais-tu ?',h:'@AnecdotesCine',a:'💡',c:'linear-gradient(135deg,#f59f00,#e8590c)'},ds:{n:'À découvrir',h:'@DecouverteCine',a:'🧭',c:'linear-gradient(135deg,#0ca678,#1971c2)'},pt:{n:'Entre potes',h:'@TesPotes',a:'👥',c:'linear-gradient(135deg,#06d6a0,#3a86ff)'}});
+function fTimeout(p,ms){return Promise.race([p,new Promise(function(r){setTimeout(function(){r(null);},ms);})]);}
+function rssItems(url){
+  return fTimeout(ivJson('https://api.rss2json.com/v1/api.json?rss_url='+encodeURIComponent(url)),9000).then(function(d){
+    if(d&&d.status==='ok'&&(d.items||[]).length)return d.items;
+    return fTimeout(fetch('https://api.allorigins.win/raw?url='+encodeURIComponent(url)).then(function(r){return r.ok?r.text():null;}).catch(function(){return null;}),10000).then(function(x){
+      if(!x)return [];var doc;try{doc=new DOMParser().parseFromString(x,'text/xml');}catch(_){return [];}
+      var q=function(n,sel){var e=n.getElementsByTagName(sel)[0];return e?e.textContent:'';};
+      return [].slice.call(doc.querySelectorAll('item,entry')).slice(0,15).map(function(n){var ln=n.getElementsByTagName('link')[0];var mt=n.getElementsByTagName('media:thumbnail')[0]||n.getElementsByTagName('media:content')[0]||n.getElementsByTagName('enclosure')[0];
+        return {title:q(n,'title'),link:ln?(ln.getAttribute('href')||ln.textContent):'',pubDate:q(n,'pubDate')||q(n,'published')||q(n,'updated'),description:q(n,'description')||q(n,'summary')||q(n,'media:description'),thumbnail:mt?(mt.getAttribute('url')||''):'',guid:q(n,'guid')||q(n,'yt:videoId')||q(n,'id')};});
+    });
+  });
+}
+newsFetch=function(){
+  var ck='cineNewsCache2',cache=null;try{cache=JSON.parse(localStorage.getItem(ck)||'null');}catch(_){}
+  if(cache&&Date.now()-cache.t<45*60000&&cache.l.length)return Promise.resolve(cache.l);
+  return Promise.all(NEWS_FEEDS.map(function(f){return rssItems(f.u).then(function(l){return (l||[]).slice(0,10).map(function(x){var img=x.thumbnail||(x.enclosure&&(x.enclosure.link||x.enclosure.thumbnail))||'';if(!img){var m=(x.content||x.description||'').match(/<img[^>]+src="([^"]+)"/);if(m)img=m[1];}var txt=String(x.description||'').replace(/<[^>]+>/g,' ').replace(/\s+/g,' ').trim();return {src:f.n,t:x.title,d:ivCut(txt,220),l:x.link,img:img,ts:new Date(String(x.pubDate||'').replace(' ','T')).getTime()||Date.now()};});});})).then(function(all){
+    var l=[].concat.apply([],all).filter(function(x){return x.t;});if(l.length)try{localStorage.setItem(ck,JSON.stringify({t:Date.now(),l:l}));}catch(_){}return l;
+  });
+};
+/* --- Chaînes YouTube (shorts) --- */
+function ytChannels(){try{return JSON.parse(localStorage.getItem('cineYtChannels')||'[]');}catch(_){return [];}}
+function ytSave(l){try{localStorage.setItem('cineYtChannels',JSON.stringify(l));}catch(_){}}
+function ytResolve(input){
+  input=String(input||'').trim();var m=input.match(/(UC[\w-]{22})/);if(m)return Promise.resolve({id:m[1],n:input.indexOf('youtube')>=0?'Chaîne YouTube':input});
+  var h=(input.match(/@([\w.\-]+)/)||[])[1]||input.replace(/^https?:\/\/(www\.)?youtube\.com\//,'').replace(/[\/?].*$/,'');if(!h)return Promise.resolve(null);
+  return fTimeout(fetch('https://api.allorigins.win/raw?url='+encodeURIComponent('https://www.youtube.com/@'+h)).then(function(r){return r.ok?r.text():null;}).catch(function(){return null;}),12000).then(function(x){if(!x)return null;var id=(x.match(/"externalId":"(UC[\w-]{22})"/)||x.match(/channel_id=(UC[\w-]{22})/)||x.match(/"channelId":"(UC[\w-]{22})"/)||[])[1];if(!id)return null;var t=((x.match(/<title>([^<]*)<\/title>/)||[])[1]||'@'+h).replace(/\s*-\s*YouTube\s*$/,'');return {id:id,n:t};});
+}
+function ytFetchAll(){
+  var ch=ytChannels();if(!ch.length)return Promise.resolve([]);
+  return Promise.all(ch.map(function(c){return rssItems('https://www.youtube.com/feeds/videos.xml?channel_id='+c.id).then(function(l){return (l||[]).slice(0,12).map(function(x){var id=(String(x.link||'').match(/(?:v=|shorts\/)([\w-]{11})/)||String(x.guid||'').match(/([\w-]{11})$/)||[])[1];if(!id)return null;return {kind:'yt',id:'yt_'+id,vid:id,ch:c.n,t:x.title||'',ts:new Date(String(x.pubDate||'').replace(' ','T')).getTime()||Date.now(),short:/shorts/.test(x.link||'')||/#shorts/i.test(x.title||'')};}).filter(Boolean);});})).then(function(a){return [].concat.apply([],a);});
+}
+function openYtSettings(){
+  var draw=function(){var l=ytChannels();o.querySelector('#yt-list').innerHTML=l.length?l.map(function(c,i){return '<div class="iv-row"><div class="iv-m"><b>'+esc(c.n)+'</b><br><small>'+c.id+'</small></div><button class="soc-btn2" data-ytdel="'+i+'">✕</button></div>';}).join(''):'<div class="soc-t">Aucune chaîne pour l\'instant.</div>';o.querySelectorAll('[data-ytdel]').forEach(function(b){b.onclick=function(){var l2=ytChannels();l2.splice(+b.dataset.ytdel,1);ytSave(l2);draw();_f2=null;};});};
+  var o=socOverlay('<div class="soc-h">📺 Mes chaînes YouTube</div><div class="soc-t">Colle le lien d\'une chaîne (ex : youtube.com/@NomDeLaChaine) : ses shorts et vidéos apparaîtront dans tes Actus.</div><div style="display:flex;gap:6px"><input id="yt-in" placeholder="https://youtube.com/@…" style="flex:1;padding:10px;border-radius:10px;border:1px solid var(--border);background:var(--input-bg);color:inherit"><button class="soc-btn" id="yt-add">Ajouter</button></div><div id="yt-list" class="iv-list"></div><div class="soc-row"><button class="soc-btn2" id="yt-x">Fermer</button></div>');
+  draw();o.querySelector('#yt-x').onclick=function(){o.remove();renderFeed();};
+  o.querySelector('#yt-add').onclick=function(){var b=this,v=o.querySelector('#yt-in').value;b.disabled=true;b.textContent='⏳';ytResolve(v).then(function(c){b.disabled=false;b.textContent='Ajouter';if(!c)return toast('❌ Chaîne introuvable. Essaie avec le lien complet de la chaîne.');var l=ytChannels();if(!l.some(function(x){return x.id===c.id;}))l.push(c);ytSave(l);o.querySelector('#yt-in').value='';draw();_f2=null;toast('📺 '+c.n+' ajoutée');});};
+}
+/* --- Sources du fil --- */
+var _f2=null;
+function f2State(){
+  if(_f2)return _f2;
+  var S=_f2={b:{mine:[],ad:[],news:[],trend:[],anec:[],pt:[],yt:[],ds:[]},seen:{},page:1,anecDone:{},busy:{}};
+  var mine=buildFeed();
+  mine.forEach(function(p){if(p.acc==='out')S.b.ad.push({kind:'ad',id:'ad_'+p.id,p:p});else S.b.mine.push(p);});
+  var today=todayStr();
+  wishlist.filter(function(w){return w.releaseDate&&w.releaseDate>today;}).sort(function(a,b){return a.releaseDate.localeCompare(b.releaseDate);}).slice(0,20).forEach(function(w){if(!S.b.ad.some(function(a){return a.id==='ad_w_'+w.id;}))S.b.ad.push({kind:'ad',id:'ad_w_'+w.id,w:w});});
+  S.b.mine.sort(function(a,b){return b.ts-a.ts;});
+  feedExtra().then(function(e){(e||[]).forEach(function(p){if(p.extra)_fyIndex[p.extra.k]=Object.assign({media_type:p.extra.k.split('_')[0]},p.extra.r);});S.b.trend=S.b.trend.concat(e||[]);f2Pump();});
+  newsFetch().then(function(n){S.b.news=(n||[]).sort(function(a,b){return b.ts-a.ts;}).map(function(x){var f=NEWS_FEEDS.find(function(y){return y.n===x.src;})||{a:'📰',c:'#444'};return {acc:'news',A:{n:x.src,h:'@'+ivNorm(x.src).replace(/ /g,''),a:f.a,c:f.c},ts:x.ts,text:'<b>'+esc(x.t)+'</b>'+(x.d?'<br><span class="tw-sub">'+esc(x.d)+'</span>':''),img:x.img,link:x.l,id:'nw_'+shHash(x.l||x.t)};});f2Pump();}).catch(function(){});
+  ytFetchAll().then(function(l){S.b.yt=l.sort(function(a,b){return b.ts-a.ts;});f2Pump();});
+  if(window.CineSocial&&window.CineSocial.friends)window.CineSocial.friends().then(function(fr){var P='https://image.tmdb.org/t/p/',now=Date.now(),mineK={};items.forEach(function(i){var k=friendKey(i);if(k)mineK[k]=i;});
+    fr.forEach(function(f){(f.items||[]).forEach(function(x){var m=mineK[x.k];if(m&&m.status==='termine'&&x.s==='termine')S.b.pt.push(feedPost('pt',now-Math.random()*6*86400000,'👀 Toi et <b>'+esc(f.name)+'</b> avez tous les deux vu <b>'+esc(x.t)+'</b>'+(x.r||m.rating?' — toi ⭐ '+(m.rating||'?')+' · lui ⭐ '+(x.r||'?')+(x.r&&m.rating?(+x.r===+m.rating?' 🤝 même note !':+x.r>+m.rating?' (il a préféré)':' (tu as préféré)'):''):''),x.p?P+x.p:(m.banner||m.poster||''),'pt_'+f.uid+'_'+x.k));
+      else if(!m&&x.s==='termine'&&x.r>=4)S.b.pt.push(feedPost('pt',now-Math.random()*6*86400000,'🔥 <b>'+esc(f.name)+'</b> a adoré <b>'+esc(x.t)+'</b> (⭐ '+x.r+') et tu ne l\'as pas encore vu…',x.p?P+x.p:'','pt2_'+f.uid+'_'+x.k));});
+      (f.wish||[]).forEach(function(k){var m=mineK[k];if(m&&m.status==='termine')S.b.pt.push(feedPost('pt',now-Math.random()*5*86400000,'📌 <b>'+esc(f.name)+'</b> a <b>'+esc(m.title)+'</b> dans sa liste « à voir »… et toi tu l\'as déjà vu'+(m.rating?' (⭐ '+m.rating+')':'')+'. Conseille-le lui !',m.banner||m.poster||'','pt3_'+f.uid+'_'+k));});});
+    S.b.pt=gShuffle(S.b.pt);f2Pump();}).catch(function(){});
+  f2MoreDisc();f2MoreAnec();
+  return S;
+}
+function f2MoreDisc(){var S=_f2;if(!S||S.busy.ds)return;S.busy.ds=1;var pg=S.page++;var owned=getOwnedCatKeys();
+  var urls=['trending/all/week','tv/popular','movie/popular','tv/top_rated','movie/top_rated'].map(function(u,i){return ivJson('https://api.themoviedb.org/3/'+u+'?api_key='+TMDB+'&language=fr-FR&page='+(pg+i*0));});
+  Promise.all(urls).then(function(rs){var now=Date.now(),out=[];
+    rs.forEach(function(d,j){((d&&d.results)||[]).forEach(function(r){var mt=r.media_type||(j===1||j===3?'tv':'movie');if(!r.backdrop_path||owned[mt+'_'+r.id])return;var k=mt+'_'+r.id;_fyIndex[k]=Object.assign({media_type:mt},r);var y=(r.release_date||r.first_air_date||'').slice(0,4);
+      var intro=['🧭 Tu devrais tester','🎯 Pile ton genre ?','🍿 Ce soir, pourquoi pas','⭐ Très bien noté :','💬 Tout le monde en parle :'][Math.floor(Math.random()*5)];
+      out.push(feedPost('ds',now-Math.random()*3*86400000,intro+' <b>'+esc(r.title||r.name)+'</b>'+(y?' ('+y+')':'')+' · ⭐ '+(r.vote_average||0).toFixed(1)+'/10<br><span class="tw-sub">'+esc(ivCut(r.overview||'',200))+'</span>','https://image.tmdb.org/t/p/w780'+r.backdrop_path,'ds_'+k,{k:k,r:r}));});});
+    S.b.ds=S.b.ds.concat(gShuffle(out));S.busy.ds=0;f2Pump();}).catch(function(){S.busy.ds=0;});
+}
+function f2MoreAnec(){var S=_f2;if(!S||S.busy.an)return;S.busy.an=1;
+  var cands=items.filter(function(i){return i.tmdbId&&!i.locked&&!S.anecDone[i.tmdbType+'_'+i.tmdbId];});
+  Object.keys(_fyIndex).forEach(function(k){if(!S.anecDone[k]&&cands.length<400){var r=_fyIndex[k];cands.push({tmdbId:r.id,tmdbType:r.media_type==='tv'?'tv':'movie',title:r.title||r.name,banner:r.backdrop_path?'https://image.tmdb.org/t/p/w780'+r.backdrop_path:'',_k:k});}});
+  var pick=gPick(cands,4);
+  Promise.all(pick.map(function(it){S.anecDone[it.tmdbType+'_'+it.tmdbId]=1;return fTimeout(wikiFindTitle(it).then(function(t){if(!t)return null;return fetch('https://fr.wikipedia.org/w/api.php?action=query&prop=extracts&explaintext=1&redirects=1&titles='+encodeURIComponent(t)+'&format=json&origin=*').then(function(r){return r.json();}).then(function(j){var pg=j&&j.query&&j.query.pages,txt='';for(var k in pg)txt=pg[k].extract||'';return wikiPickFacts(txt).slice(0,2).map(function(f,n){return feedPost('an',Date.now()-Math.random()*4*86400000,'💡 <b>'+esc(it.title)+'</b> — '+esc(f.t),it.banner||it.poster||'','an_'+it.tmdbType+'_'+it.tmdbId+'_'+n,it._k?{k:it._k,r:_fyIndex[it._k]}:null);});});}).catch(function(){return null;}),12000);})).then(function(r){
+    r.forEach(function(l){if(l)S.b.anec=S.b.anec.concat(l);});S.b.anec=gShuffle(S.b.anec);S.busy.an=0;f2Pump();});
+}
+var F2_PATTERN=['mine','news','ds','anec','yt','news','pt','trend','ad','ds','anec','news','yt','mine','pt','ds','news','anec','ad','trend'];
+function f2Next(){var S=_f2;for(var tries=0;tries<F2_PATTERN.length;tries++){var k=F2_PATTERN[S.pi=((S.pi||0)+1)%F2_PATTERN.length];var b=S.b[k];while(b&&b.length){var p=b.shift();if(!S.seen[p.id]){S.seen[p.id]=1;return p;}}}return null;}
+function f2Html(p){
+  if(p.kind==='ad'){var w=p.w,pp=p.p;var t=w?w.title:'',img=w?w.poster:(pp&&pp.img)||'',d=w?new Date(w.releaseDate+'T12:00'):null;
+    var txt=w?'Sortie le <b>'+d.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'})+'</b>'+(w.season?' · saison '+w.season:''):pp.text;
+    var days=w?Math.ceil((d-Date.now())/86400000):0;
+    return '<div class="tw tw-ad"><div class="ad-lbl">Sponsorisé · 🔥 Tes attentes</div><div class="ad-img" style="background-image:url('+esc(img)+')">'+(w?'<div class="ad-cd">J-'+days+'</div>':'')+'</div><div class="ad-b">'+(t?'<div class="ad-t">'+esc(t)+'</div>':'')+'<div class="ad-s">'+txt+'</div><button class="ad-go" data-adgo="1">Voir mes attentes →</button></div></div>';}
+  if(p.kind==='yt')return '<div class="tw tw-yt"><div class="tw-av" style="background:linear-gradient(135deg,#ff0000,#b00000)">▶</div><div class="tw-m"><div class="tw-h"><b>'+esc(p.ch)+'</b> <span class="tw-hd">· '+feedAgo(p.ts)+'</span></div><div class="tw-t">'+esc(p.t)+'</div><div class="yt-box" data-yt="'+p.vid+'" style="background-image:url(https://i.ytimg.com/vi/'+p.vid+'/hqdefault.jpg)"><span class="yt-play">▶</span><span class="yt-tag">'+(p.short?'Short':'Vidéo')+'</span></div></div></div>';
+  return twHtml(p);
+}
+function f2Append(n){
+  var S=_f2,c1=document.getElementById('f2-c1'),c2=document.getElementById('f2-c2');if(!c1)return 0;var one=window.innerWidth<760,k=0;
+  for(var i=0;i<n;i++){var p=f2Next();if(!p)break;k++;var d=document.createElement('div');d.className='f2-it';d.innerHTML=f2Html(p);var tgt=one||c1.offsetHeight<=c2.offsetHeight?c1:c2;tgt.appendChild(d.firstChild);}
+  var tot=Object.keys(S.b).reduce(function(a,x){return a+S.b[x].length;},0);if(tot<25){f2MoreDisc();f2MoreAnec();}
+  return k;
+}
+function f2Pump(){var c1=document.getElementById('f2-c1');if(!c1)return;var s=document.getElementById('f2-sent');if(!s)return;var r=s.getBoundingClientRect();if(r.top<window.innerHeight+900)f2Append(8);var ld=document.getElementById('f2-ld');if(ld)ld.style.display=c1.children.length?'none':'';}
+renderFeed=function(){
+  var el=document.getElementById('feed-body');if(!el)return;
+  if(_f2&&Date.now()-(_f2.t||0)>20*60000)_f2=null;
+  var fresh=!_f2;f2State();_f2.t=_f2.t||Date.now();
+  if(!fresh&&el.querySelector('#f2-c1')){f2Pump();return;}
+  _f2.seen={};
+  el.className='feed2';
+  el.innerHTML='<div class="f2-bar"><span>📰 Ton fil ciné · actus, anecdotes, tes potes, tes attentes'+(ytChannels().length?', tes chaînes YouTube':'')+'</span><button class="soc-btn2" id="f2-yt">📺 Mes chaînes YouTube</button><button class="soc-btn2" id="f2-re">🔄</button></div><div class="f2-cols"><div class="f2-col" id="f2-c1"></div><div class="f2-col" id="f2-c2"></div></div><div class="f2-ld" id="f2-ld">⏳ Je prépare ton fil…</div><div id="f2-sent" class="f2-sent"></div>';
+  el.querySelector('#f2-yt').onclick=openYtSettings;el.querySelector('#f2-re').onclick=function(){_f2=null;renderFeed();};
+  if(!el._f2b){el._f2b=1;el.addEventListener('click',function(e){var t=e.target.closest('[data-twlike],[data-twadd],.tw-img,[data-yt],[data-adgo]');if(!t)return;
+    if(t.dataset.twlike){var id=t.dataset.twlike;if(passState.feedLikes[id])delete passState.feedLikes[id];else passState.feedLikes[id]=1;svPass();t.classList.toggle('on');t.innerHTML=(passState.feedLikes[id]?'❤️':'🤍')+' '+((Math.abs(parseInt(shHash(id),36))%180)+(passState.feedLikes[id]?1:0));return;}
+    if(t.dataset.twadd){fyAdd(t.dataset.twadd);t.remove();return;}
+    if(t.dataset.yt){t.outerHTML='<div class="yt-box on"><iframe src="https://www.youtube-nocookie.com/embed/'+t.dataset.yt+'?autoplay=1&loop=1&playlist='+t.dataset.yt+'&rel=0" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe></div>';return;}
+    if(t.dataset.adgo){var b=document.querySelector('.nav-btn[data-view="attentes"]');if(b)b.click();return;}
+    if(t.dataset.fyk){fyPreview(t.dataset.fyk);return;}if(t.dataset.twlink){window.open(t.dataset.twlink,'_blank','noopener');}
+  });}
+  f2Append(12);f2Pump();
+};
+(function(){
+  var sc=function(){var v=document.getElementById('view-feed');if(v&&v.style.display!=='none')f2Pump();};
+  window.addEventListener('scroll',function(){clearTimeout(sc._t);sc._t=setTimeout(sc,120);},{passive:true});
+  setInterval(sc,2500);
+  var st=document.createElement('style');st.textContent=
+   '.feed2{max-width:1180px;margin:0 auto}.f2-bar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:14px}.f2-bar span{flex:1;font-size:.85rem;color:var(--muted)}'
+  +'.f2-cols{display:grid;grid-template-columns:1fr 1fr;gap:22px;align-items:start}.f2-col{display:flex;flex-direction:column;gap:18px;min-width:0}@media(max-width:760px){.f2-cols{grid-template-columns:1fr}.f2-col#f2-c2{display:none}}'
+  +'.feed2 .tw{background:var(--card-bg);border:1px solid rgba(128,128,128,.18);border-radius:20px;padding:16px;box-shadow:0 8px 22px rgba(0,0,0,.18);animation:f2In .5s cubic-bezier(.2,.9,.3,1) both;font-size:1.02rem}.feed2 .tw-av{width:50px;height:50px;font-size:1.4rem;flex:0 0 50px}.feed2 .tw-t{font-size:1.02rem;line-height:1.45}.feed2 .tw-img{height:auto;aspect-ratio:16/9;border-radius:16px;margin-top:10px;cursor:pointer;background-size:cover;background-position:center;transition:transform .3s}.feed2 .tw-img:hover{transform:scale(1.015)}@keyframes f2In{from{opacity:0;transform:translateY(26px) scale(.98)}}'
+  +'.tw-ad{padding:0!important;overflow:hidden;border:2px solid #ffd23f55!important;display:block!important}.ad-lbl{font-size:.7rem;font-weight:800;letter-spacing:.5px;text-transform:uppercase;padding:8px 14px;background:linear-gradient(90deg,#ffd23f33,transparent);color:#f5a623}.ad-img{aspect-ratio:16/10;max-height:340px;width:100%;background-position:center 25%!important;background:#222 center/cover;position:relative}.ad-cd{position:absolute;right:12px;top:12px;background:#ff4d6d;color:#fff;font-family:Fredoka,sans-serif;font-weight:800;font-size:1.5rem;padding:6px 14px;border-radius:14px;box-shadow:0 6px 16px #0008;animation:ptNumPulse 1.6s infinite}.ad-b{padding:14px 16px 16px}.ad-t{font-family:Fredoka,sans-serif;font-size:1.35rem;font-weight:800}.ad-s{font-size:.92rem;margin:4px 0 12px;opacity:.9}.ad-go{border:none;border-radius:12px;padding:10px 16px;font-weight:800;background:linear-gradient(135deg,#ff4d6d,#7b2cbf);color:#fff;cursor:pointer}'
+  +'.yt-box{position:relative;margin-top:10px;aspect-ratio:9/16;max-height:640px;width:100%;border-radius:16px;background:#000 center/cover;cursor:pointer;overflow:hidden}.yt-box iframe{position:absolute;inset:0;width:100%;height:100%;border:0}.yt-play{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:70px;height:70px;border-radius:50%;background:#ff0000e6;color:#fff;font-size:1.8rem;display:flex;align-items:center;justify-content:center;box-shadow:0 8px 24px #0009}.yt-tag{position:absolute;left:10px;top:10px;background:#000a;color:#fff;font-size:.72rem;font-weight:800;padding:3px 9px;border-radius:99px}'
+  +'.f2-ld{text-align:center;padding:30px;color:var(--muted)}.f2-sent{height:2px}';
+  document.head.appendChild(st);
 })();
 
 /* ---------- 👥 SOIRÉE À DEUX ---------- */
@@ -13926,7 +14275,6 @@ function computeBadges(){
   ].concat((function(){try{return passBadgesList();}catch(_){return [];}})());
 }
 function checkBadgeUnlocks(){
-  return; // Succès retirés
   try{
     var all=computeBadges();
     var nowU=all.filter(function(b){return b.cur>=b.goal;}).map(function(b){return b.name;});
@@ -14367,11 +14715,13 @@ setTimeout(function(){try{
     document.getElementById('ch-send').onclick=function(){send();};
     document.getElementById('ch-txt').addEventListener('keydown',function(e){if(e.key==='Enter')send();});
     pn.querySelectorAll('[data-emo]').forEach(function(b){b.onclick=function(){var i=document.getElementById('ch-txt');i.value+=b.dataset.emo;i.focus();};});
+    (function(){var row=pn.querySelector('.ch-emo');if(!row||!window.CineEmote)return;var eb=document.createElement('button');eb.title='Envoyer une emote';eb.style.cssText='margin-left:auto;font-size:.8rem;font-weight:800;border-radius:10px;background:rgba(128,128,128,.18)';eb.textContent='😀 Emotes';row.appendChild(eb);
+      eb.onclick=function(){window.CineEmote.picker(function(id){var msg={uid:me.uid,name:chatName(),text:'',emo:id,t:Date.now()};try{if(window.CineMe)msg.ava=window.CineMe().ava;}catch(_){}db.collection('chat').add(msg).catch(function(e){tst('💬 Envoi impossible : '+((e&&e.code)||e));});});};})();
     chatUnsub=db.collection('chat').orderBy('t','desc').limit(200).onSnapshot(function(qs){
       var prevLast=chatMsgs.length?chatMsgs[chatMsgs.length-1].t:0;
       chatMsgs=[];qs.forEach(function(d){chatMsgs.push(Object.assign({id:d.id},d.data()));});chatMsgs.reverse();
       var last=chatMsgs[chatMsgs.length-1];
-      if(last&&prevLast&&last.t>prevLast&&last.uid!==me.uid&&!chatOpen)tst('💬 '+(last.name||'Ton pote')+' : '+(last.text||'🎬 '+(last.film&&last.film.t||'')).slice(0,60));
+      if(last&&prevLast&&last.t>prevLast&&last.uid!==me.uid&&!chatOpen)tst('💬 '+(last.name||'Ton pote')+' : '+(last.text||(last.emo?'😀 une emote':'🎬 '+(last.film&&last.film.t||''))).slice(0,60));
       drawChat(chatOpen);
     },function(e){var l=document.getElementById('ch-list');if(l)l.innerHTML='<div class="ch-err">⚙️ Le salon n\'est pas encore activé : l\'admin doit ajouter la règle « chat » dans Firestore.<br><small>'+esc2((e&&e.code)||'')+'</small></div>';});
   }
@@ -14381,9 +14731,9 @@ setTimeout(function(){try{
     var lastDay='';
     l.innerHTML=chatMsgs.length?chatMsgs.map(function(m){var d=new Date(m.t),day=d.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'});var sep=day!==lastDay?'<div class="ch-day">'+day+'</div>':'';lastDay=day;var mine=m.uid===me.uid;
       var av=m.ava&&m.ava.v?(m.ava.t==='img'?'<span class="ch-av" style="background-image:url('+esc2(m.ava.v)+')"></span>':'<span class="ch-av emo">'+esc2(m.ava.v)+'</span>'):'<span class="ch-av emo">'+esc2((m.name||'?').charAt(0).toUpperCase())+'</span>';
-      return sep+'<div class="ch-line'+(mine?' mine':'')+'">'+av+'<div class="ch-m'+(mine?' mine':'')+'">'+((mine||isAdmin())?'<button class="ch-del" data-chdel="'+m.id+'" title="Supprimer">🗑</button>':'')+(mine?'':'<div class="ch-n">'+esc2(m.name||'?')+'</div>')+esc2(m.text||'')
+      return sep+'<div class="ch-line'+(mine?' mine':'')+'">'+av+'<div class="ch-m'+(mine?' mine':'')+(m.emo&&!m.text?' emo-only':'')+'">'+((mine||isAdmin())?'<button class="ch-del" data-chdel="'+m.id+'" title="Supprimer">🗑</button>':'')+(mine?'':'<div class="ch-n">'+esc2(m.name||'?')+'</div>')+esc2(m.text||'')
         +(m.film?'<div class="ch-film" data-chfilm="'+esc2(m.film.k||'')+'">'+(m.film.p?'<img src="'+esc2(m.film.p)+'">':'')+'<div><b>'+esc2(m.film.t||'')+'</b>'+(m.film.r?'<br>'+'★'.repeat(Math.round(m.film.r))+' ('+(m.film.r*2)+'/10)':'')+'</div></div>':'')
-        +'<div class="ch-t">'+d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})+'</div></div></div>';}).join(''):'<div class="ch-err">👋 Aucun message pour l\'instant. Dis bonjour !</div>';
+        +(m.emo&&window.CineEmote?'<div class="ch-emote">'+window.CineEmote.svg(m.emo,96)+'</div>':'')+'<div class="ch-t">'+d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})+'</div></div></div>';}).join(''):'<div class="ch-err">👋 Aucun message pour l\'instant. Dis bonjour !</div>';
     l.querySelectorAll('[data-chfilm]').forEach(function(b){b.onclick=function(){if(window.CineOpenByKey&&b.dataset.chfilm){chatOpen=false;document.getElementById('chat-pn').classList.remove('show');window.CineOpenByKey(b.dataset.chfilm);}};});
     l.querySelectorAll('[data-chdel]').forEach(function(b){b.onclick=function(){db.collection('chat').doc(b.dataset.chdel).delete().catch(function(){});};});
     if(markRead||atBottom)l.scrollTop=l.scrollHeight;
