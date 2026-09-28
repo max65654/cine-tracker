@@ -2131,6 +2131,10 @@ body.dark .subr-details summary{color:#C9A8FF;}
 .saga-bulk-wrap .saga-bulk{margin:4px}
 .feed-cols{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;align-items:start}.fcol-tabs{display:none}.fcol{background:var(--card-bg);border:1px solid var(--border);border-radius:16px;overflow:hidden;display:flex;flex-direction:column;max-height:82vh}.fcol-h{padding:10px 14px;font-family:'Fredoka',sans-serif;font-weight:700;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--card-bg);z-index:1}.fcol-h small{display:block;font-family:Inter,sans-serif;font-weight:400;font-size:.68rem;color:var(--muted)}.fcol-b{overflow-y:auto}.fcol .tw{padding:10px 12px}.tw-sub{color:var(--muted);font-size:.8rem}.tw-act a{color:inherit;text-decoration:none}
 @media(max-width:1000px){.feed-cols{display:block}.fcol-tabs{display:flex;gap:6px;margin-bottom:10px;overflow-x:auto}.fcol-tabs button{border:1px solid var(--border);background:var(--card-bg);color:inherit;border-radius:999px;padding:7px 14px;cursor:pointer;font-family:inherit;font-weight:600;white-space:nowrap}.fcol-tabs button.on{background:var(--violet);color:#fff;border-color:transparent}.fcol{display:none;max-height:none}.fcol.on{display:flex}}
+#game-stage{font-size:1.08rem}#game-stage .qz-q{font-size:1.3rem!important;line-height:1.35}#game-stage .qz-opt{font-size:1.05rem!important;padding:16px!important}#game-stage .qz-img{height:220px!important}#game-stage .qz-img.big{height:340px!important}#game-stage .rd-row{font-size:1rem!important;padding:9px 6px!important}#game-stage .rd-row{grid-template-columns:1fr 90px 90px!important}#game-stage .rd-t img{width:44px!important;height:66px!important}#game-stage .rd-stat b{font-size:1.6rem!important}#game-stage .rd-worst img{width:96px!important}#game-stage .rd-worst{grid-template-columns:96px 1fr!important;font-size:1.05rem}#game-stage .duo-grid{grid-template-columns:repeat(auto-fill,minmax(190px,1fr))!important}#game-stage .duo-b{font-size:.92rem!important}.gh-card{font-size:1.02rem}.gh-card .gh-ico{font-size:2.6rem}
+.ls-search{width:100%;padding:12px 16px;border-radius:999px;border:2px solid var(--border);background:var(--input-bg);color:inherit;font-size:1rem;margin:0 0 10px;box-sizing:border-box;font-family:inherit}
+.plan-days{margin:10px 0 14px;background:var(--card-bg);border-radius:14px;padding:10px 12px;box-shadow:0 3px 0 var(--shadow)}.pdy-h{font-weight:700;font-size:.86rem;margin-bottom:8px}.pdy-h small{font-weight:400;color:var(--muted)}.pdy-row{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px}.pdy{flex:0 0 58px;border:2px solid var(--border);background:var(--input-bg);color:inherit;border-radius:12px;padding:6px 2px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:1px;font-family:inherit;transition:transform .1s}.pdy:hover{transform:translateY(-2px)}.pdy span{font-size:.62rem;text-transform:uppercase;opacity:.75}.pdy b{font-size:1.05rem}.pdy small{font-size:.6rem;opacity:.8}.pdy.today{border-color:var(--raspberry)}.pdy.off{background:rgba(255,77,109,.18);border-color:rgba(255,77,109,.6);text-decoration:line-through}.pdy.rest{opacity:.55}.pdy.vac{box-shadow:inset 0 -3px 0 #ffd23f}
+.pa-det summary{cursor:pointer;list-style:none}.pa-det summary::-webkit-details-marker{display:none}.pa-det summary small{font-weight:400;color:var(--muted);margin-left:6px}.pa-det[open] summary{margin-bottom:8px}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 </head>
@@ -9877,7 +9881,7 @@ function buildPlan(){
         var isToday=n.date===todayS;
         var sameDay=weeks[wk].indexOf(n)>0&&weeks[wk][weeks[wk].indexOf(n)-1].date===n.date;
         var dayMin=planBudgetFor(n.date);
-        return '<div class="plan-day'+(isToday?' today':'')+(sameDay?' same':'')+'"><div class="pd-d">'+(sameDay?'':(isToday?'🌙 Aujourd\'hui':new Date(n.date+'T12:00').toLocaleDateString('fr-FR',{weekday:'short',day:'numeric'}))+(dayMin>=180?' <span class="pd-big">'+fmtMin(dayMin)+'</span>':''))+'</div><div class="pd-c"><span class="plan-dot" style="background:'+n.sr.color+'"></span><b>'+esc(n.sr.info.name)+'</b> · '+nightLabel(n)+' <span style="color:var(--muted2)">('+fmtMin(n.min)+')</span>'+endTag+'</div>'
+        return '<div class="plan-day'+(isToday?' today':'')+(sameDay?' same':'')+'" data-date="'+n.date+'"><div class="pd-d">'+(sameDay?'':(isToday?'🌙 Aujourd\'hui':new Date(n.date+'T12:00').toLocaleDateString('fr-FR',{weekday:'short',day:'numeric'}))+(dayMin>=180?' <span class="pd-big">'+fmtMin(dayMin)+'</span>':''))+'</div><div class="pd-c"><span class="plan-dot" style="background:'+n.sr.color+'"></span><b>'+esc(n.sr.info.name)+'</b> · '+nightLabel(n)+' <span style="color:var(--muted2)">('+fmtMin(n.min)+')</span>'+endTag+'</div>'
           +(n.isNext?'<button class="pd-done" data-pdone="'+nights.indexOf(n)+'" title="J\'ai regardé cette soirée">✓ Fait</button>':'')+'</div>';
       }).join('')+'</div>';
     }).join('');
@@ -10105,14 +10109,15 @@ function renderPlanAvail(){
   var today=todayStr();
   var vacs=VAC_ZONE_A.filter(function(v){return v.to>today;});
   var offs=Object.keys(planSettings.off).filter(function(d){return d>=today;}).sort();
-  el.innerHTML='<div class="pa-h">🏖️ Vacances (zone A · Grenoble) & jours pas dispo</div>'
+  el.innerHTML='<details class="pa-det"'+(planSettings.vacOpen?' open':'')+'><summary class="pa-h">🏖️ Vacances (zone A · Grenoble) & jours pas dispo <small>'+(offs.length?offs.length+' jour(s) pas dispo · ':'')+'touche pour '+(planSettings.vacOpen?'cacher':'afficher')+'</small></summary>'
     +'<div class="pa-vacs">'+vacs.map(function(v){var c=planSettings.vac[v.id]||{mode:'normal'};var exc=Object.keys(c.exc||{}).sort();
       return '<div class="pa-v"><b>'+v.n+'</b> <small>du '+new Date(v.from+'T12:00').toLocaleDateString('fr-FR',{day:'numeric',month:'short'})+' au '+new Date(shiftDate(v.to,-1)+'T12:00').toLocaleDateString('fr-FR',{day:'numeric',month:'short'})+'</small>'
         +'<div class="pa-ctl"><select data-pav="'+v.id+'"><option value="normal"'+(c.mode==='normal'?' selected':'')+'>Comme d\'habitude</option><option value="more"'+(c.mode==='more'?' selected':'')+'>Plus de temps</option><option value="off"'+(c.mode==='off'?' selected':'')+'>Pas dispo</option></select>'
         +(c.mode==='more'?'<select data-pamin="'+v.id+'">'+[120,180,240,300,360,480].map(function(m){return '<option value="'+m+'"'+((c.min||240)===m?' selected':'')+'>'+fmtMin(m)+' / jour</option>';}).join('')+'</select>':'')
         +(c.mode!=='normal'?'<span class="pa-exc">'+(c.mode==='off'?'sauf (dispo) :':'sauf (pas dispo) :')+' <input type="date" min="'+v.from+'" max="'+shiftDate(v.to,-1)+'" data-paexc="'+v.id+'"> '+exc.map(function(d){return '<span class="pa-chip" data-parmexc="'+v.id+'|'+d+'">'+new Date(d+'T12:00').toLocaleDateString('fr-FR',{weekday:'short',day:'numeric'})+' ✕</span>';}).join('')+'</span>':'')
         +'</div></div>';}).join('')+'</div>'
-    +'<div class="pa-off">🚫 Jours où je ne suis pas dispo : <input type="date" min="'+today+'" id="pa-offd"> <span class="pa-or">ou du</span> <input type="date" min="'+today+'" id="pa-f"> au <input type="date" min="'+today+'" id="pa-t"> <button class="pc-mini" id="pa-addr">Ajouter</button><div class="pa-chips">'+(offs.length?offs.map(function(d){return '<span class="pa-chip" data-parm="'+d+'">'+new Date(d+'T12:00').toLocaleDateString('fr-FR',{weekday:'short',day:'numeric',month:'short'})+' ✕</span>';}).join(''):'<small>Aucun pour l\'instant</small>')+'</div></div>';
+    +'<div class="pa-off">🚫 Jours où je ne suis pas dispo : <input type="date" min="'+today+'" id="pa-offd"> <span class="pa-or">ou du</span> <input type="date" min="'+today+'" id="pa-f"> au <input type="date" min="'+today+'" id="pa-t"> <button class="pc-mini" id="pa-addr">Ajouter</button><div class="pa-chips">'+(offs.length?offs.map(function(d){return '<span class="pa-chip" data-parm="'+d+'">'+new Date(d+'T12:00').toLocaleDateString('fr-FR',{weekday:'short',day:'numeric',month:'short'})+' ✕</span>';}).join(''):'<small>Aucun pour l\'instant</small>')+'</div></div></details>';
+  var det=el.querySelector('.pa-det');if(det)det.addEventListener('toggle',function(){planSettings.vacOpen=det.open;svPlan();var sm=det.querySelector('summary small');if(sm)sm.textContent=(offs.length?offs.length+' jour(s) pas dispo · ':'')+'touche pour '+(det.open?'cacher':'afficher');});
   function save(){svPlan();renderPlanAvail();buildPlan();}
   el.querySelectorAll('[data-pav]').forEach(function(s){s.onchange=function(){var c=planSettings.vac[s.dataset.pav]=planSettings.vac[s.dataset.pav]||{};c.mode=s.value;if(c.mode==='more'&&!c.min)c.min=240;save();};});
   el.querySelectorAll('[data-pamin]').forEach(function(s){s.onchange=function(){planSettings.vac[s.dataset.pamin].min=+s.value;save();};});
@@ -12769,6 +12774,73 @@ renderFeed=function(){
   feedExtra().then(function(e){ex=e;draw(ex,nw);});
   newsFetch().then(function(n){nw=n;draw(ex,nw);}).catch(function(){nw=[];draw(ex,nw);});
 };
+
+/* ====== 📦 Découpage « Parties » (Netflix : Lupin, La casa de papel…) via les groupes d'épisodes TMDB ====== */
+var _partsMem={};
+function tvPartsCached(tv){var c=_partsMem[tv];if(c!==undefined)return c;try{var all=JSON.parse(localStorage.getItem('cineParts')||'{}');var x=all[tv];if(x&&Date.now()-x.t<7*86400000){_partsMem[tv]=x.p;return x.p;}}catch(_){}return undefined;}
+function tvParts(tv){
+  var c=tvPartsCached(tv);if(c!==undefined)return Promise.resolve(c);
+  return Promise.all([ivJson('https://api.themoviedb.org/3/tv/'+tv+'/episode_groups?api_key='+TMDB),ivJson('https://api.themoviedb.org/3/tv/'+tv+'?api_key='+TMDB)]).then(function(r){
+    var l=((r[0]&&r[0].results)||[]).filter(function(g){return g.group_count>1&&g.episode_count>0;}),ns=((r[1]&&r[1].seasons)||[]).filter(function(s){return s.season_number>0;}).length;
+    l.forEach(function(g){var n=g.name||'',sc=0;if(/netflix/i.test(n))sc+=4;if(/edit|mont/i.test(n))sc+=2;if(/part|partie|volume/i.test(n))sc+=3;if(g.type===4)sc+=1;if(g.group_count>ns)sc+=2;if(/ital|test|助手|e2e/i.test(n))sc-=6;g._sc=sc;});
+    l.sort(function(a,b){return b._sc-a._sc;});
+    var best=l[0];if(!best||best._sc<2)return null;
+    return ivJson('https://api.themoviedb.org/3/tv/episode_group/'+best.id+'?api_key='+TMDB+'&language=fr-FR').then(function(d){
+      var gs=((d&&d.groups)||[]).slice().sort(function(a,b){return a.order-b.order;});
+      var parts=gs.map(function(g,i){return {n:'Partie '+(i+1),eps:(g.episodes||[]).slice().sort(function(a,b){return a.order-b.order;}).map(function(e){return {s:e.season_number,e:e.episode_number};})};}).filter(function(p){return p.eps.length;});
+      if(parts.length<=ns&&!parts.some(function(p){var s0=p.eps[0].s;return p.eps.some(function(e){return e.s!==s0;});})&&parts.every(function(p,i){return p.eps[0].s===i+1;}))return null; // même découpage que les saisons → inutile
+      return parts.length>1?parts:null;
+    });
+  }).then(function(p){_partsMem[tv]=p||null;try{var all=JSON.parse(localStorage.getItem('cineParts')||'{}');all[tv]={t:Date.now(),p:p||null};localStorage.setItem('cineParts',JSON.stringify(all));}catch(_){}return p||null;}).catch(function(){return null;});
+}
+function partOf(tv,s,e){var p=tvPartsCached(tv);if(!p)return null;for(var i=0;i<p.length;i++){var k=p[i].eps.findIndex(function(x){return x.s===s&&x.e===e;});if(k>=0)return {p:i+1,c:k+1};}return null;}
+// Libellés du planning en « Partie X · Ch. Y » quand la série est découpée en parties sur Netflix
+(function(){var orig=nightLabel;nightLabel=function(n){try{var id=n.sr.info.id,a=n.eps[0],z=n.eps[n.eps.length-1],pa=partOf(id,a.s,a.e),pz=partOf(id,z.s,z.e);if(pa&&pz){return 'Partie '+pa.p+' · Ch. '+pa.c+(n.eps.length>1?('–'+(pz.p!==pa.p?'P'+pz.p+' ':'')+pz.c):'');}}catch(_){}return orig(n);};})();
+// Premium : « Partie 4 » → la bonne saison TMDB
+PREMIUM_DEF.oct=Object.assign({},PREMIUM_DEF.oct,{season:null,part:4,label:'Lupin — Partie 4'});
+(function(){var orig=premiumResolve;premiumResolve=function(){var d=premiumDef();if(!d.part)return orig();
+  var tvP=d.tv?Promise.resolve(d.tv):ivJson('https://api.themoviedb.org/3/search/tv?api_key='+TMDB+'&language=fr-FR&query='+encodeURIComponent(d.q)).then(function(r){var x=((r&&r.results)||[])[0];return x?x.id:null;});
+  return tvP.then(function(tv){if(!tv)return orig();return tvParts(tv).then(function(parts){var p=parts&&parts[d.part-1];if(p&&p.eps.length){_premCfg=_premCfg||{};var cs=currentSeason();var ov=Object.assign({},(_premCfg[cs.id]||{}));ov.tv=tv;ov.season=p.eps[0].s;_premCfg[cs.id]=ov;}return orig();});});
+};})();
+// Import Netflix : « Lupin: Partie 3: Chapitre 2 » → saison / épisode TMDB exacts
+(function(){var origG=ivGroupNetflix;ivGroupNetflix=function(rows){var gs=origG(rows);rows.forEach(function(r){var parts=r.title.split(': ');for(var i=1;i<parts.length-1;i++){if(/^(partie|part|volume|vol\.?)\s*\d+/i.test(parts[i])){var name=parts.slice(0,i).join(': ');var g=gs.find(function(x){return x.name===name&&x.type==='tv';});if(g)g.partKind=true;break;}}});return gs;};})();
+(function(){var origI=ivImport;ivImport=function(o,list,src){
+  var pre=list.filter(function(m){return m.tmdbType==='tv'&&m.g&&m.g.partKind;});
+  Promise.all(pre.map(function(m){return tvParts(m.tmdbId).then(function(parts){if(!parts)return;var ns={};Object.keys(m.g.seasons).forEach(function(pn){var p=parts[+pn-1];if(!p)return;var w=m.g.seasons[pn].slice().sort(function(a,b){var ca=+((a.t.match(/(\d+)/)||[])[1]||0),cb=+((b.t.match(/(\d+)/)||[])[1]||0);return (ca-cb)||String(a.d).localeCompare(String(b.d));});w.forEach(function(x,k){var t=p.eps[k];if(!t)return;(ns[t.s]=ns[t.s]||[]).push({t:'Épisode '+t.e,d:x.d,_e:t.e});});});if(Object.keys(ns).length){m.g.seasons=ns;m.g.mapped=true;}});})).then(function(){origI(o,list,src);});
+};})();
+/* ====== 📅 Jours dispo / pas dispo en un clic ====== */
+function renderPlanDays(){
+  var tl=document.getElementById('plan-timeline');if(!tl)return;
+  var bar=document.getElementById('plan-days');if(!bar){bar=document.createElement('div');bar.id='plan-days';bar.className='plan-days';tl.parentNode.insertBefore(bar,tl);}
+  var t=todayStr(),html='';
+  for(var i=0;i<21;i++){var d=shiftDate(t,i),off=planSettings.off&&planSettings.off[d],b=planDayBudget(d),v=vacFor(d),dt=new Date(d+'T12:00');
+    html+='<button class="pdy'+(off?' off':'')+(b===0&&!off?' rest':'')+(v?' vac':'')+(i===0?' today':'')+'" data-pdy="'+d+'" title="'+(off?'Pas dispo — touche pour redevenir dispo':'Touche si tu n\'es pas dispo ce jour-là')+'"><span>'+dt.toLocaleDateString('fr-FR',{weekday:'short'})+'</span><b>'+dt.getDate()+'</b><small>'+(off?'🚫':b?fmtMin(b):'repos')+'</small></button>';}
+  bar.innerHTML='<div class="pdy-h">📅 Mes 3 prochaines semaines <small>touche un jour pour dire que tu n\'es pas dispo (ou l\'annuler)</small></div><div class="pdy-row">'+html+'</div>';
+  bar.querySelectorAll('[data-pdy]').forEach(function(b){b.onclick=function(){var d=b.dataset.pdy;if(planSettings.off[d]){delete planSettings.off[d];toast('✅ '+new Date(d+'T12:00').toLocaleDateString('fr-FR',{weekday:'long',day:'numeric'})+' : de nouveau dispo');}else{planSettings.off[d]=1;toast('🚫 '+new Date(d+'T12:00').toLocaleDateString('fr-FR',{weekday:'long',day:'numeric'})+' : pas dispo, le planning se décale');}svPlan();try{renderPlanAvail();}catch(_){}buildPlan();};});
+}
+(function(){var orig=buildPlan;buildPlan=function(){var r=orig.apply(this,arguments);try{renderPlanDays();}catch(_){}
+  // tap sur le jour dans la chronologie = pas dispo
+  setTimeout(function(){var tl=document.getElementById('plan-timeline');if(!tl)return;tl.querySelectorAll('.plan-day').forEach(function(row){var dd=row.querySelector('.pd-d');if(!dd||dd._b||!dd.textContent.trim())return;dd._b=1;dd.title='Touche pour dire que tu n\'es pas dispo ce jour-là';dd.style.cursor='pointer';dd.addEventListener('click',function(){var b=row.querySelector('[data-pdone]');var date=row.dataset.date;if(!date)return;planSettings.off[date]=1;svPlan();toast('🚫 Pas dispo ce jour-là : le planning se décale');buildPlan();});});},1500);
+  // prépare les « Parties » des séries du planning
+  planList.forEach(function(e){if(tvPartsCached(e.id)===undefined)tvParts(e.id);});
+  return r;};})();
+/* ====== 🔍 Recherche + affichage plus gros dans les jeux ====== */
+function addListSearch(container,rowSel,ph){
+  if(!container||container.querySelector('.ls-search'))return;
+  var rows=container.querySelectorAll(rowSel);if(rows.length<6)return;
+  var inp=document.createElement('input');inp.className='ls-search';inp.placeholder=ph||'🔍 Cherche un film ou une série…';
+  container.insertBefore(inp,container.firstChild);
+  inp.addEventListener('input',function(){var q=ivNorm(inp.value);container.querySelectorAll(rowSel).forEach(function(r){r.style.display=!q||ivNorm(r.textContent).indexOf(q)>=0?'':'none';});});
+}
+(function(){
+  var obs=new MutationObserver(function(){
+    var st=document.getElementById('game-stage');
+    if(st){var rl=st.querySelector('.rd-list');if(rl)addListSearch(rl,'.rd-row:not(.rd-h)');}
+    ['pool-films','pool-series'].forEach(function(id){var p=document.getElementById(id);if(p)addListSearch(p,'.pool-item');});
+    var fc=document.getElementById('fun-classic');if(fc)fc.querySelectorAll('.fun-pool,.pool-list,.duel-pool,.tourn-pool').forEach(function(p){addListSearch(p,':scope > *:not(.ls-search)');});
+  });
+  obs.observe(document.body,{childList:true,subtree:true});
+})();
 
 /* ---------- 👥 SOIRÉE À DEUX ---------- */
 function gameDuo(){
