@@ -2155,8 +2155,6 @@ body.dark .subr-details summary{color:#C9A8FF;}
       <button class="nav-btn" data-view="planning">🗓️ Planning séries</button>
       <button class="nav-btn" data-view="pass">🎟️ Pass</button>
       <button class="nav-btn" data-view="fun">🎮 Jeux</button>
-      <button class="nav-btn" data-view="stats">📊 Wrapped</button>
-      <button class="nav-btn" data-view="badges">🏅 Succès</button>
       <button class="nav-btn" data-view="attentes">🔥 Attentes</button>
       <button class="nav-btn" data-view="alertes">🔔 Alertes<span id="alert-nav-badge" class="nav-badge" style="display:none"></span></button>
       <button class="nav-btn" data-view="actus">📰 Actus</button>
@@ -9318,6 +9316,14 @@ var passState=ld('cinePass',{xp:0,log:[],claimed:{},pepites:{},owned:{avatar:['a
 var _planTvCache={};
 function svPlan(){try{localStorage.setItem('cinePlanList',JSON.stringify(planList));localStorage.setItem('cinePlanSettings',JSON.stringify(planSettings));localStorage.setItem('cinePlanProgress',JSON.stringify(planProgress));localStorage.setItem('cinePlanSeen',JSON.stringify(planSeen));}catch(e){}}
 function svPass(){try{localStorage.setItem('cinePass',JSON.stringify(passState));}catch(e){}}
+// 🔄 Remise à zéro complète du Pass : il repart de zéro le 1er octobre 2026 (récompenses, niveau, monnaies, cartes…)
+(function(){if(passState.reset2610)return;
+  passState={xp:0,log:[],claimed:{},pepites:{},owned:{avatar:['a0'],banner:['b0'],title:['t0']},equip:{avatar:'a0',banner:'b0',title:'t0'},name:passState.name||'',welcome:false,quests:{},
+    verified:passState.verified||{},quizLock:passState.quizLock||{},bonusQuizAt:passState.bonusQuizAt||0,premWish:passState.premWish||{},
+    cur:{tk:0,pc:0,dm:0,st:0,hc:0},season:'2026-10',reset2610:1};
+  svPass();
+})();
+function passNotStarted(){return currentSeason().id<'2026-10';}
 var PLAN_COLORS=['#FF4D6D','#5B3A8C','#06D6A0','#FFB703','#3A86FF','#FB5607','#8338EC','#2EC4B6','#E76F51','#9B5DE5','#00BBF9','#F15BB5'];
 
 /* ---------- 🗓️ SAISONS À THÈME (le Pass repart à zéro à chaque saison, tes récompenses restent) ---------- */
@@ -9544,7 +9550,7 @@ function passPendingCount(){var n=0,L=passLevel();for(var i=1;i<=L;i++){if(!pass
     });
   } else if(!/^\d{4}-\d{2}$/.test(passState.season)){
     passState.season=cs.id; // ancien format (saison de 3 mois) → devient le Pass du mois en cours, sans remise à zéro
-  } else if(passState.season!==cs.id){
+  } else if(passState.season<cs.id){
     var old=passState.season,peps=Object.keys(passState.pepites||{}).map(function(k){return passState.pepites[k];}).filter(Boolean);
     passState.history.unshift({season:old,level:passLevel(),xp:passState.xp||0,nights:(passState.log||[]).filter(function(x){return x.t==='night';}).length,pepites:peps.length});
     passState.pepArchive=passState.pepArchive.concat(peps);
@@ -10458,7 +10464,7 @@ function claimTier(n,btn){
   else if(t.k==='boost'){passState.boostUntil=Math.max(Date.now(),passState.boostUntil||0)+3*86400000;msg='⚡ Boost XP ×2 activé pour 3 jours !';}
   else if(t.k==='questpass'){curAdd({dm:2,pc:30});msg='💰 +2 💎 et +30 🍿';}
   else if(t.k==='actor_card'){svPass();grantRandomActorCard().then(function(c){if(!c)toast('🃏 Ajoute et note quelques titres pour recevoir des cartes');renderPass();});renderPass();return;}
-  else if(t.k==='badge'){grantOwned('badge',t.badge.icon+'|'+t.badge.name+'|'+currentSeason().def.name);msg='🏅 Badge exclusif « '+t.badge.name+' » ajouté à tes Succès !';}
+  else if(t.k==='badge'){grantOwned('badge',t.badge.icon+'|'+t.badge.name+'|'+currentSeason().def.name);msg='🏅 Badge exclusif « '+t.badge.name+' » ajouté à ton profil !';}
   else if(t.k==='recap'){svPass();renderPass();try{confetti();}catch(_){}
     if(t.bonus&&t.bonus.k==='avatar_img'){genAvatarImg(2).then(function(c){if(c){passState.imgCos[c.id]=c;grantOwned('avatar',c.id);passState.equip.avatar=c.id;svPass();toast('👑 Avatar légendaire : '+c.name+' !');renderPass();}});}
     openRecapCard();return;}
@@ -12903,6 +12909,30 @@ function addListSearch(container,rowSel,ph){
   };
 })();
 
+/* ====== 🎟️ Le Pass (remis à zéro) ne démarre que le 1er octobre ====== */
+(function(){
+  var oR=renderPass;renderPass=function(){
+    var v=document.getElementById('view-pass');if(!v)return oR.apply(this,arguments);
+    var soon=document.getElementById('pass-soon');
+    if(passNotStarted()){
+      [].forEach.call(v.children,function(c){if(c.id!=='pass-soon'){if(c.dataset.psHid===undefined)c.dataset.psHid=c.style.display||'';c.style.display='none';}});
+      if(!soon){soon=document.createElement('div');soon.id='pass-soon';soon.className='pass-soon';v.appendChild(soon);}
+      var d=new Date(2026,9,1),ms=d-Date.now(),h=Math.max(0,Math.floor(ms/3600000));
+      soon.innerHTML='<div class="ps-big">🎟️</div><div class="ps-h">Le nouveau Pass démarre le 1er octobre</div><div class="ps-t">Tout repart de zéro : niveau 0, aucune récompense, aucune monnaie. Tout le monde part à égalité 🏁</div><div class="ps-cd">⏳ Encore '+(h>=24?Math.floor(h/24)+' j '+(h%24)+' h':h+' h')+'</div><div class="ps-t" style="opacity:.75">Série Premium d\'octobre : 🕵️ un gentleman cambrioleur…</div>';
+      return;
+    }
+    if(soon){soon.remove();[].forEach.call(v.children,function(c){if(c.dataset.psHid!==undefined){c.style.display=c.dataset.psHid;delete c.dataset.psHid;}});}
+    return oR.apply(this,arguments);
+  };
+  var oX=addPassXp;addPassXp=function(){if(passNotStarted())return;return oX.apply(this,arguments);};
+  var oE=passEventLog;passEventLog=function(){if(passNotStarted())return;return oE.apply(this,arguments);};
+  var oC=claimQuest;claimQuest=function(){if(passNotStarted())return;return oC.apply(this,arguments);};
+  ['curAdd','cardGrant','grantOwned','grantRandomActorCard'].forEach(function(n){try{var f=eval(n);if(typeof f!=='function')return;var w=function(){if(passNotStarted())return n==='grantRandomActorCard'?Promise.resolve(null):undefined;return f.apply(this,arguments);};eval(n+'=w');}catch(_){}});
+  var oQ=questClaimableCount;questClaimableCount=function(){if(passNotStarted())return 0;return oQ.apply(this,arguments);};
+  var st=document.createElement('style');st.textContent='.pass-soon{max-width:620px;margin:30px auto;padding:34px 24px;border-radius:26px;text-align:center;color:#fff;background:linear-gradient(135deg,#2b1055,#7597de 60%,#ff4d6d);box-shadow:0 10px 30px #0004}.ps-big{font-size:3.4rem}.ps-h{font-family:Fredoka,sans-serif;font-size:1.6rem;font-weight:700;margin:8px 0}.ps-t{font-size:.95rem;margin:6px 0}.ps-cd{display:inline-block;margin:14px 0 6px;padding:8px 18px;border-radius:99px;background:#fff2;font-family:Fredoka,sans-serif;font-size:1.2rem;font-weight:700}';document.head.appendChild(st);
+  setTimeout(function(){var dot=document.getElementById('pass-quest-dot');if(dot&&passNotStarted())dot.style.display='none';},3000);
+})();
+
 /* ---------- 👥 SOIRÉE À DEUX ---------- */
 function gameDuo(){
   var body=gStage('👥 Soirée à deux','');
@@ -13896,6 +13926,7 @@ function computeBadges(){
   ].concat((function(){try{return passBadgesList();}catch(_){return [];}})());
 }
 function checkBadgeUnlocks(){
+  return; // Succès retirés
   try{
     var all=computeBadges();
     var nowU=all.filter(function(b){return b.cur>=b.goal;}).map(function(b){return b.name;});
