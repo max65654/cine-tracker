@@ -2081,6 +2081,8 @@ body.dark .subr-details summary{color:#C9A8FF;}
 .bt-list{display:flex;flex-direction:column;gap:8px}.bt{display:flex;gap:10px;align-items:center;background:rgba(0,0,0,.22);border-radius:12px;padding:8px;font-size:.8rem;color:#fff}.bt img{width:40px;height:60px;object-fit:cover;border-radius:6px}.bt-m{flex:1}.bt-act{display:flex;gap:6px;align-items:center;margin-top:6px;flex-wrap:wrap}.bt-act .soc-btn,.bt-act .soc-btn2{padding:5px 10px;color:#fff}.bt.win{box-shadow:inset 0 0 0 2px #06d6a0}.bt.lose{opacity:.6}.bt.exp{opacity:.5}
 .pt-voy{position:absolute;top:28px;left:6px;right:6px;font-size:.62rem;background:rgba(123,44,191,.9);color:#fff;border-radius:6px;padding:2px 4px;text-align:center}.hdr-troll{position:absolute;top:-10px;left:-8px;font-size:1.3rem;animation:pbBob 1.5s ease-in-out infinite;pointer-events:none}.pass-tabs{flex-wrap:wrap}
 
+.ac-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:10px;margin-bottom:12px}.ac-card{border:none;cursor:pointer;border-radius:14px;padding:6px;background:linear-gradient(160deg,#2b1055,#1a0b33);color:#fff;display:flex;flex-direction:column;gap:4px;box-shadow:inset 0 0 0 2px #9aa5b1;transition:transform .15s}.ac-card:hover{transform:translateY(-4px) rotate(-1deg)}.ac-card.r-rare{box-shadow:inset 0 0 0 2px #4dabf7}.ac-card.r-epique{box-shadow:inset 0 0 0 2px #c77dff,0 0 12px rgba(199,125,255,.4)}.ac-card.r-legend{box-shadow:inset 0 0 0 2px #ffd23f,0 0 16px rgba(255,210,63,.5)}.ac-card.r-premium{box-shadow:inset 0 0 0 2px #ff4d6d,0 0 18px rgba(255,77,109,.55)}.ac-img{width:100%;aspect-ratio:2/3;border-radius:10px;background:#0003 center/cover}.ac-n{font-size:.74rem;font-weight:700;line-height:1.15}.ac-r{font-size:.6rem;opacity:.75;text-transform:uppercase;letter-spacing:1px}
+.ac-box{width:min(680px,100%)!important}.ac-big{margin:0 auto 10px;width:190px;border-radius:18px;padding:8px;background:linear-gradient(160deg,#2b1055,#7a1fa2);color:#fff;box-shadow:0 0 0 3px #ffd23f,0 10px 40px rgba(0,0,0,.5);animation:pbCard .8s ease}.ac-big.r-rare{box-shadow:0 0 0 3px #4dabf7}.ac-big.r-epique{box-shadow:0 0 0 3px #c77dff}.ac-big.r-premium{box-shadow:0 0 0 3px #ff4d6d,0 0 40px rgba(255,77,109,.6)}.ac-bimg{width:100%;aspect-ratio:2/3;border-radius:12px;background:#0003 center/cover}.ac-bn{font-family:'Fredoka',sans-serif;font-weight:700;margin-top:6px}.ac-br{font-size:.7rem;opacity:.85}.ac-sub-h{font-weight:700;margin:12px 0 6px;text-align:left}.ac-sub-h small{font-weight:400;color:var(--muted)}.ac-subs{display:flex;gap:8px;overflow-x:auto;padding-bottom:6px}.ac-sub{position:relative;flex:0 0 96px;font-size:.66rem;display:flex;flex-direction:column;gap:2px;text-align:left}.ac-sub small{color:var(--muted)}.ac-simg{width:96px;height:140px;border-radius:10px;background:#0003 center/cover}.ac-simg.tall{height:144px}.ac-sub.lock .ac-simg{filter:grayscale(1) brightness(.35) blur(1px)}.ac-lk{position:absolute;top:52px;left:0;right:0;text-align:center;font-size:1.4rem}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 </head>
@@ -9312,7 +9314,7 @@ var PASS_TEMPLATE=[
   {k:'joker'},{k:'quote'},{k:'sticker',s:0},{k:'title',s:0},{k:'chest',special:true},
   {k:'sound'},{k:'pepite_actor'},{k:'frame'},{k:'boost'},{k:'pepite_duo'},
   {k:'avatar_img',s:1},{k:'sticker',s:1},{k:'trailer'},{k:'reroll'},{k:'theme',special:true},
-  {k:'pepite_decade'},{k:'questpass'},{k:'banner_img',s:1},{k:'quote'},{k:'chest'},
+  {k:'actor_card'},{k:'actor_card'},{k:'banner_img',s:1},{k:'quote'},{k:'chest'},
   {k:'badge'},{k:'frame'},{k:'title',s:1},{k:'pepite_duo'},{k:'recap',special:true,bonus:{k:'avatar_img',s:2}}
 ];
 var PEP_KINDS={pepite:1,pepite_decade:1,pepite_actor:1,pepite_duo:1,trailer:1,chest:1};
@@ -10112,7 +10114,8 @@ function rewardFaceHtml(n,t){
   if(t.k==='joker')return '<div class="pr-title">🃏</div><div class="pr-lbl">Joker<br><b>soirée ratée</b></div>';
   if(t.k==='reroll')return '<div class="pr-title">🎲</div><div class="pr-lbl">Relance<br><b>de pépite</b></div>';
   if(t.k==='boost')return '<div class="pr-title">⚡</div><div class="pr-lbl">Boost<br><b>XP ×2 · 3 jours</b></div>';
-  if(t.k==='questpass')return '<div class="pr-title">🎟️</div><div class="pr-lbl">Pass de quête<br><b>+1 quête bonus</b></div>';
+  if(t.k==='questpass')return '<div class="pr-title">💰</div><div class="pr-lbl">Bourse<br><b>2 💎 + 30 🍿</b></div>';
+  if(t.k==='actor_card')return '<div class="pr-title">🃏</div><div class="pr-lbl">Carte<br><b>actrice / acteur</b></div>';
   if(t.k==='badge')return '<div class="pr-title">'+t.badge.icon+'</div><div class="pr-lbl">Badge exclusif<br><b>'+esc(t.badge.name)+'</b></div>';
   if(t.k==='recap')return '<div class="pr-title">🏆</div><div class="pr-lbl">Carte<br><b>Saison terminée</b></div>';
   return '';
@@ -10238,7 +10241,8 @@ function claimTier(n,btn){
   else if(t.k==='joker'){passState.inv.joker=(passState.inv.joker||0)+1;msg='🃏 Joker obtenu : il protégera ta série de soirées si tu en rates une';}
   else if(t.k==='reroll'){passState.inv.reroll=(passState.inv.reroll||0)+1;msg='🎲 Relance obtenue : ouvre une pépite qui ne te plaît pas et échange-la';}
   else if(t.k==='boost'){passState.boostUntil=Math.max(Date.now(),passState.boostUntil||0)+3*86400000;msg='⚡ Boost XP ×2 activé pour 3 jours !';}
-  else if(t.k==='questpass'){var ws=weekStart();passState.bonusQuests[ws]=(passState.bonusQuests[ws]||0)+1;msg='🎟️ Quête bonus ajoutée cette semaine !';}
+  else if(t.k==='questpass'){curAdd({dm:2,pc:30});msg='💰 +2 💎 et +30 🍿';}
+  else if(t.k==='actor_card'){svPass();grantRandomActorCard().then(function(c){if(!c)toast('🃏 Ajoute et note quelques titres pour recevoir des cartes');renderPass();});renderPass();return;}
   else if(t.k==='badge'){grantOwned('badge',t.badge.icon+'|'+t.badge.name+'|'+currentSeason().def.name);msg='🏅 Badge exclusif « '+t.badge.name+' » ajouté à tes Succès !';}
   else if(t.k==='recap'){svPass();renderPass();try{confetti();}catch(_){}
     if(t.bonus&&t.bonus.k==='avatar_img'){genAvatarImg(2).then(function(c){if(c){passState.imgCos[c.id]=c;grantOwned('avatar',c.id);passState.equip.avatar=c.id;svPass();toast('👑 Avatar légendaire : '+c.name+' !');renderPass();}});}
@@ -11416,7 +11420,7 @@ function passEventLog(t,n,meta){
 }
 function evCount(t,fromD,toD){var n=0;(passState.evs||[]).forEach(function(e){if(e.t===t&&e.d>=fromD&&(!toD||e.d<=toD))n+=e.n||1;});return n;}
 /* ---------- Quêtes ---------- */
-var QDIFF={f:{n:'Facile',xp:100,c:{tk:15}},m:{n:'Moyenne',xp:200,c:{tk:25,pc:10}},d:{n:'Difficile',xp:400,c:{dm:1,pc:20}},e:{n:'Épique',xp:700,c:{dm:3,st:1}}};
+var QDIFF={f:{n:'Facile',xp:100,c:{tk:15}},m:{n:'Moyenne',xp:200,c:{tk:25,pc:10}},d:{n:'Difficile',xp:400,c:{dm:1,pc:20}},e:{n:'Épique',xp:700,c:{dm:3,st:1},card:true}};
 var QTPL=[
  {id:'ep',ico:'📺',t:'Regarde {n} épisode{s}',g:{f:3,m:6,d:12,e:25}},
  {id:'ep_plan',ico:'🗓️',t:'Regarde {n} épisode{s} de ton planning',g:{f:2,m:5,d:10,e:20}},
@@ -11469,6 +11473,7 @@ function claimQuest(id,btn){
   var q=questsOpen().list.find(function(x){return x.id===id;});if(!q||passState.qclaim[id]||questProgress(q)<q.goal)return;
   passState.qclaim[id]=Date.now();svPass();
   curAdd(q.c);
+  if(q.diff==='e')setTimeout(function(){grantRandomActorCard();},1300);
   var card=btn&&btn.closest('.pq');if(card){card.classList.add('pq-burst');}
   setTimeout(function(){addPassXp(q.xp,'Quête : '+q.t,'quest');renderQuests();},card?450:0);
 }
@@ -11478,7 +11483,7 @@ function renderQuests(){
   var done=Q.list.filter(function(q){return passState.qclaim[q.id];}).length;
   function qHtml(q){
     var c=questProgress(q),ok=c>=q.goal,cl=!!passState.qclaim[q.id];
-    return '<div class="pq d-'+q.diff+(cl?' claimed':ok?' ready':'')+'"><div class="pq-ico">'+q.ico+'</div><div class="pq-main"><div class="pq-t">'+esc(q.t)+' <span class="pq-diff">'+QDIFF[q.diff].n+'</span></div><div class="pq-bar"><div style="width:'+Math.round(c/q.goal*100)+'%"></div><span>'+c+'/'+q.goal+'</span></div><div class="pq-rw">+'+q.xp+' XP '+curHtml(q.c)+'</div></div>'
+    return '<div class="pq d-'+q.diff+(cl?' claimed':ok?' ready':'')+'"><div class="pq-ico">'+q.ico+'</div><div class="pq-main"><div class="pq-t">'+esc(q.t)+' <span class="pq-diff">'+QDIFF[q.diff].n+'</span></div><div class="pq-bar"><div style="width:'+Math.round(c/q.goal*100)+'%"></div><span>'+c+'/'+q.goal+'</span></div><div class="pq-rw">+'+q.xp+' XP '+curHtml(q.c)+(q.diff==='e'?'<span class="cur-pill">🃏 carte</span>':'')+'</div></div>'
       +(cl?'<div class="pq-xp">✓</div>':ok?'<button class="pq-claim" data-qc="'+q.id+'">🎁 Récupérer</button>':'<div class="pq-xp">🔒</div>')+'</div>';
   }
   var pend=ivPendingSeasons();
@@ -11930,6 +11935,57 @@ function renderBets(){
     box.querySelectorAll('[data-bp]').forEach(function(b){b.onclick=function(){var p=b.dataset.bp.split('|'),x=c[+p[0]],st=+box.querySelector('[data-bst="'+p[0]+'"]').value;if(!curSpend({pc:st})){toast('Pas assez de 🍿');return;}passState.bets.push(Object.assign({},x,{pick:p[1],stake:st,stakeC:{pc:st},ts:Date.now()}));svPass();toast('🔮 Pari enregistré !');renderBets();};});
   });
 }
+
+/* ====== 🃏 CARTES D'ACTRICES / ACTEURS ======
+   Récompenses du Pass, des quêtes épiques et du Pass Premium. Chaque carte a des sous-cartes :
+   ses rôles (débloqués quand tu as vu le titre) et d'autres photos (débloquées en regardant ses films). */
+var CARD_RAR={commune:{n:'Commune',c:'#9aa5b1'},rare:{n:'Rare',c:'#4dabf7'},epique:{n:'Épique',c:'#c77dff'},legend:{n:'Légendaire',c:'#ffd23f'},premium:{n:'Premium',c:'#ff4d6d'}};
+function cardRarFromPop(p){return p>60?'legend':p>25?'epique':p>8?'rare':'commune';}
+function grantRandomActorCard(silent){
+  var seeds=items.filter(function(i){return i.tmdbId&&!i.locked&&(parseFloat(i.rating||0)>=4||i.fav||i.status==='termine');});
+  if(!seeds.length)seeds=items.filter(function(i){return i.tmdbId&&!i.locked;});
+  if(!seeds.length)return Promise.resolve(null);
+  var tries=0;
+  function attempt(){
+    var it=seeds[Math.floor(Math.random()*seeds.length)],mt=it.tmdbType==='tv'?'tv':'movie';
+    return ivJson('https://api.themoviedb.org/3/'+mt+'/'+it.tmdbId+(mt==='tv'?'/aggregate_credits':'/credits')+'?api_key='+TMDB+'&language=fr-FR').then(function(d){
+      var cast=((d&&d.cast)||[]).filter(function(c){return c.profile_path;}).slice(0,10);
+      var fresh=cast.filter(function(c){return !passState.cards[c.id];});
+      var c=(fresh.length?fresh:cast)[Math.floor(Math.random()*Math.min(6,(fresh.length?fresh:cast).length||1))];
+      if(!c){tries++;return tries<4?attempt():null;}
+      var role=c.character||(c.roles&&c.roles[0]&&c.roles[0].character)||'';
+      var card={id:c.id,name:c.name,photo:'https://image.tmdb.org/t/p/w342'+c.profile_path,role:role,from:it.title,rar:cardRarFromPop(c.popularity||0)};
+      cardGrant(card);
+      if(!silent)passCelebrate('🃏',card.name,(CARD_RAR[card.rar]||{}).n+' · '+(role?role+' dans ':'')+it.title,card.rar==='legend'?'legend':card.rar==='epique'?'epic':'rare',card.photo);
+      return card;
+    });
+  }
+  return attempt();
+}
+function cardsSectionHtml(){
+  var l=Object.keys(passState.cards||{}).map(function(k){return passState.cards[k];}).sort(function(a,b){return (b.got||0)-(a.got||0);});
+  return '<div class="pc-sec">🃏 Mes cartes d\'actrices & d\'acteurs ('+l.length+') <span>(clique pour voir ses rôles et ses photos)</span></div>'
+    +(l.length?'<div class="ac-grid">'+l.map(function(c){return '<button class="ac-card r-'+c.rar+'" data-accard="'+c.id+'"><div class="ac-img" style="background-image:url('+c.photo+')"></div><div class="ac-n">'+esc(c.name)+'</div><div class="ac-r">'+(CARD_RAR[c.rar]||{n:''}).n+(c.dup?' · x'+(c.dup+1):'')+'</div></button>';}).join('')+'</div>':'<div class="soc-t" style="text-align:left">Aucune carte pour l\'instant : elles tombent aux paliers 21 et 22 du Pass, dans les quêtes épiques et dans le Pass Premium.</div>');
+}
+function openActorCard(id){
+  var c=passState.cards[id];if(!c)return;
+  var o=socOverlay('<div class="ac-big r-'+c.rar+'"><div class="ac-bimg" style="background-image:url('+c.photo+')"></div><div class="ac-bn">'+esc(c.name)+'</div><div class="ac-br">'+(CARD_RAR[c.rar]||{n:''}).n+(c.role?' · '+esc(c.role):'')+(c.from?' · '+esc(c.from):'')+'</div></div><div class="soc-t">⏳ Ses rôles et ses photos…</div>');
+  o.querySelector('.soc-box').classList.add('ac-box');
+  Promise.all([ivJson('https://api.themoviedb.org/3/person/'+id+'/combined_credits?api_key='+TMDB+'&language=fr-FR'),ivJson('https://api.themoviedb.org/3/person/'+id+'/images?api_key='+TMDB)]).then(function(r){
+    var roles=(((r[0]&&r[0].cast)||[]).filter(function(x){return x.poster_path&&x.character&&!(x.genre_ids||[]).some(function(g){return g===10767||g===10763;});}).sort(function(a,b){return (b.popularity||0)-(a.popularity||0);}));
+    var seenK={},uniq=[];roles.forEach(function(x){var k=x.media_type+'_'+x.id;if(!seenK[k]){seenK[k]=1;uniq.push(x);}});roles=uniq.slice(0,12);
+    var have={};items.forEach(function(i){if(i.tmdbId&&(i.status==='termine'||i.status==='en_cours'))have[(i.tmdbType==='tv'?'tv':'movie')+'_'+i.tmdbId]=1;});
+    var seenN=roles.filter(function(x){return have[x.media_type+'_'+x.id];}).length;
+    var photos=((r[1]&&r[1].profiles)||[]).slice(1,5);
+    var box=o.querySelector('.soc-t');
+    box.outerHTML='<div class="ac-sub-h">🎭 Ses rôles <small>('+seenN+' / '+roles.length+' débloqués — regarde le titre pour débloquer la carte)</small></div><div class="ac-subs">'+roles.map(function(x){var ok=have[x.media_type+'_'+x.id];return '<div class="ac-sub'+(ok?'':' lock')+'"><div class="ac-simg" style="background-image:url(https://image.tmdb.org/t/p/w185'+x.poster_path+')"></div><b>'+esc(x.character)+'</b><small>'+esc(x.title||x.name)+'</small>'+(ok?'':'<span class="ac-lk">🔒</span>')+'</div>';}).join('')+'</div>'
+      +'<div class="ac-sub-h">📸 Autres photos <small>(1 photo débloquée par titre vu avec '+esc(c.name.split(' ')[0])+')</small></div><div class="ac-subs">'+photos.map(function(ph,i){var ok=i<seenN;return '<div class="ac-sub ph'+(ok?'':' lock')+'"><div class="ac-simg tall" style="background-image:url(https://image.tmdb.org/t/p/w342'+ph.file_path+')"></div>'+(ok?'<button class="pc-mini" data-acava="'+esc(ph.file_path)+'">🧑‍🎤 En avatar</button>':'<span class="ac-lk">🔒</span>')+'</div>';}).join('')+'</div>'
+      +'<div class="soc-row"><button class="soc-btn" id="ac-x">Fermer</button></div>';
+    o.querySelector('#ac-x').onclick=function(){o.remove();};
+    o.querySelectorAll('[data-acava]').forEach(function(b){b.onclick=function(){var aid='img:card_'+id+'_'+shHash(b.dataset.acava);passState.imgCos=passState.imgCos||{};passState.imgCos[aid]={img:'https://image.tmdb.org/t/p/w342'+b.dataset.acava,name:c.name,r:c.rar==='legend'||c.rar==='premium'?'légendaire':'épique'};grantOwned('avatar',aid);passState.equip.avatar=aid;svPass();try{renderHeaderAvatar();renderPassProfile();}catch(_){}toast('🧑‍🎤 '+c.name+' est ton avatar !');};});
+  });
+}
+try{var _origRPC=renderPassCollection;renderPassCollection=function(target,onChange){_origRPC(target,onChange);var el=target||document.getElementById('pass-collection');if(!el)return;var d=document.createElement('div');d.className='ac-wrap';d.innerHTML=cardsSectionHtml();el.insertBefore(d,el.firstChild);d.querySelectorAll('[data-accard]').forEach(function(b){b.onclick=function(){openActorCard(+b.dataset.accard);};});};}catch(_){}
 
 /* ---------- 👥 SOIRÉE À DEUX ---------- */
 function gameDuo(){
