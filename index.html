@@ -11540,13 +11540,20 @@ function ivSeasonTiming(it,sn){
 function ivNextMidnight(){var d=new Date();d.setHours(24,0,0,0);return d.getTime();}
 function ivShuffle(a){a=a.slice();for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t;}return a;}
 function ivCut(s,n){s=String(s||'').replace(/\s+/g,' ').trim();return s.length>n?s.slice(0,n).replace(/\s\S*$/,'')+'…':s;}
-function ivBuildQuiz(it,sn){
+function ivBuildQuiz(it,sn,N){
+  N=N||5;
   var eps=((episodes[it.id]||{})[sn]||[]).map(function(e,i){return {e:e,i:i};}).filter(function(x){return x.e.synopsis&&x.e.synopsis.length>40;});
   var pool=eps.slice();
   if(pool.length<4){Object.keys(episodes[it.id]||{}).forEach(function(s){if(String(s)===String(sn))return;(episodes[it.id][s]||[]).forEach(function(e,i){if(e.synopsis&&e.synopsis.length>40)pool.push({e:e,i:i,s:s});});});}
   if(eps.length<3||pool.length<4)return null;
   var qs=[];
-  ivShuffle(eps).slice(0,5).forEach(function(x,n){
+  var order=ivShuffle(eps);while(order.length<N)order=order.concat(ivShuffle(eps));
+  order.slice(0,N).forEach(function(x,n){
+    if(N>5&&n>=eps.length&&n%3===2){ // vrai / faux pour varier quand la saison est courte
+      var tru=Math.random()<.5,oth=ivShuffle(pool.filter(function(y){return y.e!==x.e;}))[0];var syn=tru||!oth?x.e.synopsis:oth.e.synopsis;
+      qs.push({q:'Vrai ou faux ? Dans l\'épisode '+(x.i+1)+' : « '+esc(ivCut(syn,170))+' »',opts:['✅ Vrai','❌ Faux'],a:(tru||!oth)?0:1});return;
+    }
+    if(N>5&&n>=eps.length)n++; // 2e passage : l'autre type de question
     var others=ivShuffle(pool.filter(function(y){return y.e!==x.e;})).slice(0,3);
     if(n%2===0){
       var opts=ivShuffle([x].concat(others));
@@ -11557,7 +11564,7 @@ function ivBuildQuiz(it,sn){
       qs.push({q:'Dans quel épisode ? « '+esc(ivCut(x.e.synopsis,170))+' »',opts:opts2.map(function(y){return 'Épisode '+(y.i+1)+(y.e.title?' — '+esc(y.e.title):'')+(y.s&&String(y.s)!==String(sn)?' (saison '+y.s+')':'');}),a:opts2.indexOf(x)});
     }
   });
-  return qs.slice(0,5);
+  return qs.slice(0,N);
 }
 function openSeasonQuiz(itemId,sn,onDone){
   var it=items.find(function(i){return i.id===itemId;});if(!it||!it.tmdbId)return;
@@ -11566,24 +11573,26 @@ function openSeasonQuiz(itemId,sn,onDone){
   if(passState.quizLock[key]&&passState.quizLock[key]>Date.now()){toast('🔒 Quiz raté : réessaie après minuit');return;}
   var tm=ivSeasonTiming(it,sn);
   if(!tm.ok){var d=new Date(tm.ready);toast('⏱️ Trop rapide : la saison dure '+fmtMin(tm.totalMin)+'. Quiz dispo le '+d.toLocaleDateString('fr-FR',{day:'numeric',month:'short'})+' à '+d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}));return;}
+  var isPremQ=typeof _premLast!=='undefined'&&_premLast&&String(_premLast.tv)===String(it.tmdbId)&&+_premLast.season===+sn;
+  var QN=isPremQ?10:5,NEED=isPremQ?8:4;
   var go=function(){
-    var qs=ivBuildQuiz(it,sn);
+    var qs=ivBuildQuiz(it,sn,QN);
     if(!qs){passState.verified[key]={src:'pace',d:todayStr()};svPass();passEventLog('season_verified',1,{k:key,t:it.title});toast('✅ Saison validée (pas assez de résumés pour un quiz)');if(onDone)onDone(true);return;}
     var qi=0,good=0;
     var o=socOverlay('');o.classList.add('soc-reco');
     function draw(){
       if(qi>=qs.length){
-        var ok=good>=4;
+        var ok=good>=Math.min(NEED,qs.length-1);
         if(ok){passState.verified[key]={src:'quiz',d:todayStr()};passEventLog('season_verified',1,{k:key,t:it.title});}
         else passState.quizLock[key]=ivNextMidnight();
         svPass();
-        o.querySelector('.soc-box').innerHTML='<div class="soc-big">'+(ok?'🏆':'😬')+'</div><div class="soc-h">'+good+' / '+qs.length+(ok?' — Saison validée !':' — Raté')+'</div><div class="soc-t">'+(ok?'La récompense est débloquée 🎉':'Il fallait 4 bonnes réponses. Le quiz se débloque à minuit.')+'</div><div class="soc-row"><button class="soc-btn" id="qz-ok">OK</button></div>';
+        o.querySelector('.soc-box').innerHTML='<div class="soc-big">'+(ok?'🏆':'😬')+'</div><div class="soc-h">'+good+' / '+qs.length+(ok?' — Saison validée !':' — Raté')+'</div><div class="soc-t">'+(ok?'La récompense est débloquée 🎉':'Il fallait '+Math.min(NEED,qs.length-1)+' bonnes réponses. Le quiz se débloque à minuit.')+'</div><div class="soc-row"><button class="soc-btn" id="qz-ok">OK</button></div>';
         o.querySelector('#qz-ok').onclick=function(){o.remove();if(onDone)onDone(ok);try{renderPass();}catch(_){}};
         if(ok)try{confetti();}catch(_){}
         return;
       }
       var q=qs[qi];
-      o.querySelector('.soc-box').innerHTML='<div class="soc-t">🧠 Quiz de fin — '+esc(it.title)+' · saison '+sn+' · question '+(qi+1)+'/'+qs.length+'</div><div class="soc-h" style="font-size:1rem;text-align:left">'+q.q+'</div><div class="iv-opts">'+q.opts.map(function(t,k){return '<button class="iv-opt" data-o="'+k+'">'+t+'</button>';}).join('')+'</div>';
+      o.querySelector('.soc-box').innerHTML='<div class="soc-t">'+(isPremQ?'👑 Quiz Premium':'🧠 Quiz de fin')+' — '+esc(it.title)+' · saison '+sn+' · question '+(qi+1)+'/'+qs.length+'</div><div class="soc-h" style="font-size:1rem;text-align:left">'+q.q+'</div><div class="iv-opts">'+q.opts.map(function(t,k){return '<button class="iv-opt" data-o="'+k+'">'+t+'</button>';}).join('')+'</div>';
       o.querySelectorAll('.iv-opt').forEach(function(b){b.onclick=function(){var k=+b.dataset.o;if(k===q.a)good++;o.querySelectorAll('.iv-opt').forEach(function(x){x.disabled=true;if(+x.dataset.o===q.a)x.classList.add('good');});if(k!==q.a)b.classList.add('bad');setTimeout(function(){qi++;draw();},900);};});
     }
     draw();
@@ -11740,10 +11749,10 @@ function renderQuests(){
       +(cl?'<div class="pq-xp">✓</div>':ok?'<button class="pq-claim" data-qc="'+q.id+'">🎁 Récupérer</button>':'<button class="pq-rr" data-qrr="'+q.id+'" title="Changer cette quête (40 🍿)">🔄</button>')+'</div>';
   }
   var pend=ivPendingSeasons();
-  var pendHtml=pend.length?'<div class="pq-head">🧠 Quiz <small>(le quiz de la série Premium débloque le Pass Premium · 1 quiz bonus max par semaine)</small></div><div class="pq-list">'+pend.map(function(p){
+  var pendHtml=pend.length?'<div class="pq-head">🧠 Quiz <small>(le quiz de 10 questions sur la série Premium débloque le Pass Premium · 1 petit quiz bonus toutes les 2 semaines)</small></div><div class="pq-list">'+pend.map(function(p){
     var lock=p.lock>Date.now(),tm=p.tm;
     var st=lock?'🔒 Raté — réessaie après minuit':!tm.ok?'⏱️ Dispo le '+new Date(tm.ready).toLocaleDateString('fr-FR',{day:'numeric',month:'short'})+' à '+new Date(tm.ready).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})+' (la saison dure '+fmtMin(tm.totalMin)+')':'';
-    return '<div class="pq verify'+(!lock&&tm.ok?' ready':'')+'"><div class="pq-ico">'+(p.prem?'👑':'🧠')+'</div><div class="pq-main"><div class="pq-t">'+(p.prem?'<b>PREMIUM</b> · ':'Bonus (+2 💎) · ')+esc(p.it.title)+' — saison '+p.sn+'</div><div class="pq-rw">'+(st||'5 questions sur les épisodes · 4 bonnes réponses pour valider')+'</div></div>'+(!lock&&tm.ok?'<button class="pq-claim" data-vq="'+p.it.id+'|'+p.sn+'">🧠 Quiz</button>':'')+'</div>';
+    return '<div class="pq verify'+(!lock&&tm.ok?' ready':'')+'"><div class="pq-ico">'+(p.prem?'👑':'🧠')+'</div><div class="pq-main"><div class="pq-t">'+(p.prem?'<b>PREMIUM</b> · ':'Bonus (+1 💎) · ')+esc(p.it.title)+' — saison '+p.sn+'</div><div class="pq-rw">'+(st||(p.prem?'10 questions sur les épisodes · 8 bonnes réponses pour débloquer le Pass Premium 👑':'5 questions sur les épisodes · 4 bonnes réponses'))+'</div></div>'+(!lock&&tm.ok?'<button class="pq-claim" data-vq="'+p.it.id+'|'+p.sn+'">🧠 Quiz</button>':'')+'</div>';
   }).join('')+'</div>':'';
   el.innerHTML='<div class="cur-bar" id="cur-bar"></div>'
     +(Q.sprint?'<div class="pq-sprint">🔓 <b>DERNIER SPRINT !</b> Toutes les quêtes du mois sont ouvertes — de quoi finir le Pass (et même plus).</div>':'<div class="pq-info">📅 4 nouvelles quêtes chaque jour · le Pass n\'avance qu\'avec les quêtes · le '+(Q.D-4)+' toutes les quêtes restantes s\'ouvrent</div>')
@@ -11763,6 +11772,7 @@ function tierCur(n){var c={tk:20+n*2};if(n%3===0)c.pc=15;if(n%5===0)c.dm=1+(n>=2
 function grantTierCurrencies(){Object.keys(passState.claimed||{}).forEach(function(n){if(passState.claimed[n]&&!passState.curClaimed[n]){passState.curClaimed[n]=1;curAdd(tierCur(+n));}});}
 /* ---------- 👑 PASS PREMIUM : la série du mois ---------- */
 var PREMIUM_DEF={
+  sep:{q:'House of the Dragon',tv:94997,season:3,label:'House of the Dragon — Saison 3',hint:'🐉 Des dragons, un trône de fer… la saison 3 est la clé du Pass Premium de septembre. 🔥'},
   oct:{q:'Lupin',tv:96677,season:4,label:'Lupin — Partie 4',phrase:'Louloute et son gros PIF !!',hint:'🕵️ Un gentleman cambrioleur préparerait un nouveau coup… et ce serait la clé du Pass Premium d\'octobre. 🎩'},
   nov:{q:'The Body',label:'The Body',phrase:'Maxan et son 0.25 en maths',hint:'🩻 On dit que le Premium de novembre parle d\'un corps… 👀'},
   dec:{q:'Harry Potter',label:'Harry Potter (la série)',phrase:'Maxan & Claud = amis',hint:'⚡ Une lettre de Poudlard serait arrivée pour le Premium de décembre… 🦉'},
@@ -12428,7 +12438,7 @@ function renderTierList(){
 var _premLast;
 ivPendingSeasons=function(){
   var out=[],today=todayStr();
-  var bonusOk=!passState.bonusQuizAt||Date.now()-passState.bonusQuizAt>7*86400000,bonus=null;
+  var bonusOk=!passState.bonusQuizAt||Date.now()-passState.bonusQuizAt>14*86400000,bonus=null;
   items.forEach(function(it){
     if(it.type!=='serie'||!it.tmdbId||it.locked)return;
     var m=episodes[it.id]||{};
@@ -12450,7 +12460,7 @@ ivPendingSeasons=function(){
 (function(){var orig=openSeasonQuiz;openSeasonQuiz=function(itemId,sn,onDone){
   var it=items.find(function(i){return i.id===itemId;});var isPrem=it&&_premLast&&String(_premLast.tv)===String(it.tmdbId)&&+_premLast.season===+sn;
   orig(itemId,sn,function(ok){
-    if(ok){if(isPrem){passEventLog('premium_unlock',1);passCelebrate('👑','PASS PREMIUM DÉBLOQUÉ !','Va récupérer tes récompenses Premium','legend');}else{passState.bonusQuizAt=Date.now();curAdd({dm:2});svPass();toast('🧠 Quiz bonus réussi : +2 💎');}}
+    if(ok){if(isPrem){passEventLog('premium_unlock',1);passCelebrate('👑','PASS PREMIUM DÉBLOQUÉ !','Va récupérer tes récompenses Premium','legend');}else{passState.bonusQuizAt=Date.now();curAdd({dm:1,pc:20});svPass();toast('🧠 Quiz bonus réussi : +1 💎 · +20 🍿');}}
     else if(!isPrem){passState.bonusQuizAt=Date.now();svPass();}
     if(onDone)onDone(ok);
   });
@@ -12557,7 +12567,7 @@ function renderOnline(){
 function liveBoxHtml(){
   if(!window.CineSocial)return '';
   var on=onlineFriends();
-  return '<div class="live-box"><div class="live-h">⚔️ Battle en direct <small>quiz ciné chronométré contre un pote connecté, chacun sur son ordi</small></div>'+(on.length?on.map(function(p){return '<div class="live-f">'+avaHtml(p.ava,p.name,'on-av big')+'<b>'+esc(p.name)+'</b><span class="live-st">🟢 en ligne'+(p.page?' · '+esc(p.page):'')+'</span><button class="soc-btn" data-battle="'+p.uid+'" data-bn="'+esc(p.name)+'">⚔️ Défier</button></div>';}).join(''):'<div class="soc-t">Aucun pote en ligne pour l\'instant. Dès qu\'il ouvre son tracker, il apparaît ici 🟢</div>')+'</div>';
+  return '<div class="live-box"><div class="live-h">⚔️ Battle en direct <small>quiz chronométré sur vos films et séries (ajoutés + à voir), chacun sur son ordi</small></div>'+(on.length?on.map(function(p){return '<div class="live-f">'+avaHtml(p.ava,p.name,'on-av big')+'<b>'+esc(p.name)+'</b><span class="live-st">🟢 en ligne'+(p.page?' · '+esc(p.page):'')+'</span><button class="soc-btn" data-battle="'+p.uid+'" data-bn="'+esc(p.name)+'">⚔️ Défier</button></div>';}).join(''):'<div class="soc-t">Aucun pote en ligne pour l\'instant. Dès qu\'il ouvre son tracker, il apparaît ici 🟢</div>')+'</div>';
 }
 function bindLiveBox(el){if(!el)return;el.querySelectorAll('[data-battle]').forEach(function(b){b.onclick=function(){startBattle(b.dataset.battle,b.dataset.bn);};});}
 function openOnlinePanel(){var o=socOverlay('<div class="soc-h">🟢 En ligne</div>'+liveBoxHtml()+'<div class="soc-row"><button class="soc-btn2" id="on-x">Fermer</button></div>');bindLiveBox(o);o.querySelector('#on-x').onclick=function(){o.remove();};}
@@ -12578,7 +12588,7 @@ function battleQuestions(){
 }
 function startBattle(uid,name){
   var o=socOverlay('<div class="soc-big">⚔️</div><div class="soc-h">Défi en direct contre '+esc(name)+'</div><div class="soc-t">⏳ Je prépare les questions…</div>');
-  battleQuestions().then(function(qs){
+  battleQuestions(uid,name).then(function(qs){
     if(qs.length<5){o.querySelector('.soc-t').textContent='Impossible de préparer les questions (connexion ?).';return;}
     window.CineSocial.battleCreate(uid,name,qs).then(function(id){
       o.querySelector('.soc-t').innerHTML='📨 Invitation envoyée ! En attente de <b>'+esc(name)+'</b>…<br><small>(il doit accepter sur son écran)</small>';
@@ -12598,7 +12608,7 @@ function onBattles(list){
 }
 function battleInvite(b){
   try{sfx.success();}catch(_){}
-  var o=socOverlay('<div class="soc-big">⚔️</div><div class="soc-h"><b>'+esc(b.aName)+'</b> te défie en direct !</div><div class="soc-t">Quiz ciné · 8 questions · le plus rapide gagne. Le gagnant empoche 60 🍿 et 1 💎.</div><div class="soc-row"><button class="soc-btn2" id="bi-no">Refuser</button><button class="soc-btn" id="bi-ok">⚔️ C\'est parti !</button></div>');
+  var o=socOverlay('<div class="soc-big">⚔️</div><div class="soc-h"><b>'+esc(b.aName)+'</b> te défie en direct !</div><div class="soc-t">Quiz sur vos films et séries (ajoutés et à voir) · 8 questions · le plus rapide gagne. Le gagnant empoche 60 🍿 et 1 💎.</div><div class="soc-row"><button class="soc-btn2" id="bi-no">Refuser</button><button class="soc-btn" id="bi-ok">⚔️ C\'est parti !</button></div>');
   o.classList.add('soc-reco');
   o.querySelector('#bi-no').onclick=function(){window.CineSocial.battleUpdate(b.id,{status:'refused'});o.remove();};
   o.querySelector('#bi-ok').onclick=function(){window.CineSocial.battleUpdate(b.id,{status:'playing',cur:0,curAt:Date.now()});o.remove();};
@@ -12840,6 +12850,57 @@ function addListSearch(container,rowSel,ph){
     var fc=document.getElementById('fun-classic');if(fc)fc.querySelectorAll('.fun-pool,.pool-list,.duel-pool,.tourn-pool').forEach(function(p){addListSearch(p,':scope > *:not(.ls-search)');});
   });
   obs.observe(document.body,{childList:true,subtree:true});
+})();
+
+/* ====== ⚔️ Battles : questions sur NOS ajouts et NOS listes « à voir » (les deux joueurs) ====== */
+(function(){
+  var famousQs=battleQuestions;
+  function det(k){var p=k.split('_');return ivJson('https://api.themoviedb.org/3/'+p[0]+'/'+p[1]+'?api_key='+TMDB+'&language=fr-FR').then(function(d){if(!d||!(d.title||d.name))return null;return {k:k,type:p[0],t:d.title||d.name,y:parseInt(String(d.release_date||d.first_air_date||'').slice(0,4))||0,ov:d.overview||'',pp:d.poster_path||''};}).catch(function(){return null;});}
+  battleQuestions=function(uid,oppName){
+    if(!uid||!window.CineSocial||!window.CineSocial.friends)return famousQs();
+    var meN=(function(){try{return profName()||'Moi';}catch(_){return 'Moi';}})(),opN=oppName||'Ton pote';
+    return window.CineSocial.friends().then(function(fr){
+      var f=fr.find(function(x){return x.uid===uid;})||{items:[],wish:[]};
+      var M={};function add(k,who,field,val){if(!k)return;var e=M[k]=M[k]||{k:k,t:'',a:{},b:{},aw:0,bw:0};if(field==='item'){e[who]=val;if(!e.t)e.t=val.t||'';}else e[who+'w']=1;}
+      items.forEach(function(i){if(i.locked)return;var k=friendKey(i);if(k)add(k,'a','item',{t:i.title,s:i.status,r:+i.rating||0});});
+      wishlist.forEach(function(w){if(w.tmdbId)add((w.tmdbType==='tv'?'tv':'movie')+'_'+w.tmdbId,'a','wish');});
+      (f.items||[]).forEach(function(i){if(i.k)add(i.k,'b','item',{t:i.t,s:i.s,r:+i.r||0});});
+      (f.wish||[]).forEach(function(k){add(k,'b','wish');});
+      var all=Object.keys(M).map(function(k){return M[k];});
+      // priorité : ce qu'on a en commun / ce que l'un a et pas l'autre, et les « à voir »
+      all.forEach(function(e){var ha=!!e.a.t||e.aw,hb=!!e.b.t||e.bw;e.sc=(ha&&hb?3:1)+(e.aw||e.bw?2:0)+(e.a.s==='a_voir'||e.b.s==='a_voir'?1:0)+Math.random()*3;});
+      all.sort(function(x,y){return y.sc-x.sc;});
+      var pick=all.slice(0,16);
+      return Promise.all(pick.map(function(e){return det(e.k).then(function(d){if(d)Object.assign(e,d);return d?e:null;});})).then(function(l){
+        l=l.filter(Boolean);var pool=l.filter(function(e){return e.pp;});
+        var qs=[],used={};
+        function others(e,n){var o=gPick(pool.filter(function(x){return x.k!==e.k&&x.t!==e.t;}),n);return o;}
+        function whoHas(e,w){var a=w?(e.aw||e.a.s==='a_voir'):!!e.a.t,b=w?(e.bw||e.b.s==='a_voir'):!!e.b.t;return a&&b?2:a?0:b?1:3;}
+        var whoOpts=[meN,opN,'Les deux','Aucun des deux'];
+        var kinds=['wish','poster','rate','year','have','resume','wish','poster'];
+        kinds.forEach(function(kind){
+          if(qs.length>=8)return;
+          var cand=gShuffle(l.filter(function(e){return !used[e.k];}));
+          var e=null;
+          if(kind==='wish')e=cand.find(function(x){return x.aw||x.bw||x.a.s==='a_voir'||x.b.s==='a_voir';});
+          else if(kind==='rate')e=cand.find(function(x){return x.a.r&&x.b.r;});
+          else if(kind==='have')e=cand.find(function(x){return (!!x.a.t)!==(!!x.b.t)||(x.a.t&&x.b.t);});
+          else if(kind==='year')e=cand.find(function(x){return x.y>1900;});
+          else if(kind==='poster')e=cand.find(function(x){return x.pp&&others(x,3).length>=3;});
+          else if(kind==='resume')e=cand.find(function(x){return x.ov&&x.ov.length>60&&others(x,3).length>=3;});
+          if(!e)return;used[e.k]=1;var img=e.pp?gPoster(e.pp):'',T=e.t;
+          if(kind==='wish')qs.push({q:'Qui a « '+T+' » dans sa liste À VOIR ?',img:img,opts:whoOpts,a:whoHas(e,true)});
+          else if(kind==='have')qs.push({q:'Qui a « '+T+' » dans sa collection ?',img:img,opts:whoOpts.slice(0,3),a:Math.min(2,whoHas(e,false))});
+          else if(kind==='rate')qs.push({q:'Qui a le mieux noté « '+T+' » ?',img:img,opts:[meN,opN,'Même note'],a:e.a.r>e.b.r?0:e.b.r>e.a.r?1:2});
+          else if(kind==='year'){var y=e.y;var o=gShuffle([y,y+(Math.random()<.5?1:-1)*2,y+5,y-4]);qs.push({q:'En quelle année est sorti « '+T+' » ?',img:img,opts:o.map(String),a:o.indexOf(y)});}
+          else if(kind==='poster'){var o1=gShuffle([e].concat(others(e,3)));qs.push({q:'Lequel de nos titres se cache derrière cette affiche floutée ?',img:img,blur:1,opts:o1.map(function(x){return x.t;}),a:o1.indexOf(e)});}
+          else{var o2=gShuffle([e].concat(others(e,3)));qs.push({q:'Lequel de nos titres correspond à ce résumé ? « '+ivCut(e.ov,170)+' »',img:'',opts:o2.map(function(x){return x.t;}),a:o2.indexOf(e)});}
+        });
+        if(qs.length>=8)return gShuffle(qs);
+        return famousQs().then(function(fq){return gShuffle(qs.concat(fq.slice(0,8-qs.length)));}).catch(function(){return qs;});
+      });
+    }).catch(function(){return famousQs();});
+  };
 })();
 
 /* ---------- 👥 SOIRÉE À DEUX ---------- */
@@ -14305,7 +14366,7 @@ setTimeout(function(){try{
     window.CineSocial={
       uid:function(){return me&&me.uid;},
       name:function(){return chatName();},
-      friends:function(){return db.collection('pub').get().then(function(qs){var o=[];qs.forEach(function(d){if(d.id!==me.uid){var x=d.data();o.push({uid:d.id,name:x.name||'Ami',nt:x.nt||'',items:x.items||[]});}});return o;});},
+      friends:function(){return db.collection('pub').get().then(function(qs){var o=[];qs.forEach(function(d){if(d.id!==me.uid){var x=d.data();o.push({uid:d.id,name:x.name||'Ami',nt:x.nt||'',items:x.items||[],wish:x.wish||[]});}});return o;});},
       recommend:function(to,film,msg){return db.collection('reco').add({from:me.uid,fromName:chatName(),to:to,k:film.k,t:film.t,p:film.p||'',y:film.y||'',msg:msg||'',ts:Date.now(),seen:false});},
       onReco:function(cb){return db.collection('reco').where('to','==',me.uid).onSnapshot(function(qs){var l=[];qs.forEach(function(d){l.push(Object.assign({id:d.id},d.data()));});cb(l);},function(e){cb([],e);});},
       markReco:function(id,answer){return db.collection('reco').doc(id).update({seen:true,answer:answer||'',answeredAt:Date.now()}).catch(function(){});},
