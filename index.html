@@ -2121,6 +2121,10 @@ body.dark .subr-details summary{color:#C9A8FF;}
 .plan-avail{flex-basis:100%;background:var(--card-bg);border-radius:14px;padding:10px 12px;box-shadow:0 3px 0 var(--shadow);font-size:.82rem}.pa-h{font-weight:700;margin-bottom:6px}.pa-vacs{display:flex;flex-direction:column;gap:6px}.pa-v{padding:6px 8px;border:1px solid var(--border);border-radius:10px}.pa-v small{color:var(--muted)}.pa-ctl{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:4px}.pa-exc{display:flex;flex-wrap:wrap;gap:4px;align-items:center;font-size:.76rem}.pa-chip{display:inline-block;padding:2px 8px;border-radius:999px;background:rgba(255,77,109,.14);cursor:pointer;font-size:.74rem;margin:2px}.pa-off{margin-top:8px}.pa-chips{margin-top:4px}.pa-or{color:var(--muted)}
 .pq-rr{border:none;background:rgba(255,255,255,.15);color:inherit;border-radius:8px;padding:6px 8px;cursor:pointer;font-size:.9rem}.sh-toprow{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:6px}.sh-gift{flex:1;min-width:200px;border:none;border-radius:16px;padding:14px;background:linear-gradient(135deg,#06d6a0,#118ab2);color:#fff;cursor:pointer;display:flex;flex-direction:column;align-items:flex-start;gap:3px;font-size:1rem;animation:pqGlow 1.5s ease-in-out infinite alternate}.sh-gift span{font-size:.75rem;opacity:.9}.sh-gift.done{animation:none;opacity:.6}.sh-deal{position:relative}.sh-dlab{position:absolute;top:-8px;left:8px;background:#ff006e;color:#fff;font-size:.62rem;font-weight:800;padding:2px 8px;border-radius:999px}.sh-old{text-decoration:line-through;opacity:.6;font-size:.7rem}.sh-fx{font-size:1.6rem;letter-spacing:4px}
 #view-pass .pass-wrap{margin-top:0}
+.hdr-online{display:inline-flex;align-items:center;gap:4px;border:none;background:var(--card-bg);border-radius:999px;padding:4px 10px 4px 6px;margin-left:8px;cursor:pointer;box-shadow:0 2px 8px var(--shadow);font-family:inherit;font-size:.72rem;color:var(--ink);vertical-align:middle}.on-dot{width:9px;height:9px;border-radius:50%;background:#06d6a0;box-shadow:0 0 0 3px rgba(6,214,160,.25);animation:onPulse 1.8s ease-in-out infinite}.on-dot.off{background:#aaa;box-shadow:none;animation:none}@keyframes onPulse{50%{box-shadow:0 0 0 6px rgba(6,214,160,0)}}.on-av{width:20px;height:20px;border-radius:50%;background:#5B3A8C center/cover;display:inline-flex;align-items:center;justify-content:center;font-size:.72rem;color:#fff;margin-left:-4px;border:2px solid var(--card-bg)}.on-av.big{width:38px;height:38px;font-size:1.1rem;margin:0}.on-n{font-weight:600;margin-left:3px}
+.live-box{background:linear-gradient(135deg,rgba(6,214,160,.15),rgba(58,134,255,.18));border:1px solid rgba(6,214,160,.45);border-radius:16px;padding:12px;margin-bottom:14px;text-align:left}.live-h{font-family:'Fredoka',sans-serif;font-weight:700;margin-bottom:8px}.live-h small{font-weight:400;opacity:.75;font-family:Inter,sans-serif}.live-f{display:flex;align-items:center;gap:10px;padding:6px 0}.live-f b{flex:1}.live-st{font-size:.72rem;opacity:.75}
+.battle-box{width:min(520px,100%)!important}.bt-score{display:flex;justify-content:space-around;align-items:center;margin-bottom:10px}.bt-score div{text-align:center}.bt-score b{display:block;font-family:'Fredoka',sans-serif;font-size:1.8rem}.bt-vs{font-weight:800;color:var(--raspberry);font-size:1.2rem}.bt-q{display:flex;justify-content:space-between;font-size:.8rem;margin-bottom:8px}.bt-t{font-weight:700;color:var(--raspberry)}.bt-img{max-height:190px;border-radius:12px;margin:0 auto 8px;display:block}.bt-img.blur{filter:blur(14px);animation:btUnblur 15s linear forwards}@keyframes btUnblur{to{filter:blur(2px)}}
+@media(max-width:760px){.hdr-online .on-n{display:none}}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 </head>
@@ -11292,6 +11296,7 @@ function showNextReco(){
       items.unshift({id:Date.now()+Math.floor(Math.random()*999),title:r.t,year:String(r.y||''),type:tv?'serie':'film',status:'a_voir',rating:0,fav:false,tags:['📨 Reco de '+(r.fromName||'un pote')],review:'',personalNotes:'',quote:'',poster:poster.replace('/w342/','/w500/'),director:'',cast:'',watchedDate:'',addedAt:Date.now(),synopsis:'',seriesStatus:'',nbSeasons:0,tmdbId:parseInt(parts[1]),tmdbType:tv?'tv':'movie',progress:null,lastEpDate:null,runtime:0,epRuntime:0,tmdbRating:0,rewatchCount:0});
       sv();try{renderAll();}catch(_){}toast('➕ « '+r.t+' » ajouté à tes À voir');try{renderActivity();}catch(_){}
     }
+    if(a==='seen'&&!socOwnedKey(r.k)){var ps=r.k.split('_'),tv2=ps[0]==='tv';items.unshift({id:Date.now()+Math.floor(Math.random()*999),title:r.t,year:String(r.y||''),type:tv2?'serie':'film',status:'termine',rating:0,fav:false,tags:['📨 Reco de '+(r.fromName||'un pote')],review:'',personalNotes:'',quote:'',poster:poster.replace('/w342/','/w500/'),director:'',cast:'',watchedDate:todayStr(),addedAt:Date.now(),synopsis:'',seriesStatus:'',nbSeasons:0,tmdbId:parseInt(ps[1]),tmdbType:tv2?'tv':'movie',progress:null,lastEpDate:null,runtime:0,epRuntime:0,tmdbRating:0,rewatchCount:0});sv();try{renderAll();}catch(_){}toast('✅ « '+r.t+' » ajouté à ta collection en « Vu »');}
     if(a==='later')_recoLater[r.id]=1;else window.CineSocial.markReco(r.id,a);
     o.remove();_recoShowing=false;setTimeout(showNextReco,600);
   };});
@@ -12524,6 +12529,110 @@ renderShop=function(){
   var pw=document.getElementById('pass-wrap'),v=document.getElementById('view-pass');
   if(pw&&v){v.appendChild(pw);}
 })();
+
+/* ====== 🟢 QUI EST EN LIGNE · ⚔️ BATTLES EN DIRECT (d'un ordi à l'autre) ====== */
+var _online=[];
+function onlineFriends(){var me=window.CineSocial&&window.CineSocial.uid();return _online.filter(function(p){return p.uid!==me&&Date.now()-(p.t||0)<150000;});}
+function avaHtml(a,name,cls){return a&&a.v?(a.t==='img'?'<span class="'+cls+'" style="background-image:url('+esc(a.v)+')"></span>':'<span class="'+cls+' emo">'+esc(a.v)+'</span>'):'<span class="'+cls+' emo">'+esc((name||'?').charAt(0).toUpperCase())+'</span>';}
+function renderOnline(){
+  var on=onlineFriends();
+  var h=document.getElementById('hdr-avatar');
+  var el=document.getElementById('hdr-online');
+  if(!el&&h){el=document.createElement('button');el.id='hdr-online';el.className='hdr-online';h.parentNode.insertBefore(el,h.nextSibling);el.onclick=openOnlinePanel;}
+  if(el){el.style.display=window.CineSocial?'':'none';el.innerHTML=on.length?'<span class="on-dot"></span>'+on.slice(0,3).map(function(p){return avaHtml(p.ava,p.name,'on-av');}).join('')+'<span class="on-n">'+(on.length===1?esc(on[0].name)+' est en ligne':on.length+' potes en ligne')+'</span>':'<span class="on-dot off"></span><span class="on-n">Personne en ligne</span>';el.title='Qui est en ligne · défier en direct';}
+  var gl=document.getElementById('games-live');if(gl)gl.innerHTML=liveBoxHtml();bindLiveBox(gl);
+  var ch=document.querySelector('#chat-pn .ch-h span');if(ch)ch.innerHTML='💬 Le salon'+(on.length?' · <small>🟢 '+on.map(function(p){return esc(p.name);}).join(', ')+'</small>':'');
+}
+function liveBoxHtml(){
+  if(!window.CineSocial)return '';
+  var on=onlineFriends();
+  return '<div class="live-box"><div class="live-h">⚔️ Battle en direct <small>quiz ciné chronométré contre un pote connecté, chacun sur son ordi</small></div>'+(on.length?on.map(function(p){return '<div class="live-f">'+avaHtml(p.ava,p.name,'on-av big')+'<b>'+esc(p.name)+'</b><span class="live-st">🟢 en ligne'+(p.page?' · '+esc(p.page):'')+'</span><button class="soc-btn" data-battle="'+p.uid+'" data-bn="'+esc(p.name)+'">⚔️ Défier</button></div>';}).join(''):'<div class="soc-t">Aucun pote en ligne pour l\'instant. Dès qu\'il ouvre son tracker, il apparaît ici 🟢</div>')+'</div>';
+}
+function bindLiveBox(el){if(!el)return;el.querySelectorAll('[data-battle]').forEach(function(b){b.onclick=function(){startBattle(b.dataset.battle,b.dataset.bn);};});}
+function openOnlinePanel(){var o=socOverlay('<div class="soc-h">🟢 En ligne</div>'+liveBoxHtml()+'<div class="soc-row"><button class="soc-btn2" id="on-x">Fermer</button></div>');bindLiveBox(o);o.querySelector('#on-x').onclick=function(){o.remove();};}
+/* ---------- Questions de battle ---------- */
+function battleQuestions(){
+  return famousMovies().then(function(list){
+    var pool=list.filter(function(m){return m.poster_path&&gYear(m)>1900;});
+    var pick=gPick(pool,8),qs=[];
+    pick.forEach(function(m,i){
+      var others=gPick(pool.filter(function(x){return x.id!==m.id;}),3);
+      var kind=i%3;
+      if(kind===0){var y=gYear(m);var opts=gShuffle([y,y+(Math.random()<.5?2:-2),y+5,y-4]);qs.push({q:'En quelle année est sorti « '+(m.title||m.name)+' » ?',img:gPoster(m.poster_path),opts:opts.map(String),a:opts.indexOf(y)});}
+      else if(kind===1){var o1=gShuffle([m].concat(others));qs.push({q:'Quel film se cache derrière cette affiche floutée ?',img:gPoster(m.poster_path),blur:1,opts:o1.map(function(x){return x.title||x.name;}),a:o1.indexOf(m)});}
+      else{var o2=gShuffle([m].concat(others));qs.push({q:'Quel film correspond à ce résumé ? « '+ivCut(m.overview||'',170)+' »',img:'',opts:o2.map(function(x){return x.title||x.name;}),a:o2.indexOf(m)});}
+    });
+    return qs;
+  });
+}
+function startBattle(uid,name){
+  var o=socOverlay('<div class="soc-big">⚔️</div><div class="soc-h">Défi en direct contre '+esc(name)+'</div><div class="soc-t">⏳ Je prépare les questions…</div>');
+  battleQuestions().then(function(qs){
+    if(qs.length<5){o.querySelector('.soc-t').textContent='Impossible de préparer les questions (connexion ?).';return;}
+    window.CineSocial.battleCreate(uid,name,qs).then(function(id){
+      o.querySelector('.soc-t').innerHTML='📨 Invitation envoyée ! En attente de <b>'+esc(name)+'</b>…<br><small>(il doit accepter sur son écran)</small>';
+      var x=document.createElement('button');x.className='soc-btn2';x.textContent='Annuler';x.style.marginTop='10px';x.onclick=function(){window.CineSocial.battleUpdate(id,{status:'cancel'});o.remove();};o.querySelector('.soc-box').appendChild(x);
+      _battleWait=id;
+    }).catch(function(e){o.querySelector('.soc-t').textContent='❌ Impossible ('+((e&&e.code)==='permission-denied'?'règles Firestore à mettre à jour':'erreur')+')';});
+  });
+}
+var _battleWait=null,_battleCur=null,_battleSeen={};
+function onBattles(list){
+  var me=window.CineSocial.uid();
+  list.forEach(function(b){
+    if(b.status==='invite'&&b.b===me&&!_battleSeen[b.id]&&Date.now()-(b.createdAt||0)<5*60000){_battleSeen[b.id]=1;battleInvite(b);}
+    if((b.status==='playing'||b.status==='done')&&(b.a===me||b.b===me)&&(Date.now()-(b.createdAt||0)<30*60000)){if(!_battleCur||_battleCur.id===b.id){_battleCur=b;battleRender(b);}}
+    if(b.status==='refused'&&b.a===me&&_battleWait===b.id){_battleWait=null;var o=document.getElementById('soc-ov');if(o)o.remove();toast('😅 '+(b.bName||'Ton pote')+' a refusé le défi');}
+  });
+}
+function battleInvite(b){
+  try{sfx.success();}catch(_){}
+  var o=socOverlay('<div class="soc-big">⚔️</div><div class="soc-h"><b>'+esc(b.aName)+'</b> te défie en direct !</div><div class="soc-t">Quiz ciné · 8 questions · le plus rapide gagne. Le gagnant empoche 60 🍿 et 1 💎.</div><div class="soc-row"><button class="soc-btn2" id="bi-no">Refuser</button><button class="soc-btn" id="bi-ok">⚔️ C\'est parti !</button></div>');
+  o.classList.add('soc-reco');
+  o.querySelector('#bi-no').onclick=function(){window.CineSocial.battleUpdate(b.id,{status:'refused'});o.remove();};
+  o.querySelector('#bi-ok').onclick=function(){window.CineSocial.battleUpdate(b.id,{status:'playing',cur:0,curAt:Date.now()});o.remove();};
+}
+var _bLocal={};
+function battleScore(b,uid){var s=0,ans=(b.ans&&b.ans[uid])||{};Object.keys(ans).forEach(function(i){var a=ans[i],q=b.qs[+i];if(q&&a.c===q.a)s+=500+Math.max(0,Math.round(500-a.ms/30));});return s;}
+function battleRender(b){
+  var me=window.CineSocial.uid(),host=b.a===me,opp=host?b.bName:b.aName,oppId=host?b.b:b.a;
+  var ov=document.getElementById('battle-ov');
+  if(!ov){ov=document.createElement('div');ov.id='battle-ov';ov.className='soc-ov battle-ov';document.body.appendChild(ov);}
+  var myS=battleScore(b,me),opS=battleScore(b,oppId);
+  var head='<div class="bt-score"><div><small>Toi</small><b>'+myS+'</b></div><div class="bt-vs">VS</div><div><small>'+esc(opp)+'</small><b>'+opS+'</b></div></div>';
+  if(b.status==='done'||b.cur>=b.qs.length){
+    var win=myS>opS,draw=myS===opS;
+    if(!_bLocal[b.id+'_paid']){_bLocal[b.id+'_paid']=1;passState.battles=passState.battles||{};if(!passState.battles[b.id]){passState.battles[b.id]=win?'win':draw?'draw':'lose';if(win)curAdd({pc:60,dm:1});else if(draw)curAdd({pc:20});else curAdd({pc:10});try{passEventLog('game',1,{t:'Battle en direct'});}catch(_){}svPass();}if(host&&b.status!=='done')window.CineSocial.battleUpdate(b.id,{status:'done'});}
+    ov.innerHTML='<div class="soc-box battle-box"><div class="soc-big">'+(win?'🏆':draw?'🤝':'😭')+'</div><div class="soc-h">'+(win?'Victoire !':draw?'Égalité !':esc(opp)+' gagne…')+'</div>'+head+'<div class="soc-t">'+(win?'+60 🍿 et +1 💎':draw?'+20 🍿':'+10 🍿 pour la participation')+'</div><div class="soc-row"><button class="soc-btn2" id="bt-x">Fermer</button><button class="soc-btn" id="bt-re">🔁 Revanche</button></div></div>';
+    ov.querySelector('#bt-x').onclick=function(){ov.remove();_battleCur=null;};
+    ov.querySelector('#bt-re').onclick=function(){ov.remove();_battleCur=null;startBattle(oppId,opp);};
+    return;
+  }
+  var i=b.cur,q=b.qs[i],key=b.id+'_'+i;
+  if(!_bLocal[key])_bLocal[key]={start:Date.now()};
+  var sig=b.status+'|'+i+'|'+JSON.stringify(b.ans||{});if(ov._sig===sig&&ov.querySelector('.bt-q'))return;ov._sig=sig;
+  var L=_bLocal[key],mine=b.ans&&b.ans[me]&&b.ans[me][i],theirs=b.ans&&b.ans[oppId]&&b.ans[oppId][i];
+  var left=Math.max(0,15-Math.floor((Date.now()-L.start)/1000));
+  ov.innerHTML='<div class="soc-box battle-box">'+head+'<div class="bt-q">Question '+(i+1)+' / '+b.qs.length+' <span class="bt-t" id="bt-t">⏱️ '+left+'s</span></div>'+(q.img?'<img class="bt-img'+(q.blur?' blur':'')+'" src="'+q.img+'">':'')+'<div class="soc-h" style="font-size:1rem">'+esc(q.q)+'</div><div class="iv-opts">'+q.opts.map(function(t,k){var cls=mine?(k===q.a&&(theirs||left===0)?' good':mine.c===k?(k===q.a?' good':' bad'):''):'';return '<button class="iv-opt'+cls+'" data-bo="'+k+'"'+(mine?' disabled':'')+'>'+esc(t)+'</button>';}).join('')+'</div><div class="soc-t">'+(mine?(theirs?'⏭️ Question suivante…':'⏳ '+esc(opp)+' réfléchit…'):(theirs?'⚡ '+esc(opp)+' a déjà répondu !':''))+'</div></div>';
+  ov.querySelectorAll('[data-bo]').forEach(function(btn){btn.onclick=function(){if(mine)return;var o={};o['ans.'+me+'.'+i]={c:+btn.dataset.bo,ms:Date.now()-L.start};window.CineSocial.battleUpdate(b.id,o);};});
+  clearInterval(L.iv);L.iv=setInterval(function(){
+    var t=document.getElementById('bt-t');var lf=Math.max(0,15-Math.floor((Date.now()-L.start)/1000));if(t)t.textContent='⏱️ '+lf+'s';
+    var cur=_battleCur;if(!cur||cur.id!==b.id||cur.cur!==i){clearInterval(L.iv);return;}
+    var bothDone=cur.ans&&cur.ans[me]&&cur.ans[me][i]&&cur.ans[oppId]&&cur.ans[oppId][i];
+    if(lf===0&&!(cur.ans&&cur.ans[me]&&cur.ans[me][i])){var o={};o['ans.'+me+'.'+i]={c:-1,ms:15000};window.CineSocial.battleUpdate(b.id,o);}
+    if(host&&(bothDone||Date.now()-L.start>17000)&&!L.adv){L.adv=1;setTimeout(function(){window.CineSocial.battleUpdate(b.id,{cur:i+1,curAt:Date.now()});},bothDone?1600:300);}
+  },500);
+}
+function liveInit(){
+  if(!window.CineSocial||liveInit.done||!window.CineSocial.onPresence)return;liveInit.done=true;
+  window.CineSocial.onPresence(function(l){_online=l;renderOnline();});
+  window.CineSocial.onBattles(onBattles);
+  setInterval(renderOnline,30000);
+}
+window.addEventListener('cine-social-ready',function(){setTimeout(liveInit,200);});
+setTimeout(liveInit,3500);
+window.CinePage=function(){var a=document.querySelector('.nav-btn.active');return a?a.textContent.replace(/^\S+\s/,'').trim():'';};
+(function(){var orig=renderGamesHub;renderGamesHub=function(){orig.apply(this,arguments);var hub=document.getElementById('games-hub');if(!hub||!window.CineSocial)return;var gl=document.getElementById('games-live');if(!gl){gl=document.createElement('div');gl.id='games-live';hub.insertBefore(gl,hub.firstChild);}gl.innerHTML=liveBoxHtml();bindLiveBox(gl);};})();
 
 /* ---------- 👥 SOIRÉE À DEUX ---------- */
 function gameDuo(){
@@ -13993,8 +14102,18 @@ setTimeout(function(){try{
       onReco:function(cb){return db.collection('reco').where('to','==',me.uid).onSnapshot(function(qs){var l=[];qs.forEach(function(d){l.push(Object.assign({id:d.id},d.data()));});cb(l);},function(e){cb([],e);});},
       markReco:function(id,answer){return db.collection('reco').doc(id).update({seen:true,answer:answer||'',answeredAt:Date.now()}).catch(function(){});},
       post:function(evt){return db.collection('activity').add(Object.assign({uid:me.uid,name:chatName(),ts:Date.now()},evt)).catch(function(){});},
-      onActivity:function(cb){return db.collection('activity').orderBy('ts','desc').limit(60).onSnapshot(function(qs){var l=[];qs.forEach(function(d){l.push(Object.assign({id:d.id},d.data()));});cb(l);},function(e){cb([],e);});}
+      onActivity:function(cb){return db.collection('activity').orderBy('ts','desc').limit(60).onSnapshot(function(qs){var l=[];qs.forEach(function(d){l.push(Object.assign({id:d.id},d.data()));});cb(l);},function(e){cb([],e);});},
+      onPresence:function(cb){return db.collection('presence').onSnapshot(function(qs){var l=[];qs.forEach(function(d){l.push(Object.assign({uid:d.id},d.data()));});cb(l);},function(){cb([]);});},
+      battleCreate:function(to,toName,qs){return db.collection('battles').add({a:me.uid,aName:chatName(),b:to,bName:toName,status:'invite',qs:qs,cur:0,ans:{},createdAt:Date.now()}).then(function(r){return r.id;});},
+      battleUpdate:function(id,o){return db.collection('battles').doc(id).update(o).catch(function(){});},
+      onBattles:function(cb){var A=[],B=[];function emit(){cb(A.concat(B));}
+        db.collection('battles').where('a','==',me.uid).onSnapshot(function(qs){A=[];qs.forEach(function(d){A.push(Object.assign({id:d.id},d.data()));});emit();},function(){});
+        db.collection('battles').where('b','==',me.uid).onSnapshot(function(qs){B=[];qs.forEach(function(d){B.push(Object.assign({id:d.id},d.data()));});emit();},function(){});}
     };
+    // 🟢 Présence : « en ligne » tant que l'appli est ouverte (mise à jour toutes les 45 s)
+    function ping(){if(document.hidden)return;var ava=null,page='';try{if(window.CineMe)ava=window.CineMe().ava;if(window.CinePage)page=window.CinePage();}catch(_){}db.collection('presence').doc(me.uid).set({name:chatName(),ava:ava,t:Date.now(),page:page}).catch(function(){});}
+    ping();setInterval(ping,45000);document.addEventListener('visibilitychange',ping);
+    window.addEventListener('pagehide',function(){try{db.collection('presence').doc(me.uid).set({t:0},{merge:true});}catch(_){}});
     try{window.dispatchEvent(new Event('cine-social-ready'));}catch(_){}
   }
   window.CineConfig={isAdmin:function(){return isAdmin();},setPremium:function(id,v){var o={};o[id]=v;return db.collection('config').doc('premium').set(o,{merge:true});}};
