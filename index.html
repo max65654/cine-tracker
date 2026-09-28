@@ -2117,6 +2117,8 @@ body.dark .subr-details summary{color:#C9A8FF;}
 @media(max-width:760px){#cine-particles{display:none!important;}header.scrolled{backdrop-filter:none!important;-webkit-backdrop-filter:none!important;}}
 @media(prefers-reduced-motion:reduce){.pbig-rays,.sh-chest{animation:none!important;}}
 @media(max-width:760px){#view-library>.add-card:not(.m-open)>*:not(#form-title):not(.search-box){display:none!important;}#view-library>.add-card:not(.m-open) #form-title::after{content:' ▾';opacity:.6}#view-library>.add-card #form-title{cursor:pointer}#view-library>.add-card{padding:12px!important;}}
+.nd-row{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:8px;border:1px solid var(--border);border-radius:12px;margin:6px 0}.nd-l{font-weight:700;min-width:90px}.nd-stars span{font-size:1.5rem;cursor:pointer;color:#bbb;transition:transform .1s}.nd-stars span.f{color:var(--sun)}.nd-stars span:hover{transform:scale(1.2)}.nd-fav{border:none;background:none;font-size:1.4rem;cursor:pointer}.nd-c{flex-basis:100%;min-height:44px;border-radius:10px;border:1px solid var(--border);background:var(--input-bg);color:inherit;padding:8px;font-family:inherit;box-sizing:border-box}.ep-cmt{font-size:.8rem;cursor:help;margin-left:4px}
+.plan-avail{flex-basis:100%;background:var(--card-bg);border-radius:14px;padding:10px 12px;box-shadow:0 3px 0 var(--shadow);font-size:.82rem}.pa-h{font-weight:700;margin-bottom:6px}.pa-vacs{display:flex;flex-direction:column;gap:6px}.pa-v{padding:6px 8px;border:1px solid var(--border);border-radius:10px}.pa-v small{color:var(--muted)}.pa-ctl{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:4px}.pa-exc{display:flex;flex-wrap:wrap;gap:4px;align-items:center;font-size:.76rem}.pa-chip{display:inline-block;padding:2px 8px;border-radius:999px;background:rgba(255,77,109,.14);cursor:pointer;font-size:.74rem;margin:2px}.pa-off{margin-top:8px}.pa-chips{margin-top:4px}.pa-or{color:var(--muted)}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 </head>
@@ -2474,6 +2476,7 @@ body.dark .subr-details summary{color:#C9A8FF;}
   <div class="plan-profile" id="plan-profile"></div>
   <div class="plan-settings">
     <div class="plan-week-cfg" id="plan-week-cfg"></div>
+    <div class="plan-avail" id="plan-avail"></div>
     <label>🚀 Début (au plus tôt)<input type="date" id="plan-start"></label>
     <button class="sub-action" id="plan-go">🔄 Recalculer</button>
     <button class="sub-action" id="plan-ics">📅 Dans mon agenda</button>
@@ -4919,6 +4922,7 @@ function epRowsHtml(itemId,s){
     +'<span class="ep-num">'+s+'×'+String(i+1).padStart(2,'0')+'</span>'
     +'<span class="ep-title">'+esc(ep.title||'Épisode '+(i+1))+'</span>'
     +(ep.seen&&ep.seenDate?'<span class="ep-seen-badge" title="Vu le '+ep.seenDate+'">📅 '+new Date(ep.seenDate+'T12:00').toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit'})+'</span>':'')
+    +(ep.comment?'<span class="ep-cmt" title="'+esc(ep.comment)+'">💬</span>':'')
     +(ep.director?'<span class="ep-dir">'+esc(ep.director)+'</span>':'')
     +'<button class="ep-vid-btn'+(hasVid?' has-vid':'')+'" data-epvid="'+s+'-'+i+'" title="'+(hasVid?'Lire la vidéo importée':'Importer une vidéo depuis mon PC')+'">'+(hasVid?'▶':'📁')+'</button>'
     +'<input type="file" id="epvid-'+itemId+'-'+s+'-'+i+'" accept="video/*" style="display:none">'
@@ -9756,7 +9760,7 @@ function computePlan(){
     // 💚 Chances que ça te plaise (tes notes par genre + note du public) → ordre du planning
     // 🤖 C'est l'appli qui choisit : score = ressemblance avec tes coups de cœur (genres, acteurs,
     // créateurs, époque…) + tes notes par genre + la note du public.
-    series.forEach(function(sr){var base=planLikeScore(sr.info),t=LIKES[sr.info.id];sr.like=(t!=null)?Math.max(3,Math.min(99,Math.round(0.6*t+0.4*base))):base;});
+    series.forEach(function(sr){var base=planLikeScore(sr.info),t=LIKES[sr.info.id];sr.like=(t!=null)?Math.max(3,Math.min(99,Math.round(0.6*t+0.4*base))):base;sr.like=Math.max(3,Math.min(99,sr.like+(planSettings.adj&&planSettings.adj[sr.info.id]||0)));});
     // Ordre choisi pour toi : on commence par la moins sûre (si elle ne te plaît pas, tu la lâches vite),
     // puis on intercale un coup de cœur, puis la suivante moins sûre… → jamais deux soirées « bof » d'affilée.
     var asc=series.slice().sort(function(a,b){return a.like-b.like;}),mix=[];
@@ -9861,7 +9865,7 @@ function buildPlan(){
       }).join('')+'</div>';
     }).join('');
     tl.innerHTML=html;
-    tl.querySelectorAll('[data-pdone]').forEach(function(b){b.addEventListener('click',function(){doneNight(nights[parseInt(b.dataset.pdone)]);});});
+    tl.querySelectorAll('[data-pdone]').forEach(function(b){b.addEventListener('click',function(){openNightDone(nights[parseInt(b.dataset.pdone)]);});});
   });
 }
 // ✓ Soirée faite : coche les épisodes dans ta collection (si la série y est), avance le planning, donne l'XP
@@ -9921,7 +9925,7 @@ function renderTonight(nights){
   ['plan-tonight','home-tonight'].forEach(function(idEl){
     var el=document.getElementById(idEl);if(!el)return;
     el.innerHTML=html;el.style.display=html?'':'none';
-    var b=el.querySelector('[data-tndone]');if(b)b.addEventListener('click',function(){doneNight(list[0]);});
+    var b=el.querySelector('[data-tndone]');if(b)b.addEventListener('click',function(){openNightDone(list[0]);});
     var sk=el.querySelector('[data-tnskip]');if(sk)sk.addEventListener('click',function(){planSettings.skip[todayS]=true;svPlan();toast('😴 Soirée repos — le planning est décalé d\'un jour');if(typeof buildPlan==='function'&&document.getElementById('plan-timeline'))buildPlan();else refreshHomeTonight();});
     var us=el.querySelector('[data-tnunskip]');if(us)us.addEventListener('click',function(){delete planSettings.skip[todayS];svPlan();buildPlan();refreshHomeTonight();});
     var rc=el.querySelector('[data-tnrecap]');if(rc)rc.addEventListener('click',function(){var box=el.querySelector('.tn-recap');box.style.display='';box.innerHTML='⏳…';planPrevEpisode(list[0]).then(function(x){box.innerHTML=x?'<b>S'+x.s+'E'+x.e+(x.name?' — '+esc(x.name):'')+'</b><br>'+esc(x.ov):'Pas de résumé dispo (c\'est le tout début 😉).';});});
@@ -9957,9 +9961,149 @@ function planAdd(id,title,poster,silent){
   id=parseInt(id);if(!id)return false;
   if(planList.some(function(e){return e.id===id;})){if(!silent)toast('Déjà au planning !');return false;}
   planList.push({id:id,title:title,poster:poster||'',mode:'auto'});
+  // La série arrive aussi dans ta collection (« À voir »), puis passe « En cours » dès le 1er épisode vu
+  if(!planItemFor(id)){items.unshift({id:Date.now()+Math.floor(Math.random()*999),title:title,year:'',type:'serie',status:'a_voir',rating:0,fav:false,tags:['🗓️ Planning'],review:'',personalNotes:'',quote:'',poster:poster||'',director:'',cast:'',watchedDate:'',addedAt:Date.now(),synopsis:'',seriesStatus:'',nbSeasons:0,tmdbId:id,tmdbType:'tv',progress:null,lastEpDate:null,runtime:0,epRuntime:0,tmdbRating:0,rewatchCount:0});try{sv();renderAll();}catch(_){}}
   try{passEventLog('plan_add',1,{t:title});}catch(_){}
   passState.log.unshift({d:todayStr(),t:'add',xp:0,l:title});svPass();
   return true;
+}
+
+/* ====== 🗓️ PLANNING v3 : saisons enchaînées, avis par soirée, vacances & jours pas dispo ====== */
+planSettings.off=planSettings.off||{};planSettings.vac=planSettings.vac||{};planSettings.adj=planSettings.adj||{};planSettings.fb=planSettings.fb||{};
+// Vacances scolaires zone A (Grenoble) — du 1er jour de vacances au jour de reprise (exclu)
+var VAC_ZONE_A=[
+  {id:'tous26',n:'🍂 Toussaint 2026',from:'2026-10-17',to:'2026-11-02'},
+  {id:'noel26',n:'🎄 Noël 2026',from:'2026-12-19',to:'2027-01-04'},
+  {id:'hiver27',n:'⛷️ Hiver 2027',from:'2027-02-13',to:'2027-03-01'},
+  {id:'print27',n:'🌷 Printemps 2027',from:'2027-04-10',to:'2027-04-26'},
+  {id:'ete27',n:'☀️ Été 2027',from:'2027-07-03',to:'2027-09-01'}
+];
+function vacFor(day){return VAC_ZONE_A.find(function(v){return day>=v.from&&day<v.to;});}
+planDayBudget=function(day){
+  if(planSettings.skip&&planSettings.skip[day])return 0;
+  if(planSettings.off&&planSettings.off[day])return 0;
+  var v=vacFor(day),cfg=v&&planSettings.vac[v.id];
+  if(cfg&&cfg.mode==='off')return (cfg.exc&&cfg.exc[day])?planBudgetFor(day):0;
+  if(cfg&&cfg.mode==='more')return (cfg.exc&&cfg.exc[day])?0:(cfg.min||240);
+  return planBudgetFor(day);
+};
+function planLikeAdj(id){return planSettings.adj[id]||0;}
+// Nouveau moteur : une saison est souvent enchaînée d'un bloc (courte ou très attendue),
+// les longues sont regardées par gros morceaux (jamais de miettes d'épisodes).
+rotateNights=function(series,prof,startS,todayS,doneToday){
+  var cap=Math.max(3,Math.round(prof.avgEps||2)+1);
+  var q=series.filter(function(sr){return sr.eps.length;}).map(function(sr){return {sr:sr,pos:0,b:false,inS:false,forced:sr.mode==='binge'};});
+  var nights=[],day=startS,r=0,guard=0;
+  function alive(x){return x.pos<x.sr.eps.length;}
+  function seasonLeft(x){var s=x.sr.eps[x.pos].s,n=0;for(var i=x.pos;i<x.sr.eps.length&&x.sr.eps[i].s===s;i++)n++;return n;}
+  function seasonLen(x){var s=x.sr.eps[x.pos].s,info=x.sr.info.seasons.find(function(z){return z.n===s;});return info?info.released:seasonLeft(x);}
+  while(q.some(alive)&&guard<1500){
+    guard++;
+    var budget=planDayBudget(day);if(day===todayS)budget=Math.max(0,budget-doneToday);
+    var left=budget,first=true,served={},rounds=0,g2=0;
+    while(left>0&&g2<40){
+      g2++;if(!q.some(alive))break;
+      var cur=q.find(function(x){return x.b&&x.inS&&alive(x);});
+      if(!cur){
+        var tries=0;do{cur=q[r%q.length];r++;tries++;}while((!alive(cur)||served[cur.sr.info.id])&&tries<=q.length);
+        if(!alive(cur)||served[cur.sr.info.id]){if(budget>=180&&rounds<1){served={};rounds++;continue;}break;}
+      }
+      if(!cur.inS){var L=seasonLen(cur);cur.b=cur.forced||L<=10||(cur.sr.like||0)>=70;cur.inS=true;}
+      var rt=cur.sr.info.rt||45,sl=seasonLeft(cur);
+      var n=Math.min(Math.floor(left/rt),cur.b?sl:cap,sl);
+      if(!cur.b&&sl-n>0&&sl-n<=2&&(sl*rt)<=left+rt)n=Math.min(sl,Math.floor((left+rt)/rt)); // pas de miettes en fin de saison
+      if(n<=0){if(first&&budget>0)n=1;else break;}
+      var chunk=cur.sr.eps.slice(cur.pos,cur.pos+n);cur.pos+=n;left-=n*rt;first=false;
+      served[cur.sr.info.id]=1;
+      nights.push({sr:cur.sr,eps:chunk,min:n*rt,kind:cur.b?'binge':'alt',date:day});
+      if(!alive(cur)||cur.sr.eps[cur.pos].s!==chunk[0].s){cur.inS=false;cur.b=false;} // saison finie → on change de série
+    }
+    day=shiftDate(day,1);
+  }
+  return nights;
+};
+/* ---------- ✓ Soirée faite : note, avis, coup de cœur (par épisode ou pour le groupe) ---------- */
+var SENT_POS=/(g[ée]nial|incroyable|trop bien|ador[ée]|top|excellent|dingue|ouf|masterclass|parfait|chef[- ]d.?[œo]euvre|kiff|j.?aime|magnifique|pépite|captivant|addictif|fou)/i;
+var SENT_NEG=/(nul|ennuy|chiant|bof|d[ée]cevant|d[ée][çc]u|long(ueur)?s?|mauvais|pas terrible|lent|bâcl|bacl|sans int[ée]r[êe]t|j.?ai pas aim|gal[èe]re|relou|moyen)/i;
+function sentOf(t){t=String(t||'');var p=SENT_POS.test(t),n=SENT_NEG.test(t);return p&&!n?1:n&&!p?-1:0;}
+function openNightDone(n){
+  if(!n)return;
+  var eps=n.eps,single=eps.length===1,mode='group';
+  var o=socOverlay('');o.querySelector('.soc-box').classList.add('iv-box');
+  function starsHtml(k){return '<div class="nd-stars" data-nds="'+k+'">'+[1,2,3,4,5].map(function(v){return '<span data-v="'+v+'">★</span>';}).join('')+'</div>';}
+  function row(k,label){return '<div class="nd-row" data-ndr="'+k+'"><div class="nd-l">'+label+'</div>'+starsHtml(k)+'<button class="nd-fav" data-ndf="'+k+'">🤍</button><textarea class="nd-c" data-ndc="'+k+'" placeholder="Ton avis (facultatif)…"></textarea></div>';}
+  function draw(){
+    o.querySelector('.soc-box').innerHTML='<div class="soc-h">✓ '+esc(n.sr.info.name)+' · '+nightLabel(n)+'</div><div class="soc-t">Note ce que tu viens de voir : ça ajuste ton planning (une série qui ne te plaît pas recule, un coup de cœur avance).'+(n.date>todayStr()?' <b>En avance</b> sur le planning 🚀':'')+'</div>'
+      +(single?'':'<div class="iv-tabs"><button class="iv-tab'+(mode==='group'?' on':'')+'" data-ndm="group">Pour tout le groupe ('+eps.length+' ép.)</button><button class="iv-tab'+(mode==='each'?' on':'')+'" data-ndm="each">Épisode par épisode</button></div>')
+      +(mode==='group'?row('g',single?'S'+eps[0].s+'E'+eps[0].e:'S'+eps[0].s+' É'+eps[0].e+'–É'+eps[eps.length-1].e):eps.map(function(x,i){return row(String(i),'S'+x.s+'E'+x.e);}).join(''))
+      +'<div class="soc-row"><button class="soc-btn2" id="nd-x">Annuler</button><button class="soc-btn2" id="nd-skip">Valider sans noter</button><button class="soc-btn" id="nd-ok">✓ C\'est vu</button></div>';
+    o.querySelectorAll('[data-ndm]').forEach(function(b){b.onclick=function(){mode=b.dataset.ndm;draw();};});
+    o.querySelectorAll('.nd-stars').forEach(function(st){st.querySelectorAll('span').forEach(function(sp){sp.onclick=function(){var v=+sp.dataset.v;st.dataset.val=st.dataset.val==v?0:v;st.querySelectorAll('span').forEach(function(x){x.classList.toggle('f',+x.dataset.v<=+st.dataset.val);});};});});
+    o.querySelectorAll('.nd-fav').forEach(function(b){b.onclick=function(){b.classList.toggle('on');b.textContent=b.classList.contains('on')?'❤️':'🤍';};});
+    o.querySelector('#nd-x').onclick=function(){o.remove();};
+    o.querySelector('#nd-skip').onclick=function(){finish(false);};
+    o.querySelector('#nd-ok').onclick=function(){finish(true);};
+  }
+  function collect(){
+    var per=eps.map(function(){return {r:0,f:false,c:''};});
+    if(mode==='group'){var r=+(o.querySelector('[data-nds="g"]').dataset.val||0),f=o.querySelector('[data-ndf="g"]').classList.contains('on'),c=o.querySelector('[data-ndc="g"]').value.trim();per=per.map(function(){return {r:r,f:f,c:c};});}
+    else eps.forEach(function(x,i){per[i]={r:+(o.querySelector('[data-nds="'+i+'"]').dataset.val||0),f:o.querySelector('[data-ndf="'+i+'"]').classList.contains('on'),c:o.querySelector('[data-ndc="'+i+'"]').value.trim()};});
+    return per;
+  }
+  function finish(withRatings){
+    var per=withRatings?collect():null;
+    var btn=o.querySelector('#nd-ok');if(btn){btn.disabled=true;btn.textContent='⏳…';}
+    var it=planItemFor(n.sr.info.id);
+    var sns={};eps.forEach(function(x){sns[x.s]=1;});
+    var chain=Promise.resolve();
+    if(it)Object.keys(sns).forEach(function(s){var arr=(episodes[it.id]||{})[s];if(!arr||arr.length<Math.max.apply(null,eps.filter(function(x){return String(x.s)===String(s);}).map(function(x){return x.e;}))){chain=chain.then(function(){return loadSeasonEps(it.id,it.tmdbId,+s);});}});
+    chain.then(function(){
+      doneNight(n);
+      if(per&&it){
+        var ts=Date.now();
+        eps.forEach(function(x,i){var ep=episodes[it.id]&&episodes[it.id][x.s]&&episodes[it.id][x.s][x.e-1];if(!ep)return;var p=per[i];if(p.r)ep.rating=p.r;if(p.f)ep.fav=true;if(p.c)ep.comment=p.c;ep.seenTs=ep.seenTs||ts;});
+        try{svE();}catch(_){}
+        planFeedback(n.sr.info.id,n.sr.info.name,per);
+      }
+      o.remove();
+    });
+  }
+  draw();
+}
+function planFeedback(id,name,per){
+  var rated=per.filter(function(p){return p.r;}),fav=per.some(function(p){return p.f;}),txt=per.map(function(p){return p.c;}).filter(Boolean).join(' ');
+  if(!rated.length&&!fav&&!txt)return;
+  var avg=rated.length?rated.reduce(function(a,p){return a+p.r;},0)/rated.length:3.2;
+  var score=avg+(fav?1:0)+sentOf(txt)*0.7;
+  var d=score>=4.6?10:score>=4?5:score<=2?-14:score<=2.8?-7:0;
+  planSettings.fb[id]=(planSettings.fb[id]||[]).concat([{d:todayStr(),s:+score.toFixed(2)}]).slice(-20);
+  if(d){planSettings.adj[id]=Math.max(-45,Math.min(35,(planSettings.adj[id]||0)+d));svPlan();
+    setTimeout(function(){toast(d>0?'🚀 Tu kiffes « '+name+' » : ses prochaines saisons avancent dans ton planning':'📉 Pas convaincu par « '+name+' » : on la recule, tes autres séries passent avant');},1200);
+    try{buildPlan();}catch(_){}}
+  var fb=planSettings.fb[id];if(fb.length>=2&&fb.slice(-2).every(function(x){return x.s<=2;}))setTimeout(function(){toast('🤔 « '+name+' » ne te plaît vraiment pas… Tu peux la retirer du planning (✕) sans rien perdre.');},4200);
+}
+/* ---------- 🏖️ Vacances & jours pas dispo ---------- */
+function renderPlanAvail(){
+  var el=document.getElementById('plan-avail');if(!el)return;
+  var today=todayStr();
+  var vacs=VAC_ZONE_A.filter(function(v){return v.to>today;});
+  var offs=Object.keys(planSettings.off).filter(function(d){return d>=today;}).sort();
+  el.innerHTML='<div class="pa-h">🏖️ Vacances (zone A · Grenoble) & jours pas dispo</div>'
+    +'<div class="pa-vacs">'+vacs.map(function(v){var c=planSettings.vac[v.id]||{mode:'normal'};var exc=Object.keys(c.exc||{}).sort();
+      return '<div class="pa-v"><b>'+v.n+'</b> <small>du '+new Date(v.from+'T12:00').toLocaleDateString('fr-FR',{day:'numeric',month:'short'})+' au '+new Date(shiftDate(v.to,-1)+'T12:00').toLocaleDateString('fr-FR',{day:'numeric',month:'short'})+'</small>'
+        +'<div class="pa-ctl"><select data-pav="'+v.id+'"><option value="normal"'+(c.mode==='normal'?' selected':'')+'>Comme d\'habitude</option><option value="more"'+(c.mode==='more'?' selected':'')+'>Plus de temps</option><option value="off"'+(c.mode==='off'?' selected':'')+'>Pas dispo</option></select>'
+        +(c.mode==='more'?'<select data-pamin="'+v.id+'">'+[120,180,240,300,360,480].map(function(m){return '<option value="'+m+'"'+((c.min||240)===m?' selected':'')+'>'+fmtMin(m)+' / jour</option>';}).join('')+'</select>':'')
+        +(c.mode!=='normal'?'<span class="pa-exc">'+(c.mode==='off'?'sauf (dispo) :':'sauf (pas dispo) :')+' <input type="date" min="'+v.from+'" max="'+shiftDate(v.to,-1)+'" data-paexc="'+v.id+'"> '+exc.map(function(d){return '<span class="pa-chip" data-parmexc="'+v.id+'|'+d+'">'+new Date(d+'T12:00').toLocaleDateString('fr-FR',{weekday:'short',day:'numeric'})+' ✕</span>';}).join('')+'</span>':'')
+        +'</div></div>';}).join('')+'</div>'
+    +'<div class="pa-off">🚫 Jours où je ne suis pas dispo : <input type="date" min="'+today+'" id="pa-offd"> <span class="pa-or">ou du</span> <input type="date" min="'+today+'" id="pa-f"> au <input type="date" min="'+today+'" id="pa-t"> <button class="pc-mini" id="pa-addr">Ajouter</button><div class="pa-chips">'+(offs.length?offs.map(function(d){return '<span class="pa-chip" data-parm="'+d+'">'+new Date(d+'T12:00').toLocaleDateString('fr-FR',{weekday:'short',day:'numeric',month:'short'})+' ✕</span>';}).join(''):'<small>Aucun pour l\'instant</small>')+'</div></div>';
+  function save(){svPlan();renderPlanAvail();buildPlan();}
+  el.querySelectorAll('[data-pav]').forEach(function(s){s.onchange=function(){var c=planSettings.vac[s.dataset.pav]=planSettings.vac[s.dataset.pav]||{};c.mode=s.value;if(c.mode==='more'&&!c.min)c.min=240;save();};});
+  el.querySelectorAll('[data-pamin]').forEach(function(s){s.onchange=function(){planSettings.vac[s.dataset.pamin].min=+s.value;save();};});
+  el.querySelectorAll('[data-paexc]').forEach(function(i){i.onchange=function(){if(!i.value)return;var c=planSettings.vac[i.dataset.paexc];c.exc=c.exc||{};c.exc[i.value]=1;save();};});
+  el.querySelectorAll('[data-parmexc]').forEach(function(b){b.onclick=function(){var p=b.dataset.parmexc.split('|');delete planSettings.vac[p[0]].exc[p[1]];save();};});
+  el.querySelectorAll('[data-parm]').forEach(function(b){b.onclick=function(){delete planSettings.off[b.dataset.parm];save();};});
+  el.querySelector('#pa-offd').onchange=function(){if(this.value){planSettings.off[this.value]=1;save();}};
+  el.querySelector('#pa-addr').onclick=function(){var f=el.querySelector('#pa-f').value,t=el.querySelector('#pa-t').value;if(!f||!t||t<f){toast('Choisis un début et une fin');return;}var d=f,g=0;while(d<=t&&g<120){planSettings.off[d]=1;d=shiftDate(d,1);g++;}save();};
 }
 
 /* ---------- 🎯 QUÊTES DE LA SEMAINE ---------- */
@@ -10485,6 +10629,9 @@ function initPlanning(){
   if(!_planInit){
     _planInit=true;
     renderPlanRemind();
+    try{renderPlanAvail();}catch(_){}
+    // Séries déjà au planning mais absentes de la collection → ajoutées en « À voir »
+    (function(){var add=0;planList.forEach(function(e){if(!planItemFor(e.id)){items.unshift({id:Date.now()+Math.floor(Math.random()*99999),title:e.title,year:'',type:'serie',status:'a_voir',rating:0,fav:false,tags:['🗓️ Planning'],review:'',personalNotes:'',quote:'',poster:e.poster||'',director:'',cast:'',watchedDate:'',addedAt:Date.now(),synopsis:'',seriesStatus:'',nbSeasons:0,tmdbId:e.id,tmdbType:'tv',progress:null,lastEpDate:null,runtime:0,epRuntime:0,tmdbRating:0,rewatchCount:0});add++;}});if(add){sv();try{renderAll();}catch(_){}}})();
     var st=document.getElementById('plan-start');st.value=planSettings.start||'';
     st.addEventListener('change',function(){planSettings.start=st.value;svPlan();buildPlan();});
     var wc=document.getElementById('plan-week-cfg');
