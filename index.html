@@ -14681,15 +14681,18 @@ var CC_PATHC={b:'#e3c48e',haunt:'#7d6b8e',space:'#9fb0c8',castle:'#eadcb5',kaiju
 ccMatch=function(root,T,opts){
   opts=opts||{};var pvp=opts.pvp||null,ME=pvp?pvp.me:0,OP=1-ME,DT=0.05,DELAY=45,LEAD=30;var A=ccArenaFor(opts),BOOST=(!pvp&&typeof _ccEvent!=='undefined'&&_ccEvent&&_ccEvent.wk===ccWeekId())?_ccEvent.gid:null;
   var W=18,L=32,BR=[3.5,14.5];
+  var MODE=(opts.mode||(pvp&&pvp.mode))?ccModeDef(opts.mode||pvp.mode):null;if(MODE)opts.mode=MODE.id;
   var ghost=opts.ghost||null;
   var aiLvl=ghost?Math.max(1,Math.round(ghost.lvl||1)):Math.max(1,Math.min(8,1+Math.floor(CC.tr/350)));if(opts.tourn)aiLvl=Math.min(10,aiLvl+1+opts.tourn.stage);
   var aiDeck=ghost&&ghost.deck&&ghost.deck.length?ghost.deck.slice():gShuffle(CC_CHARS.filter(function(c){return CC.tr>=600||['kaiju','dino'].indexOf(c.id)<0;}).map(function(c){return c.id;})).slice(0,8);
+  if(MODE&&MODE.mirror&&!ghost)aiDeck=CC.deck.slice();if(MODE&&MODE.draft&&!ghost)aiDeck=gShuffle(CC_CHARS.map(function(c){return c.id;})).slice(0,8);
   var startAt=pvp?pvp.startAt:Date.now()+2600;
-  var M=CCM={tick:0,t:0,dur:180,over:false,el:[5,5],units:[],towers:[],proj:[],fx:[],corpses:[],sel:-1,hand:gShuffle(CC.deck.slice()),aiHand:aiDeck.slice(),crowns:[0,0],end:false,sched:[],seq:0,otherTick:0,seenEv:{},started:false,shake:0};
+  var M=CCM={mode:MODE?MODE.id:null,stats:{played:0,spells:0,tw:0},tick:0,t:0,dur:MODE&&MODE.dur?MODE.dur:180,over:false,el:[5,5],units:[],towers:[],proj:[],fx:[],corpses:[],sel:-1,hand:gShuffle(CC.deck.slice()),aiHand:aiDeck.slice(),crowns:[0,0],end:false,sched:[],seq:0,otherTick:0,seenEv:{},started:false,shake:0};
+  if(MODE&&MODE.draft)M.hand=gShuffle(CC_CHARS.map(function(c){return c.id;})).slice(0,8);if(MODE&&MODE.el0)M.el=[MODE.el0,MODE.el0];
   var oppName=pvp?esc(pvp.oppName):ghost?'Deck de '+esc(ghost.name):'Bot niv. '+aiLvl,oppAv=pvp?'👤':ghost?'👻':'🤖';
   var seg='';for(var sg=0;sg<10;sg++)seg+='<span></span>';
   root.innerHTML='<canvas class="cc-cv"></canvas><div class="cc3-tbars" id="cc3-tb"></div>'
-    +'<div class="cc3-top"><div class="cc3-pl en"><span class="cc3-av">'+oppAv+'</span><div class="cc3-pn"><b>'+oppName+'</b><small>'+(opts.tourn?'🏆 Tournoi · étape '+(opts.tourn.stage+1):pvp?'Combat amical':'🏟️ '+esc(A.n.replace(/^\S+\s/,''))+'</small>')+'</div><div class="cc3-crowns" id="cc-cr1"><i></i><i></i><i></i></div></div><div class="cc3-timer"><small>Temps restant</small><b id="cc-time">3:00</b><em id="cc3-x2">💧 x2</em></div></div>'
+    +'<div class="cc3-top"><div class="cc3-pl en"><span class="cc3-av">'+oppAv+'</span><div class="cc3-pn"><b>'+oppName+'</b><small>'+(MODE?MODE.ico+' '+esc(MODE.n):opts.tourn?'🏆 Tournoi · étape '+(opts.tourn.stage+1):pvp?'Combat amical':'🏟️ '+esc(A.n.replace(/^\S+\s/,'')))+'</small></div><div class="cc3-crowns" id="cc-cr1"><i></i><i></i><i></i></div></div><div class="cc3-timer"><small>Temps restant</small><b id="cc-time">3:00</b><em id="cc3-x2">💧 x2</em></div></div>'
     +'<button class="cc-quit" id="cc-quit">✕</button><div class="cc-emo-pop" id="cc-emo-me"></div><div class="cc-emo-pop en" id="cc-emo-en"></div><div class="cc3-banner" id="cc3-ban"></div>'
     +'<div class="cc3-hud"><div class="cc3-mine"><div class="cc3-crowns me" id="cc-cr0"><i></i><i></i><i></i></div><span>'+esc(profName())+'</span></div><div class="cc3-row"><div class="cc3-side"><button class="cc-emo-btn" id="cc-emo-btn">😀</button><div class="cc3-next"><small>Suivante</small><div id="cc-next"></div></div></div><div class="cc3-hand" id="cc-hand"></div></div><div class="cc3-elix"><div class="cc3-drop"><b id="cc-eln">5</b></div><div class="cc3-elbar"><i id="cc-elf"></i>'+seg+'</div></div></div>'
     +'<div class="cc-emo-pick" id="cc-emo-pick" style="display:none"></div><div class="cc-hint" id="cc-hint">Glisse une carte sur ton côté de l\'arène</div><div class="cc-wait" id="cc-wait"></div>';
@@ -14741,7 +14744,8 @@ ccMatch=function(root,T,opts){
   var tb=root.querySelector('#cc3-tb');
   function mkBar(o,h,w){var gp2=new T.Group();var bg=new T.Mesh(new T.PlaneGeometry(w+.06,.2),new T.MeshBasicMaterial({color:0x1b1330,depthTest:false,transparent:true}));var fg=new T.Mesh(new T.PlaneGeometry(w,.13),new T.MeshBasicMaterial({color:o.side===ME?0x4dabf7:0xff4d6d,depthTest:false,transparent:true}));fg.position.z=.01;gp2.add(bg);gp2.add(fg);gp2.position.y=h;gp2.renderOrder=999;bg.renderOrder=999;fg.renderOrder=1000;o.g.add(gp2);return {g:gp2,fg:fg,w:w};}
   function mkTower(side,x,y,king){var g2=new T.Group(),col=teamCol(side),H=king?2.3:1.9,Rr=king?1.55:1.15;
-    var stone=toon('#98a2b1'),stoneD=toon('#687282'),trim=toon('#'+new T.Color(col).getHexString());
+    var sk=side===ME&&typeof CC_TSKINS!=='undefined'?CC_TSKINS[CC.tsk||'classic']:null;if(sk&&sk.id==='classic')sk=null;
+    var stone=toon(sk?sk.st:'#98a2b1'),stoneD=toon(sk?sk.sd:'#687282'),trim=sk&&sk.glow?toon('#'+new T.Color(sk.glow).getHexString(),{emissive:sk.glow}):toon('#'+new T.Color(sk&&sk.trim?sk.trim:col).getHexString());
     var base=new T.Mesh(new T.BoxGeometry(Rr*2.3,.55,Rr*2.3),stoneD);base.position.y=.27;base.castShadow=base.receiveShadow=true;g2.add(base);
     var body=new T.Mesh(new T.CylinderGeometry(Rr,Rr*1.12,H,10),stone);body.position.y=.55+H/2;body.castShadow=true;body.receiveShadow=true;g2.add(body);
     for(var k=0;k<5;k++){var bd=new T.Mesh(new T.BoxGeometry(Rr*.5,.07,.05),stoneD);var a=k*1.26;bd.position.set(Math.cos(a)*Rr*1.02,.9+k*.32,Math.sin(a)*Rr*1.02);bd.rotation.y=-a+Math.PI/2;g2.add(bd);}
@@ -14763,7 +14767,7 @@ ccMatch=function(root,T,opts){
     g4.add(body);g4.userData=body.userData;g4.userData.body=body;
     var ring=new T.Mesh(new T.RingGeometry(.5*s*(c.gear==='kaiju'?1.4:1),.68*s*(c.gear==='kaiju'?1.4:1),24),new T.MeshBasicMaterial({color:teamCol(side),side:T.DoubleSide,transparent:true,opacity:.85,depthWrite:false}));ring.rotation.x=-Math.PI/2;ring.position.y=.03;g4.add(ring);
     return g4;}
-  function spawn(side,id,x,y,lvl){var c=ccChar(id);if(!c)return;if(c.spell){castSpell(side,c,x,y,lvl);return;}var m=ccMul(lvl)*(BOOST&&c.gid===BOOST?1.25:1),n=c.count||1;for(var k=0;k<n;k++){var ox=n>1?(k-1)*.7:0,oy=n>1?(k%2)*.5:0;var g5=mkUnit(c,side);var u={side:side,c:c,x:x+ox,y:y+oy,hp:c.hp*m,max:c.hp*m,dmg:c.dmg*m,cd:.6,r:.4*(c.sc||1),g:g5,fly:!!c.fly,born:M.t,lvl:lvl||1};g5.position.copy(P(u.x,u.y));u._drop=performance.now();S.add(g5);u.bar=mkBar(u,(c.gear==='kaiju'?5.4:c.gear==='dino'?4.4:c.gear==='robot'?3.9:2.9*Math.min(1.5,(c.sc||1)))+(u.fly?1.3:0),1.1*Math.min(1.6,(c.sc||1)));M.units.push(u);}}
+  function spawn(side,id,x,y,lvl){var c=ccChar(id);if(!c)return;if(c.spell){castSpell(side,c,x,y,lvl);return;}var m=ccMul(lvl)*(BOOST&&c.gid===BOOST?1.25:1),n=c.count||1,hk=MODE&&MODE.hpK||1,dk=MODE&&MODE.dmgK||1;for(var k=0;k<n;k++){var ox=n>1?(k-1)*.7:0,oy=n>1?(k%2)*.5:0;var g5=mkUnit(c,side);if(MODE&&MODE.sc)g5.scale.setScalar(MODE.sc);var u={side:side,c:c,x:x+ox,y:y+oy,hp:c.hp*m*hk,max:c.hp*m*hk,dmg:c.dmg*m*dk,cd:.6,r:.4*(c.sc||1),g:g5,fly:!!c.fly,born:M.t,lvl:lvl||1};g5.position.copy(P(u.x,u.y));u._drop=performance.now();S.add(g5);u.bar=mkBar(u,(c.gear==='kaiju'?5.4:c.gear==='dino'?4.4:c.gear==='robot'?3.9:2.9*Math.min(1.5,(c.sc||1)))+(u.fly?1.3:0),1.1*Math.min(1.6,(c.sc||1)));M.units.push(u);}}
   function castSpell(side,c,x,y,lvl){var m=ccMul(lvl)*(BOOST&&c.gid===BOOST?1.25:1),ctr={x:x,y:y};
     var foes=M.units.filter(function(u){return u.side!==side&&alive(u)&&dist(u,ctr)<c.r+u.r;}),ftw=M.towers.filter(function(t){return t.side!==side&&alive(t)&&dist(t,ctr)<c.r+t.r;});
     if(c.sdmg){foes.forEach(function(u){u.hp-=c.sdmg*m;u._fl=performance.now();});ftw.forEach(function(t){t.hp-=c.sdmg*m*.3;t.active=true;t._fl=performance.now();});}
@@ -14790,7 +14794,7 @@ ccMatch=function(root,T,opts){
   function hit(att,tg){var dm=att.dmg;var list=att.c&&att.c.splash?M.units.filter(function(e){return e.side!==att.side&&alive(e)&&dist(e,tg)<att.c.splash;}).concat(tg.tower?[tg]:[]):[tg];if(att.c&&att.c.splash&&!tg.tower&&list.indexOf(tg)<0)list.push(tg);
     list.forEach(function(e){e.hp-=dm;e._fl=performance.now();if(e.tower){e.active=true;}});if(att.c&&att.c.drain)att.hp=Math.min(att.max,att.hp+dm*att.c.drain);
     try{var hp=tg.g.position.clone();hp.y+=tg.tower?2.2:1.5;burst(hp,att.c&&att.c.rng<2?5:3,att.c&&att.c.gear==='vampire'?0xff2244:0xffe08a,3,.28);if(!att.tower&&att.c.rng<2)ccsPlay('enemy_attack',.18,1+Math.random()*.3,.09);else ccsPlay('enemy_hurt',.16,1+Math.random()*.4,.08);if(att.c&&att.c.splash)ringFx(tg.g.position,att.c.splash,0xffc078,.35);}catch(_){}}
-  function shoot(att,tg,col){var kind=att.tower?(att.king?'ball':'arrow'):(['witch','mage','alien'].indexOf(att.c.gear)>=0?'orb':'bullet');var m;
+  function shoot(att,tg,col){var kind=att.tower?(att.king?'ball':'arrow'):(['witch','mage','alien','director'].indexOf(att.c.gear)>=0?'orb':'bullet');var m;
     if(kind==='arrow'){m=new T.Group();var sh=new T.Mesh(new T.CylinderGeometry(.025,.025,.6,5),toon('#8d5524'));sh.rotation.x=Math.PI/2;m.add(sh);var tip=new T.Mesh(new T.ConeGeometry(.05,.14,5),toon('#dee2e6'));tip.rotation.x=Math.PI/2;tip.position.z=.34;m.add(tip);}
     else if(kind==='ball'){m=new T.Mesh(new T.SphereGeometry(.2,10,8),toon('#212529'));}
     else if(kind==='orb'){m=new T.Sprite(new T.SpriteMaterial({map:TX.glow,color:col,transparent:true,depthWrite:false,blending:T.AdditiveBlending}));m.scale.setScalar(.55);}
@@ -14798,7 +14802,7 @@ ccMatch=function(root,T,opts){
     var from=att.g.position.clone();from.y+=att.tower?att.topY+1.4:1.7;m.position.copy(from);S.add(m);M.proj.push({m:m,from:from,tg:tg,t:0,d:.3,att:att,kind:kind,col:col});
     if(att.tower&&att.who){att.who.userData.play(att.king?'attack':'shoot',true,.05);att._shotT=performance.now();ccsPlay(att.king?'break':'jump',att.king?.22:.12,att.king?1.4:1.8,.1);}
     else if(kind==='orb')ccsPlay('blaster',.12,1.6,.12);else if(kind==='bullet')ccsPlay('blaster',.14,1.2,.1);}
-  function destroy(o){if(o.tower){var other=1-o.side;M.crowns[other]+=o.king?3:1;if(o.king){M.crowns[other]=3;M.end=true;}
+  function destroy(o){if(o.tower){var other=1-o.side;if(other===ME)M.stats.tw++;M.crowns[other]+=o.king?3:1;if(o.king){M.crowns[other]=3;M.end=true;}
       M.towers.forEach(function(t){if(t.side===o.side&&t.king)t.active=true;});
       o._fall=performance.now();boom(o.g.position,2.2);M.shake=.55;ccsPlay('break',.7,.7);ccsPlay('enemy_destroy',.6,.6);if(o.el)o.el.style.display='none';
       crownPop(other);
@@ -14838,7 +14842,7 @@ ccMatch=function(root,T,opts){
   function groundAt(cx,cy){var r=cv.getBoundingClientRect();mv.x=((cx-r.left)/r.width)*2-1;mv.y=-((cy-r.top)/r.height)*2+1;ray.setFromCamera(mv,cam);var hp=ray.intersectObject(ground)[0];if(!hp)return null;return {x:hp.point.x+W/2,y:-hp.point.z+L/2};}
   function validPos(c,x,y){var okY=c.spell?(y>=.5&&y<=L-.5):(ME===0?(y<=15.3&&y>=.5):(y>=16.7&&y<=L-.5));return okY&&x>=.5&&x<=W-.5;}
   function tryDeploy(x,y){if(M.sel<0||M.end||!M.started)return false;var id=M.hand[M.sel],c=ccChar(id);if(!validPos(c,x,y)){toast(c.spell?'Hors de l\'arène':'Pose-la de ton côté de la rivière');return false;}if(c.cost>M.el[ME]){toast('Pas assez d\'élixir 💧');return false;}
-    M.el[ME]-=c.cost;var lv=(CC.cards[id]||{}).l||1;
+    M.el[ME]-=c.cost;M.stats.played++;if(c.spell)M.stats.spells++;var lv=(CC.cards[id]||{}).l||1;
     if(pvp){var k=ME+'_'+(M.seq++),e={s:ME,id:id,x:+x.toFixed(2),y:+y.toFixed(2),l:lv,tk:M.tick+DELAY,n:M.seq};var up={};up['ev.'+k]=e;up['tk.'+ME]=M.tick;pvpSend(up);e.k=k;schedule(e);}
     else spawn(ME,id,x,y,lv);
     var pp=P(x,y);ringFx(pp,.9,0xffffff,.4);var fl=document.createElement('div');fl.className='cc3-minus';fl.textContent='-'+c.cost;root.appendChild(fl);var sp=pp.clone();sp.y=1.5;sp.project(cam);var rr=cv.getBoundingClientRect();fl.style.left=((sp.x+1)/2*rr.width)+'px';fl.style.top=((1-sp.y)/2*rr.height)+'px';setTimeout(function(){fl.remove();},900);
@@ -14865,17 +14869,18 @@ ccMatch=function(root,T,opts){
     cam.position.copy(camBase);cam.lookAt(camLook);}
   resize();setTimeout(resize,60);setTimeout(resize,400);window.addEventListener('resize',resize);
   /* ---------- Simulation (identique sur les 2 ordis) ---------- */
-  function step(){var dt=DT;M.tick++;M.t=M.tick*DT;var dbl=M.t>M.dur-60;[0,1].forEach(function(s){M.el[s]=Math.min(10,M.el[s]+dt/(dbl?1.4:2.8));});
+  function step(){var dt=DT;M.tick++;M.t=M.tick*DT;var dbl=M.t>M.dur-60;[0,1].forEach(function(s){M.el[s]=Math.min(10,M.el[s]+dt/(dbl?1.4:2.8)*(MODE&&MODE.el||1));});
+    if(MODE&&MODE.zombies&&M.tick>=300&&M.tick%400===0){spawn(0,'zombie',9,9.5,1);spawn(1,'zombie',9,22.5,1);banner('🧟 La horde arrive !','pink');}
     while(M.sched.length&&M.sched[0].tk<=M.tick){var e=M.sched.shift();spawn(e.s,e.id,e.x,e.y,e.l);markers=markers.filter(function(m){if(m.k===e.k){S.remove(m.m);return false;}return true;});}
     if(!pvp)aiThink(dt);
     var left=M.dur-M.t;if(left<=0){if(M.crowns[0]===M.crowns[1]&&!M.over){M.over=true;M.dur+=60;banner('⏱️ Prolongation !','gold');}else M.end=true;}
-    if(M.crowns[0]>=3||M.crowns[1]>=3)M.end=true;
+    if(M.crowns[0]>=3||M.crowns[1]>=3)M.end=true;if(MODE&&MODE.sudden&&(M.crowns[0]||M.crowns[1]))M.end=true;
     M.pulls=(M.pulls||[]).filter(function(pl){if(pl.until<M.t)return false;M.units.forEach(function(u){if(u.side===pl.side||!alive(u))return;var dx=pl.x-u.x,dy=pl.y-u.y,dd=Math.sqrt(dx*dx+dy*dy);if(dd<pl.r&&dd>.25){u.x+=dx/dd*2.4*dt;u.y+=dy/dd*2.4*dt;}});return true;});
     M.units.forEach(function(u){if(!alive(u))return;if(u.fz>M.t)return;u.cd-=dt;if(M.t-u.born<.6)return;var tg=u.tg&&alive(u.tg)&&dist(u,u.tg)<7?u.tg:null;if(!tg||!tg.tower)tg=pickTarget(u);u.tg=tg;if(!tg)return;
       var d=dist(u,tg),reach=u.c.rng+(tg.r||.4)+u.r;
-      if(d<=reach){if(u.cd<=0){u.cd=u.c.hs;if(u.c.rng>2)shoot(u,tg,u.c.gear==='witch'?0xd65bff:u.c.gear==='alien'?0x80ed99:u.c.gear==='mage'?0xffd23f:0xffffff);else hit(u,tg);u.lunge=.25;}}
+      if(d<=reach){if(u.cd<=0){u.cd=u.c.hs/(MODE&&MODE.atk||1);if(u.c.rng>2)shoot(u,tg,u.c.gear==='witch'?0xd65bff:u.c.gear==='alien'?0x80ed99:u.c.gear==='mage'?0xffd23f:u.c.gear==='director'?0xffe066:0xffffff);else hit(u,tg);u.lunge=.25;}}
       else{var tx=tg.x,ty=tg.y;if(!u.fly&&(u.y-16)*(ty-16)<0){var bx=Math.abs(u.x-BR[0])<Math.abs(u.x-BR[1])?BR[0]:BR[1];if(Math.abs(u.y-16)>.5||Math.abs(u.x-bx)>.6){tx=bx;ty=16+(ty>16?.6:-.6);if(Math.abs(u.x-bx)>.6&&Math.abs(u.y-16)<1.6)ty=u.y;}}
-        var dx=tx-u.x,dy=ty-u.y,l=Math.sqrt(dx*dx+dy*dy)||1,sp=u.c.spd*1.6*dt;u.x+=dx/l*sp;u.y+=dy/l*sp;u.fdx=dx;u.fdy=dy;u.walk=(u.walk||0)+dt*8;}});
+        var dx=tx-u.x,dy=ty-u.y,l=Math.sqrt(dx*dx+dy*dy)||1,sp=u.c.spd*1.6*dt*(MODE&&MODE.spd||1);u.x+=dx/l*sp;u.y+=dy/l*sp;u.fdx=dx;u.fdy=dy;u.walk=(u.walk||0)+dt*8;}});
     for(var a=0;a<M.units.length;a++)for(var b2=a+1;b2<M.units.length;b2++){var A2=M.units[a],B=M.units[b2];if(!alive(A2)||!alive(B)||A2.fly!==B.fly)continue;var dd=dist(A2,B),mn=A2.r+B.r;if(dd<mn&&dd>0){var push=(mn-dd)/2,px=(A2.x-B.x)/dd*push,py=(A2.y-B.y)/dd*push;A2.x+=px;A2.y+=py;B.x-=px;B.y-=py;}}
     M.towers.forEach(function(t){if(!alive(t)||!t.active)return;if(t.fz>M.t)return;t.cd-=dt;if(t.cd>0)return;var best=null,bd=t.rng;M.units.forEach(function(u){if(u.side===t.side||!alive(u))return;var d=dist(t,u);if(d<bd){bd=d;best=u;}});if(best){t.cd=t.hs;t.aim=best;shoot(t,best,t.side===ME?0x74c0fc:0xffa8a8);}});
     M.proj=M.proj.filter(function(p){p.t+=dt;if(p.t>=p.d){S.remove(p.m);if(alive(p.tg))hit(p.att,p.tg);return false;}return true;});
@@ -14936,13 +14941,15 @@ ccMatch=function(root,T,opts){
   raf=requestAnimationFrame(loop);
   function finish(quitNow){if(M.fin)return;M.fin=1;M.end=true;_ccLive=null;
     var cr=M.crowns.slice();if(pvp&&ME===1&&M.hostRes&&!M.oppQuit&&!quitNow)cr=M.hostRes.c;
-    var me=cr[ME],en=cr[OP],win=me>en,draw=me===en,friendly=!!pvp||!!ghost||!!opts.tourn;if(opts.tourn&&!quitNow)ccTournResult(win);else if(opts.tourn)ccTournResult(false);if(!pvp&&!ghost&&!opts.tourn)ccEventWin(win);
+    var me=cr[ME],en=cr[OP],win=me>en,draw=me===en,friendly=!!pvp||!!ghost||!!opts.tourn||!!MODE;if(opts.tourn&&!quitNow)ccTournResult(win);else if(opts.tourn)ccTournResult(false);if(!pvp&&!ghost&&!opts.tourn&&!MODE)ccEventWin(win);
     var dtr=friendly?0:(win?30:draw?0:-20);CC.tr=Math.max(0,CC.tr+dtr);CC.best=Math.max(CC.best||0,CC.tr);var gold=win?ccRand(20,40):draw?10:5,gem=win&&!friendly?2:0;CC.gold+=gold;CC.gem+=gem;var chest=win&&!friendly?ccAddChest():null;
     if(friendly){CC.fr=CC.fr||{w:0,l:0,d:0};CC.fr[win?'w':draw?'d':'l']++;}else CC.st[win?'w':draw?'d':'l']++;ccSave();if(win){try{passEventLog('game',1,{t:'Ciné Clash'});}catch(_){}try{gameXp(40,'Ciné Clash');}catch(_){}ccsPlay('coin',.6,1);}
-    var o=document.createElement('div');o.className='cc-end';o.innerHTML='<div class="cc-endbox"><div class="cc-endt '+(win?'win':draw?'draw':'lose')+'">'+(win?'VICTOIRE !':draw?'ÉGALITÉ':'DÉFAITE')+'</div>'+(friendly?'<div class="cc-dsub">'+(opts.tourn?'🏆 Tournoi du week-end':'Combat amical')+(pvp?' contre '+esc(pvp.oppName):ghost?' contre le deck de '+esc(ghost.name):'')+(M.oppQuit?' · il a abandonné':'')+(M.lost?' · connexion perdue':'')+'</div>':'')+'<div class="cc3-endcr"><div class="me">'+[0,1,2].map(function(k){return '<i class="'+(k<me?'on':'')+'" style="animation-delay:'+(k*.25+.3)+'s">👑</i>';}).join('')+'</div><span>'+me+' – '+en+'</span><div class="en">'+[0,1,2].map(function(k){return '<i class="'+(k<en?'on':'')+'">👑</i>';}).join('')+'</div></div><div class="cc-endr">'+(friendly?'':'<span>🏆 '+(dtr>=0?'+':'')+dtr+'</span>')+'<span>🪙 +'+gold+'</span>'+(gem?'<span>💠 +'+gem+'</span>':'')+(chest?'<span>'+CC_CHESTS[chest].i+' '+CC_CHESTS[chest].n+'</span>':'')+'</div><div class="cc-endemo">'+ccPortrait(CC.deck.filter(function(d){return ccChar(d)&&!ccChar(d).spell;})[0]||'knight',win?'cool':draw?'hmm':'snif',120)+'</div><div class="soc-row">'+(pvp||ghost?'<button class="cc-btn alt" id="cc-re">🔁 Revanche</button>':'')+'<button class="cc-btn" id="cc-ok">OK</button></div></div>';
+    var extra='';try{extra=ccAfterMatch({win:win,draw:draw,me:me,en:en,quit:!!quitNow,friendly:friendly,pvp:!!pvp,ghost:!!ghost,tourn:!!opts.tourn,mode:MODE?MODE.id:null,played:M.stats.played,spells:M.stats.spells,tw:M.stats.tw})||'';}catch(e){console.warn(e);}
+    var o=document.createElement('div');o.className='cc-end';o.innerHTML='<div class="cc-endbox"><div class="cc-endt '+(win?'win':draw?'draw':'lose')+'">'+(win?'VICTOIRE !':draw?'ÉGALITÉ':'DÉFAITE')+'</div>'+(friendly?'<div class="cc-dsub">'+(MODE?MODE.ico+' '+esc(MODE.n):opts.tourn?'🏆 Tournoi du week-end':'Combat amical')+(pvp?' contre '+esc(pvp.oppName):ghost?' contre le deck de '+esc(ghost.name):'')+(M.oppQuit?' · il a abandonné':'')+(M.lost?' · connexion perdue':'')+'</div>':'')+'<div class="cc3-endcr"><div class="me">'+[0,1,2].map(function(k){return '<i class="'+(k<me?'on':'')+'" style="animation-delay:'+(k*.25+.3)+'s">👑</i>';}).join('')+'</div><span>'+me+' – '+en+'</span><div class="en">'+[0,1,2].map(function(k){return '<i class="'+(k<en?'on':'')+'">👑</i>';}).join('')+'</div></div><div class="cc-endr">'+(friendly?'':'<span>🏆 '+(dtr>=0?'+':'')+dtr+'</span>')+'<span>🪙 +'+gold+'</span>'+(gem?'<span>💠 +'+gem+'</span>':'')+(chest?'<span>'+CC_CHESTS[chest].i+' '+CC_CHESTS[chest].n+'</span>':'')+extra+'</div><div class="cc-endemo">'+ccPortrait(CC.deck.filter(function(d){return ccChar(d)&&!ccChar(d).spell;})[0]||'knight',win?'cool':draw?'hmm':'snif',120)+'</div><div class="soc-row">'+(pvp||ghost?'<button class="cc-btn alt" id="cc-re">🔁 Revanche</button>':'')+'<button class="cc-btn" id="cc-ok">OK</button></div></div>';
     root.appendChild(o);if(win)try{confetti();setTimeout(confetti,400);}catch(_){}
     o.querySelector('#cc-ok').onclick=function(){root.remove();ccRender();};
-    var re=o.querySelector('#cc-re');if(re)re.onclick=function(){root.remove();if(pvp)ccInvite(pvp.oppUid,pvp.oppName);else ccStartMatch({ghost:ghost});};}
+    var re=o.querySelector('#cc-re');if(re)re.onclick=function(){root.remove();if(pvp)ccInvite(pvp.oppUid,pvp.oppName,MODE?MODE.id:null);else ccStartMatch({ghost:ghost,mode:MODE?MODE.id:null});};
+    if(MODE&&!pvp&&!ghost){var bt=document.createElement('button');bt.className='cc-btn alt';bt.textContent='🔁 Rejouer';bt.onclick=function(){root.remove();ccStartMatch({mode:MODE.id});};var rw=o.querySelector('.soc-row');rw.insertBefore(bt,rw.firstChild);}}
 };
 // Précharge les modèles dès qu'on ouvre Ciné Clash
 (function(){var oG=gameCineClash;gameCineClash=function(){var r=oG.apply(this,arguments);ccLoadThree().then(function(T){ccgLoad(T);}).catch(function(){});try{ccsLoad();}catch(_){}return r;};})();
@@ -15019,6 +15026,323 @@ function ccHub3D(host){
     else ccLoadThree().then(function(T){return ccgLoad(T);}).then(function(){if(CCG.ok&&document.body.contains(host)&&!host.classList.contains('is3d'))ccHub3D(host);}).catch(function(e){console.warn('hub3d',e);});}}catch(e){console.warn('hub3d',e);}
   return r;};})();
 (function(){var st=document.createElement('style');st.textContent='.cc-arena-art.is3d{display:block;position:relative;height:260px;margin:0 -12px 6px}.cc-hub3d{width:100%;height:100%;display:block;cursor:pointer;-webkit-mask-image:linear-gradient(#000 78%,transparent);mask-image:linear-gradient(#000 78%,transparent)}.cc-hub3d-tip{position:absolute;right:14px;bottom:6px;font-size:.72rem;font-weight:700;color:#fff;background:#0006;padding:3px 10px;border-radius:99px;pointer-events:none;transition:opacity .4s}@media (max-width:760px){.cc-arena-art.is3d{height:190px;margin:4px -8px 6px}}';document.head.appendChild(st);})();
+
+/* ====== ⚔️ CINÉ CLASH v4 : Pass Clash, quêtes, mode du mois, nouvelles arènes & cartes, révélation 3D des cartes ====== */
+/* ---------- Calendrier : saison = mois (la saison 1 démarre maintenant et va jusqu'à fin octobre 2026) ---------- */
+function ccMonthIdx(d){d=d||new Date();return Math.max(0,(d.getFullYear()*12+d.getMonth())-(2026*12+9));}
+function ccSeasonKey(d){var i=ccMonthIdx(d),y=2026+Math.floor((9+i)/12),m=(9+i)%12;return y+'-'+String(m+1).padStart(2,'0');}
+function ccSeasonEnd(){var k=ccSeasonKey().split('-');return new Date(+k[0],+k[1],1,0,0,0).getTime();}
+function ccLeft(){var ms=Math.max(0,ccSeasonEnd()-Date.now()),d=Math.floor(ms/864e5),h=Math.floor(ms%864e5/36e5);return d>0?d+' j '+h+' h':h+' h '+Math.floor(ms%36e5/6e4)+' min';}
+/* ---------- Modes du mois ---------- */
+var CC_MODES=[
+ {id:'zombies',ico:'🧟',n:'La Nuit des Zombies',d:'Toutes les 20 secondes, une horde de 3 zombies gratuits rejoint chaque camp. Chaos garanti !',zombies:1,el:1.2,c1:'#6a994e',c2:'#1b1330'},
+ {id:'triple',ico:'⚡',n:'Triple Élixir',d:'L\'élixir remonte 3 fois plus vite : pose tes cartes sans réfléchir !',el:3,el0:7,c1:'#f72585',c2:'#3a0ca3'},
+ {id:'draft',ico:'🎁',n:'Pioche Folle',d:'Deck surprise de 8 cartes au hasard parmi TOUTES les cartes du jeu, même celles que tu n\'as pas encore.',draft:1,el:1.4,c1:'#ff4d6d',c2:'#1b4332'},
+ {id:'rage',ico:'😡',n:'Rage Totale',d:'Tout le monde est sous rage : les persos courent et frappent 40 % plus vite.',spd:1.4,atk:1.4,el:1.3,c1:'#d00000',c2:'#370617'},
+ {id:'mirror',ico:'🪞',n:'Miroir',d:'Contre le bot, il joue exactement ton deck. Qui l\'utilise le mieux ?',mirror:1,c1:'#4cc9f0',c2:'#1d3557'},
+ {id:'sudden',ico:'💀',n:'Mort Subite',d:'La première tour détruite gagne la partie. Élixir x2 dès le début, 2 minutes chrono.',sudden:1,el:2,dur:120,c1:'#adb5bd',c2:'#111827'},
+ {id:'giants',ico:'🦖',n:'Méga Géants',d:'Tous les persos sont géants : 2 fois plus de vie, plus de dégâts. Élixir x2.',hpK:2,dmgK:1.3,sc:1.3,el:2,c1:'#ff6d00',c2:'#3d0c02'}
+];
+var CC_MODE_GOAL=5;
+function ccModeDef(id){return CC_MODES.find(function(m){return m.id===id;})||null;}
+function ccModeOfMonth(d){return CC_MODES[ccMonthIdx(d)%CC_MODES.length];}
+function ccModeState(){var k=ccSeasonKey();if(!CC.md||CC.md.s!==k)CC.md={s:k,w:0,got:0};return CC.md;}
+/* ---------- Saisons du Pass Clash ---------- */
+var CC_SEASONS=[
+ {ico:'🎃',n:'Frissons d\'Halloween',skin:'haunt',c1:'#ff7b00',c2:'#3c096c'},
+ {ico:'⚡',n:'Haute Tension',skin:'neon',c1:'#00f5d4',c2:'#3a0ca3'},
+ {ico:'🎄',n:'Hotte Surprise',skin:'candy',c1:'#ff4d6d',c2:'#1b4332'},
+ {ico:'❄️',n:'Grand Froid',skin:'ice',c1:'#9bf6ff',c2:'#1d3557'},
+ {ico:'💘',n:'Coups de Cœur',skin:'love',c1:'#ff8fab',c2:'#6a0572'},
+ {ico:'🎬',n:'Nuit des Oscars',skin:'gold',c1:'#ffd23f',c2:'#3d2c00'},
+ {ico:'🌋',n:'Âge des Monstres',skin:'lava',c1:'#ff6d00',c2:'#3d0c02'}
+];
+function ccSeason(){var i=ccMonthIdx();return Object.assign({num:i+1,key:ccSeasonKey()},CC_SEASONS[i%CC_SEASONS.length]);}
+/* ---------- Tours (apparences) ---------- */
+var CC_TSKINS={
+ classic:{id:'classic',n:'Classiques',ico:'🏰',st:'#98a2b1',sd:'#687282'},
+ haunt:{id:'haunt',n:'Tours Hantées',ico:'🎃',st:'#5a4a6e',sd:'#2d2238',glow:'#ff7b00'},
+ neon:{id:'neon',n:'Tours Néon',ico:'⚡',st:'#2b2f55',sd:'#15183a',glow:'#00f5d4'},
+ candy:{id:'candy',n:'Tours Sucre d\'orge',ico:'🍭',st:'#ffd6e8',sd:'#ff8fab',trim:'#e63946'},
+ ice:{id:'ice',n:'Tours de Glace',ico:'❄️',st:'#d7f3ff',sd:'#8ecae6',glow:'#48cae4'},
+ love:{id:'love',n:'Tours Cœur',ico:'💘',st:'#ffc2d1',sd:'#c9184a',trim:'#ff4d6d'},
+ gold:{id:'gold',n:'Tours Dorées',ico:'👑',st:'#e9c46a',sd:'#a67c00',trim:'#fff3b0'},
+ lava:{id:'lava',n:'Tours de Lave',ico:'🌋',st:'#4a2c20',sd:'#2b170f',glow:'#ff6d00'}
+};
+function ccSkinOwned(id){return id==='classic'||(CC.tsks||[]).indexOf(id)>=0;}
+/* ---------- Nouvelles cartes ---------- */
+[{id:'stunt',n:'Cascadeuse Casse-cou',g:'Action',gid:28,cost:4,hp:1150,dmg:150,hs:1.1,rng:1.1,spd:1.6,rar:'épique',col:'#f77f00',skin:'#e0ac69',gear:'stunt',d:'Fonce à toute vitesse et encaisse les chocs comme dans les meilleures cascades.'},
+ {id:'director',n:'Réalisatrice Tyrannique',g:'Drame',gid:18,cost:5,hp:760,dmg:160,hs:1.4,rng:5.5,spd:.95,splash:1.5,rar:'légendaire',col:'#2b2d42',skin:'#f1c27d',gear:'director',d:'« Coupez ! » Son mégaphone envoie des ondes de choc qui touchent tout un groupe.'}
+].forEach(function(c){if(!ccChar(c.id))CC_CHARS.push(c);});
+CC_LOOK.stunt={white:'#f77f00',orange:'#1b1b1b',red:'#fcbf49',gray:'#1b1b1b',acc:['helmS'],noPlume:1};
+CC_LOOK.director={white:'#2b2d42',orange:'#111',red:'#3d405b',gray:'#111',acc:['beret','mega'],noPlume:1};
+var _ccgAcc0=ccgAcc;
+ccgAcc=function(T,key,root){_ccgAcc0(T,key,root);var look=CC_LOOK[key]||{},head=ccgBone(root,'head'),arm=ccgBone(root,'arm-right');if(!head)return;
+  function M(c,o){return ccgToon(T,null,Object.assign({color:c},o||{}));}
+  function add(geo,mat,x,y,z,par){var m=new T.Mesh(geo,mat);m.position.set(x,y,z);m.castShadow=true;(par||head).add(m);return m;}
+  (look.acc||[]).forEach(function(k){
+    if(k==='helmS'){add(new T.SphereGeometry(.3,16,10,0,Math.PI*2,0,Math.PI/2),M('#f77f00'),0,.32,0);add(new T.BoxGeometry(.46,.11,.06),M('#1b1b1b'),0,.28,.27);add(new T.BoxGeometry(.07,.02,.58),M('#fff'),0,.61,0);}
+    if(k==='beret'){var b=add(new T.CylinderGeometry(.36,.32,.12,16),M('#ef233c'),.03,.46,0);b.rotation.z=-.2;add(new T.SphereGeometry(.045,6,5),M('#ef233c'),.05,.54,0);add(new T.BoxGeometry(.46,.07,.05),M('#111'),0,.24,.28);}
+    if(k==='mega'&&arm){var mg=add(new T.ConeGeometry(.1,.26,12,1,true),M('#ffd23f',{side:T.DoubleSide}),0,-.36,.14,arm);mg.rotation.x=Math.PI/2+.55;}
+  });};
+var _ccGear0=ccGear;
+ccGear=function(c,E){if(c.gear==='stunt')return '<path d="M25 52 a25 27 0 0 1 50 0 v-3 h-50z" fill="#f77f00" stroke="#1b1b1b" stroke-width="2"/><rect x="29" y="43" width="42" height="8" rx="4" fill="#1b1b1b" opacity=".85"/><rect x="47" y="24" width="6" height="18" fill="#fff" opacity=".85"/>';
+  if(c.gear==='director')return '<ellipse cx="46" cy="31" rx="23" ry="7" fill="#ef233c"/><path d="M28 31 q18 -16 36 0z" fill="#ef233c"/><circle cx="46" cy="21" r="3" fill="#ef233c"/><rect x="34" y="45" width="32" height="7" rx="3" fill="#111" opacity=".85"/><path d="M68 62 l16 -9 v22z" fill="#ffd23f" stroke="#1b1330" stroke-width="2"/>';
+  return _ccGear0(c,E);};
+/* ---------- Nouvelles arènes + route prolongée jusqu'à 4000 🏆 ---------- */
+CC_ARENAS.push({min:2600,k:'western',n:'🌵 Ville du Far West',sky:0xffc98b,g1:'#c9a36b',g2:'#d8b27a',river:0x4cc9f0,riverE:0x0a5c7a,edge:0x8d6e63},
+ {min:3200,k:'studio',n:'🎬 Studio Légendaire',sky:0x1a0b33,g1:'#6d597a',g2:'#7d6a8c',river:0xffd23f,riverE:0x8a5a00,edge:0x2d1e3e});
+CC_PATHC.western='#f1d9a7';CC_PATHC.studio='#e9d8a6';
+var _ccArenaFor0=ccArenaFor;
+ccArenaFor=function(opts){var o=_ccArenaFor0(opts);if(o.k!=='western'&&o.k!=='studio')return o;var K=o.k;
+  o.decor=function(T,S,W,L){function M(c,e){return new T.MeshLambertMaterial({color:c,emissive:e||0});}
+    for(var d=0;d<14;d++){var side=d%2?1:-1,g=new T.Group();
+      if(K==='western'){var tr=new T.Mesh(new T.CylinderGeometry(.28,.3,2,8),M(0x2d6a4f));tr.position.y=1;g.add(tr);[-1,1].forEach(function(s){var ar=new T.Mesh(new T.CylinderGeometry(.16,.16,.8,8),M(0x2d6a4f));ar.position.set(s*.42,1.2+s*.15,0);g.add(ar);var el=new T.Mesh(new T.CylinderGeometry(.16,.16,.4,8),M(0x2d6a4f));el.rotation.z=Math.PI/2;el.position.set(s*.28,.95+s*.15,0);g.add(el);});if(d%3===0){var rk=new T.Mesh(new T.DodecahedronGeometry(.5),M(0xb5835a));rk.position.set(.8,.3,.4);g.add(rk);}}
+      else{var tp=new T.Mesh(new T.CylinderGeometry(.06,.06,2.4),M(0x222222));tp.position.y=1.2;g.add(tp);var lamp=new T.Mesh(new T.CylinderGeometry(.35,.22,.5,10),M(0x333333));lamp.position.y=2.5;lamp.rotation.x=side*.6;g.add(lamp);var lens=new T.Mesh(new T.CircleGeometry(.3,12),new T.MeshBasicMaterial({color:0xfff3b0}));lens.position.set(0,2.5,side*.26);lens.rotation.x=side>0?-.6:Math.PI+.6;g.add(lens);if(d%4===1){var clap=new T.Mesh(new T.BoxGeometry(.9,.6,.08),M(0x111111));clap.position.set(.9,.3,0);g.add(clap);var top=new T.Mesh(new T.BoxGeometry(.9,.15,.08),M(0xf8f9fa));top.position.set(.9,.7,0);top.rotation.z=.25;g.add(top);}}
+      g.position.set(side*(W/2+1.3),0,-L/2+2+d*2.2);S.add(g);}
+    if(K==='studio'){var sg=new T.BufferGeometry(),pts=[];for(var i=0;i<300;i++){pts.push((Math.random()-.5)*160,18+Math.random()*50,(Math.random()-.5)*160);}sg.setAttribute('position',new T.Float32BufferAttribute(pts,3));S.add(new T.Points(sg,new T.PointsMaterial({color:0xffe066,size:.35})));}
+    if(K==='western'){var mesa=new T.Mesh(new T.CylinderGeometry(7,9,6,7),M(0xb5651d));mesa.position.set(26,3,-34);S.add(mesa);}
+  };return o;};
+(function(){var have={};CC_ROAD.forEach(function(s){have[s.t]=1;});for(var t=3100;t<=4000;t+=100){if(have[t])continue;var i=t/100,r;if(i%5===0)r={k:'chest',id:i%10===0?'magic':'gold'};else if(i%3===0)r={k:'emote'};else if(i%2===0)r={k:'gem',n:20+i*2};else r={k:'gold',n:100+i*25};CC_ROAD.push({t:t,r:r});}
+  var nc={2700:'stunt',3300:'director'};CC_ROAD.forEach(function(s){if(nc[s.t]&&!CC.road[s.t])s.r={k:'card',id:nc[s.t]};});})();
+function ccArenaIdx(tr){var k=0;CC_ARENAS.forEach(function(a,i){if(tr>=a.min)k=i;});return k;}
+function ccArenaEmo(A){return A.n.split(' ')[0];}
+function ccArenaName(A){return A.n.replace(/^\S+\s/,'');}
+function ccArenaCards(i){var A=CC_ARENAS[i],nx=CC_ARENAS[i+1],mx=nx?nx.min:1e9;return CC_ROAD.filter(function(s){return s.r.k==='card'&&s.t>=A.min&&s.t<mx;});}
+function ccHex(n){return '#'+('000000'+n.toString(16)).slice(-6);}
+/* ---------- Pass Clash ---------- */
+var CCP_T=20,CCP_PER=8,CCP_PRICE=200;
+function ccPassState(){var k=ccSeasonKey();if(!CC.pass||CC.pass.s!==k)CC.pass={s:k,pts:0,f:{},p:{},prem:false,bank:0};return CC.pass;}
+function ccPassTier(pts){return Math.min(CCP_T,Math.floor(pts/CCP_PER));}
+function ccPassRewards(k,S){var f,p;
+  if(k===20)f={k:'chest',id:'magic'};else if(k%5===0)f={k:'chest',id:'gold'};else if(k%5===3)f={k:'emote'};else if(k===7)f={k:'gem',n:25};else if(k%2===0)f={k:'gold',n:80+k*15};else f={k:'cards',n:6+k};
+  if(k===20)p={k:'skin',id:S.skin};else if(k===5||k===15)p={k:'emote2'};else if(k===8||k===16)p={k:'chest',id:'magic'};else if(k===4||k===12)p={k:'chest',id:'gold'};else if(k===10)p={k:'skin',id:S.skin==='gold'?'lava':'gold'};else if(k%2)p={k:'gold',n:150+k*20};else p={k:'gem',n:15+k};
+  return [f,p];}
+function ccRwIco(r){return r.k==='gold'?'🪙':r.k==='gem'?'💠':r.k==='cards'?'🃏':r.k==='chest'?CC_CHESTS[r.id].i:r.k==='emote'?'😀':r.k==='emote2'?'🤩':r.k==='skin'?(CC_TSKINS[r.id]||{}).ico||'🏰':r.k==='bank'?'🎁':'🎁';}
+function ccRwLab(r){return r.k==='gold'?r.n+' or':r.k==='gem'?r.n+' gemmes':r.k==='cards'?r.n+' cartes':r.k==='chest'?CC_CHESTS[r.id].n:r.k==='emote'?'Emote':r.k==='emote2'?'2 emotes':r.k==='skin'?(CC_TSKINS[r.id]||{}).n:'Bonus';}
+function ccPassReady(){var P=ccPassState(),t=ccPassTier(P.pts),n=0;for(var k=1;k<=t;k++){if(!P.f[k])n++;if(P.prem&&!P.p[k])n++;}var extra=Math.max(0,Math.floor((P.pts-CCP_T*CCP_PER)/CCP_PER))-(P.bank||0);return n+Math.max(0,extra);}
+function ccCoinPop(txt){var e=document.createElement('div');e.className='ccp-pop';e.textContent=txt;document.body.appendChild(e);setTimeout(function(){e.remove();},1300);try{ccsPlay('coin',.5,1.1);}catch(_){}}
+function ccLootShow(title,ico,gold,gem,cards){var o=document.createElement('div');o.className='cc-ov';o.innerHTML='<div class="cc-chest-open"><div class="cc-chest-ico">'+ico+'</div><div class="cc-h">'+esc(title)+'</div><div class="cc-loot">'+(gold?'<div class="cc-lt">🪙 +'+gold+'</div>':'')+(gem?'<div class="cc-lt">💠 +'+gem+'</div>':'')+Object.keys(cards||{}).map(function(id,i){return '<div class="cc-lcard" style="animation-delay:'+(0.2+i*0.15)+'s">'+ccPortrait(id,'joie',64)+'<b>×'+cards[id]+'</b><small>'+esc(ccChar(id).n)+'</small></div>';}).join('')+'</div><button class="cc-btn">Super !</button></div>';document.body.appendChild(o);try{ccsPlay('coin',.5,1);}catch(_){}o.querySelector('button').onclick=function(){o.remove();ccRender();};}
+function ccSkinBig(id){var s=CC_TSKINS[id],o=document.createElement('div');o.className='pbig r-legend';o.innerHTML='<div class="pbig-rays"></div><div class="pbig-in"><div class="pbig-top">NOUVELLES TOURS !</div>'+ccTowerMini(id,1)+'<div class="pbig-n">'+esc(s.n)+'</div><div class="pbig-d">Tes tours auront ce look dans l\'arène</div><div class="soc-row"><button class="soc-btn2" id="sk-no">Plus tard</button><button class="soc-btn" id="sk-eq">🏰 Équiper</button></div></div>';document.body.appendChild(o);try{confetti();}catch(_){}
+  o.querySelector('#sk-no').onclick=function(){o.remove();ccRender();};o.querySelector('#sk-eq').onclick=function(){CC.tsk=id;ccSave();o.remove();toast('🏰 '+s.n+' équipées !');ccRender();};}
+function ccTowerMini(id,big){var s=CC_TSKINS[id]||CC_TSKINS.classic;return '<div class="cct-tw'+(big?' big':'')+'" style="--st:'+s.st+';--sd:'+s.sd+';--tr:'+(s.glow||s.trim||'#3a86ff')+(s.glow?';--gl:'+s.glow:'')+'"><b></b><i></i><em></em></div>';}
+function ccGive(r,label){
+  if(r.k==='gold'){CC.gold+=r.n;ccSave();ccCoinPop('🪙 +'+r.n);ccRender();}
+  else if(r.k==='gem'){CC.gem+=r.n;ccSave();ccCoinPop('💠 +'+r.n);ccRender();}
+  else if(r.k==='cards'){var got=ccGiveCards(r.n);ccSave();ccLootShow(label||'Cartes','🃏',0,0,got);}
+  else if(r.k==='chest'){ccSave();ccOpenChest(r.id);}
+  else if(r.k==='emote'||r.k==='emote2'){var e=ccNewEmote(),e2=r.k==='emote2'?ccNewEmote():null;if(!e){CC.gem+=30;ccSave();ccCoinPop('💠 +30');ccRender();return;}ccSave();emoteBigCC(e);if(e2)setTimeout(function(){emoteBigCC(e2);},250);setTimeout(ccRender,300);}
+  else if(r.k==='skin'){CC.tsks=CC.tsks||[];if(ccSkinOwned(r.id)){CC.gem+=100;ccSave();ccOpenChest('magic');toast('💠 +100 (tu avais déjà ces tours)');return;}CC.tsks.push(r.id);ccSave();ccSkinBig(r.id);}
+  else if(r.k==='bank'){CC.gold+=250;CC.cards&&ccGiveCards(10);ccSave();ccCoinPop('🎁 🪙 +250 · 🃏 +10');ccRender();}
+}
+function ccPassClaim(tr,k){var P=ccPassState(),S=ccSeason();if(ccPassTier(P.pts)<k)return toast('🔒 Palier '+k+' pas encore atteint');if(tr==='p'&&!P.prem)return ccPassBuy();if(P[tr][k])return;P[tr][k]=1;ccSave();ccGive(ccPassRewards(k,S)[tr==='f'?0:1],'Pass · palier '+k);}
+function ccPassBank(){var P=ccPassState(),n=Math.max(0,Math.floor((P.pts-CCP_T*CCP_PER)/CCP_PER))-(P.bank||0);if(n<=0)return;P.bank=(P.bank||0)+1;ccSave();ccGive({k:'bank'});}
+function ccPassAll(){var P=ccPassState(),S=ccSeason(),t=ccPassTier(P.pts),gold=0,gem=0,cards={},left=0;
+  for(var k=1;k<=t;k++){['f','p'].forEach(function(tr){if(tr==='p'&&!P.prem)return;if(P[tr][k])return;var r=ccPassRewards(k,S)[tr==='f'?0:1];if(r.k==='gold'){gold+=r.n;P[tr][k]=1;}else if(r.k==='gem'){gem+=r.n;P[tr][k]=1;}else if(r.k==='cards'){var g=ccGiveCards(r.n);Object.keys(g).forEach(function(id){cards[id]=(cards[id]||0)+g[id];});P[tr][k]=1;}else left++;});}
+  if(!gold&&!gem&&!Object.keys(cards).length)return toast(left?'Touche les coffres, emotes et tours un par un 🎁':'Rien à récupérer pour l\'instant');CC.gold+=gold;CC.gem+=gem;ccSave();ccLootShow('Pass Clash','🎫',gold,gem,cards);if(left)setTimeout(function(){toast('🎁 Il reste '+left+' récompense(s) spéciale(s) à ouvrir');},800);}
+function ccPassBuy(){var P=ccPassState(),S=ccSeason();if(P.prem)return;
+  var o=document.createElement('div');o.className='cc-ov';o.innerHTML='<div class="ccp-buy" style="--c1:'+S.c1+';--c2:'+S.c2+'"><button class="fd-x">✕</button><div class="ccp-buyt">✨ PASS PREMIUM</div><div class="ccp-buys">Saison '+S.num+' · '+S.ico+' '+esc(S.n)+'</div><div class="ccp-perks"><div>'+ccTowerMini(S.skin)+'<b>'+esc((CC_TSKINS[S.skin]||{}).n)+'</b><small>tours exclusives de la saison</small></div><div><span>🔮🔮</span><b>Coffres magiques</b><small>+ coffres d\'or</small></div><div><span>🤩</span><b>4 emotes</b><small>en plus</small></div><div><span>🪙💠</span><b>Plein d\'or et de gemmes</b><small>à chaque palier</small></div></div><div class="ccp-buyp">Tu as 💠 '+CC.gem+'</div><button class="cc-btn gold" id="ccp-go">Débloquer · 💠 '+CCP_PRICE+'</button>'+(CC.gem<CCP_PRICE?'<small class="ccp-tip">Astuce : dans la Boutique, échange tes 💎 du Pass Ciné contre des 💠 (1 💎 = 10 💠). Les victoires et les coffres en donnent aussi.</small>':'')+'</div>';
+  document.body.appendChild(o);o.querySelector('.fd-x').onclick=function(){o.remove();};
+  o.querySelector('#ccp-go').onclick=function(){if(CC.gem<CCP_PRICE)return toast('Il te faut 💠 '+CCP_PRICE);CC.gem-=CCP_PRICE;P.prem=true;ccSave();o.remove();var b=document.createElement('div');b.className='pbig r-premium';b.innerHTML='<div class="pbig-rays"></div><div class="pbig-in"><div class="pbig-top">PASS PREMIUM ACTIVÉ !</div><div class="pbig-ico">✨</div><div class="pbig-n">Saison '+S.num+' · '+esc(S.n)+'</div><div class="pbig-d">Toutes les récompenses dorées sont à toi dès que tu atteins leur palier.</div><button class="soc-btn">Trop bien !</button></div>';document.body.appendChild(b);try{confetti();setTimeout(confetti,400);}catch(_){}b.querySelector('button').onclick=function(){b.remove();ccRender();};};}
+/* ---------- Quêtes du jour ---------- */
+var CCQ=[
+ {id:'play',n:'Joue 3 combats',goal:3,f:function(i){return 1;}},
+ {id:'win',n:'Gagne 2 combats',goal:2,f:function(i){return i.win?1:0;}},
+ {id:'crown',n:'Gagne 5 couronnes',goal:5,f:function(i){return i.me;}},
+ {id:'cards',n:'Pose 25 cartes',goal:25,f:function(i){return i.played;}},
+ {id:'spell',n:'Lance 4 sorts',goal:4,f:function(i){return i.spells;}},
+ {id:'tower',n:'Détruis 3 tours',goal:3,f:function(i){return i.tw;}},
+ {id:'mode',n:'Joue 1 combat du mode du mois',goal:1,f:function(i){return i.mode?1:0;}},
+ {id:'three',n:'Gagne un combat 3 couronnes',goal:1,f:function(i){return i.win&&i.me>=3?1:0;}},
+ {id:'friend',n:'Affronte un pote (en direct ou son deck)',goal:1,f:function(i){return i.pvp||i.ghost?1:0;}}
+];
+function ccQuests(){var d=todayStr();if(!CC.q||CC.q.d!==d){var R=qRand('ccq'+d),pool=CCQ.filter(function(q){return q.id!=='play';}).map(function(q){return q.id;}),l=['play'];while(l.length<3&&pool.length){l.push(pool.splice(Math.floor(R()*pool.length),1)[0]);}CC.q={d:d,l:l.map(function(id){return {id:id,p:0,ok:0};})};ccSave();}return CC.q;}
+/* ---------- Après chaque combat : points de Pass, quêtes, défi du mois ---------- */
+function ccAfterMatch(i){if(i.quit&&!i.win)return '';var chips=[],P=ccPassState();var pts=i.me+(i.win?1:0)+(i.mode?1:0);
+  var q=ccQuests();q.l.forEach(function(x){if(x.ok)return;var d=CCQ.find(function(z){return z.id===x.id;});if(!d)return;x.p=Math.min(d.goal,x.p+d.f(i));if(x.p>=d.goal){x.ok=1;pts+=3;CC.gold+=60;chips.push('<span class="cc3-pchip q">✅ '+esc(d.n)+' · 🎫 +3</span>');}});
+  var t0=ccPassTier(P.pts);P.pts+=pts;var t1=ccPassTier(P.pts);chips.unshift('<span class="cc3-pchip">🎫 +'+pts+' Pass</span>');if(t1>t0)chips.push('<span class="cc3-pchip up">🎫 Palier '+t1+' atteint !</span>');
+  if(i.mode){var ms=ccModeState();if(i.win&&ms.w<CC_MODE_GOAL){ms.w++;if(ms.w>=CC_MODE_GOAL)chips.push('<span class="cc3-pchip up">🏅 Défi du mois réussi !</span>');}}
+  ccSave();return chips.join('');}
+/* ---------- Révélation 3D d'une carte ---------- */
+function ccMiniStage(cv,id){var T=window.THREE,c=ccChar(id);var R;try{R=new T.WebGLRenderer({canvas:cv,antialias:true,alpha:true});}catch(e){return null;}
+  R.setPixelRatio(Math.min(2,window.devicePixelRatio||1));R.outputEncoding=T.sRGBEncoding;R.shadowMap.enabled=true;R.shadowMap.type=T.PCFSoftShadowMap;
+  var S=new T.Scene(),cam=new T.PerspectiveCamera(32,1,.1,100);S.add(new T.HemisphereLight(0xffffff,0x4a3b6b,.75));var sun=new T.DirectionalLight(0xfff2dc,1);sun.position.set(-3,9,6);sun.castShadow=true;sun.shadow.mapSize.set(1024,1024);var sc=sun.shadow.camera;sc.left=-4;sc.right=4;sc.top=4;sc.bottom=-4;S.add(sun);
+  var A=ccArenaFor({}),gc=document.createElement('canvas');gc.width=gc.height=128;var g=gc.getContext('2d');for(var k=0;k<8;k++){g.fillStyle=k%2?A.g1:A.g2;g.fillRect(0,k*16,128,16);}var gt=new T.CanvasTexture(gc);gt.encoding=T.sRGBEncoding;
+  var side=ccgToon(T,null,{color:'#8a6a45'});var plat=new T.Mesh(new T.CylinderGeometry(2.6,2.75,.45,48),[side,new T.MeshLambertMaterial({map:gt}),side]);plat.position.y=-.23;plat.receiveShadow=true;S.add(plat);
+  var rim=new T.Mesh(new T.TorusGeometry(2.64,.1,8,64),ccgToon(T,null,{color:'#e9ecef'}));rim.rotation.x=Math.PI/2;S.add(rim);
+  var rc={'commun':0x4dabf7,'rare':0xff9f1c,'épique':0xc77dff,'légendaire':0xffd23f}[c.rar]||0xffffff;
+  var glow=new T.Mesh(new T.CircleGeometry(3.6,40),new T.MeshBasicMaterial({color:rc,transparent:true,opacity:.35,blending:T.AdditiveBlending,depthWrite:false}));glow.rotation.x=-Math.PI/2;glow.position.y=-.5;S.add(glow);
+  var b=ccBody(T,c);b.traverse(function(o){if(o.isMesh)o.castShadow=true;});S.add(b);if(b.userData.tail)b.userData.tail.visible=false;var gk={robot:1.05,dino:.9,kaiju:.72,ghost:1.15}[c.gear];if(gk)b.scale.multiplyScalar(gk);else{b.updateMatrixWorld(true);var bb=new T.Box3().setFromObject(b),sz=new T.Vector3();bb.getSize(sz);if(sz.y>0.5&&sz.y<8)b.scale.multiplyScalar(Math.min(1.5,2.6/sz.y));}
+  var ring=new T.Mesh(new T.RingGeometry(.7,.95,40),new T.MeshBasicMaterial({color:rc,transparent:true,opacity:0,side:T.DoubleSide,depthWrite:false}));ring.rotation.x=-Math.PI/2;ring.position.y=.03;S.add(ring);
+  var sparks=[];var sct=document.createElement('canvas');sct.width=sct.height=32;var sx=sct.getContext('2d'),gr=sx.createRadialGradient(16,16,0,16,16,16);gr.addColorStop(0,'rgba(255,255,255,1)');gr.addColorStop(1,'rgba(255,255,255,0)');sx.fillStyle=gr;sx.fillRect(0,0,32,32);var stx=new T.CanvasTexture(sct);
+  function spark(n){for(var q=0;q<n;q++){var s=new T.Sprite(new T.SpriteMaterial({map:stx,color:rc,transparent:true,blending:T.AdditiveBlending,depthWrite:false}));var a=Math.random()*6.283,r=.4+Math.random()*1.4;s.position.set(Math.cos(a)*r,.2,Math.sin(a)*r);s.scale.setScalar(.25+Math.random()*.25);s.userData.v=new T.Vector3(Math.cos(a)*1.5,2+Math.random()*2.5,Math.sin(a)*1.5);s.userData.t=0;S.add(s);sparks.push(s);}}
+  function size(){var w=cv.clientWidth||300,h=cv.clientHeight||300;R.setSize(w,h,false);cam.aspect=w/h;var ds=Math.max(9.6,3.3/(Math.tan(16*Math.PI/180)*cam.aspect));cam.position.set(0,3.6*ds/9.6,ds);cam.lookAt(0,.85,0);cam.updateProjectionMatrix();}size();
+  var t0=performance.now(),last=t0,raf=0,landed=false,run=true,ud=b.userData,shake=0;b.position.y=7;
+  function loop(now){if(!run)return;raf=requestAnimationFrame(loop);if(!document.body.contains(cv)){stop();return;}var dt=Math.min(.1,(now-last)/1000);last=now;var t=(now-t0)/1000;
+    if(!landed){var k=Math.min(1,t/.5);b.position.y=7*(1-k*k);if(k>=1){landed=true;b.position.y=0;shake=.25;ring.material.opacity=.9;spark(26);try{ccsPlay('land',.7,.9);ccsPlay('enemy_destroy',.35,1.4);}catch(_){}if(ud.play)ud.play('win',true,.05);ud._back=now+1500;}}
+    else{b.rotation.y=Math.sin(t*.7)*.55;if(ud._back&&now>ud._back){ud._back=0;if(ud.play)ud.play('idle',false,.25);}}
+    if(ud.mixer)ud.mixer.update(dt);if(ud.inner)ud.inner.position.y=Math.sin(t*2.4)*.12;if(ud.tail)ud.tail.rotation.z=Math.sin(t*3.5)*.25;
+    if(ring.material.opacity>0){ring.material.opacity=Math.max(0,ring.material.opacity-dt*.9);ring.scale.setScalar(ring.scale.x+dt*2.4);}
+    glow.material.opacity=.28+Math.sin(t*3)*.08;
+    sparks=sparks.filter(function(s){s.userData.t+=dt;s.position.addScaledVector(s.userData.v,dt);s.userData.v.y-=3*dt;s.material.opacity=Math.max(0,1-s.userData.t/1.3);if(s.userData.t>1.3){S.remove(s);return false;}return true;});
+    if(landed&&Math.random()<dt*3)spark(1);
+    if(shake>0){shake=Math.max(0,shake-dt);cam.position.x=(Math.random()-.5)*shake;}else cam.position.x=0;
+    R.render(S,cam);}
+  function stop(){run=false;cancelAnimationFrame(raf);try{R.dispose();R.forceContextLoss&&R.forceContextLoss();}catch(_){}}
+  raf=requestAnimationFrame(loop);return {stop:stop};}
+function ccReveal(id,title){var c=ccChar(id);if(!c)return;var rc=c.rar==='légendaire'?'legend':c.rar==='épique'?'epic':c.rar==='rare'?'rare':'common';
+  try{ccLoadThree().then(function(T){return ccgLoad(T);}).catch(function(){});}catch(_){}
+  var o=document.createElement('div');o.className='ccr-ov ccr-'+rc;
+  o.innerHTML='<div class="ccr-rays"></div><div class="ccr-top">'+(title||'NOUVELLE CARTE DÉBLOQUÉE !')+'</div><div class="ccr-stage"><canvas class="ccr-cv"></canvas><div class="ccr-card"><div class="ccr-in"><div class="ccr-back"><span>🎬</span><b>CINÉ CLASH</b></div><div class="ccr-face r-'+c.rar+'"><i class="ccr-cost">'+c.cost+'</i>'+ccPortrait(id,'cool',120)+'<b>'+esc(c.n)+'</b><small>'+esc(c.rar)+'</small></div></div></div></div>'
+    +'<div class="ccr-info"><div class="ccr-n">'+esc(c.n)+'</div><div class="ccr-d">'+esc(c.g)+' · '+esc(c.rar)+' · 💧 '+c.cost+'</div><p>'+esc(c.d)+'</p><div class="soc-row"><button class="cc-btn alt" id="ccr-deck">🃏 Voir la carte</button><button class="cc-btn" id="ccr-ok">Super !</button></div></div><div class="ccr-tap">Touche la carte pour la révéler</div>';
+  document.body.appendChild(o);try{ccsPlay('jump',.4,.7);}catch(_){}
+  var stage=null,flipped=false;
+  function flip(){if(flipped)return;flipped=true;o.classList.add('flip');try{ccsPlay('coin',.6,.8);ccsPlay('break',.35,1.5);}catch(_){}try{confetti();}catch(_){}
+    setTimeout(function(){if(!document.body.contains(o))return;if(c.spell||!window.THREE||!CCG.ok){o.classList.add('done');return;}o.classList.add('show3d');stage=ccMiniStage(o.querySelector('.ccr-cv'),id);setTimeout(function(){o.classList.add('done');},700);},1150);}
+  setTimeout(flip,1900);o.addEventListener('click',function(e){if(!e.target.closest('button'))flip();});
+  function close(){if(stage)stage.stop();o.classList.add('out');setTimeout(function(){o.remove();},280);}
+  o.querySelector('#ccr-ok').onclick=function(e){e.stopPropagation();close();};
+  o.querySelector('#ccr-deck').onclick=function(e){e.stopPropagation();close();setTimeout(function(){ccCardDetail(id);},300);};}
+ccUnlockBig=function(id){ccReveal(id);};
+/* ---------- Nouvelle arène : animation + cadeau d'arrivée ---------- */
+function ccArenaUnlock(i){var A=CC_ARENAS[i];if(!A)return;var cards=ccArenaCards(i);
+  var o=document.createElement('div');o.className='ccr-ov ccr-arena';o.innerHTML='<div class="ccr-rays"></div><div class="ccr-top">NOUVELLE ARÈNE !</div><div class="cca-card" style="--a1:'+A.g1+';--a2:'+A.g2+';--sky:'+ccHex(A.sky)+'"><div class="cca-ico">'+ccArenaEmo(A)+'</div><div class="cca-n">'+esc(ccArenaName(A))+'</div><div class="cca-tr">Arène '+(i+1)+' · 🏆 '+A.min+'+</div></div>'
+    +(cards.length?'<div class="cca-sub">Cartes à débloquer dans cette arène</div><div class="cca-cards">'+cards.map(function(s,k){var has=ccHas(s.r.id);return '<div class="cca-c'+(has?' has':'')+'" style="animation-delay:'+(1+k*.25)+'s">'+ccPortrait(s.r.id,has?'cool':'hmm',70)+'<small>'+(has?'✔ À toi':'🏆 '+s.t)+'</small></div>';}).join('')+'</div>':'')
+    +'<button class="cc-btn gold" id="cca-gift">🎁 Cadeau d\'arrivée : 🥇 + 💠 40</button>';
+  document.body.appendChild(o);try{ccsPlay('coin',.6,.7);confetti();}catch(_){}
+  o.querySelector('#cca-gift').onclick=function(){CC.agift=CC.agift||{};if(!CC.agift[A.k]){CC.agift[A.k]=1;CC.gem+=40;ccSave();o.remove();ccOpenChest('gold');setTimeout(function(){ccCoinPop('💠 +40');},400);}else{o.remove();ccRender();}};}
+var _ccArPend=0;function ccArenaCheck(){var cur=ccArenaIdx(CC.tr);if(CC.arSeen==null){CC.arSeen=cur;ccSave();return;}if(cur>CC.arSeen&&!_ccArPend){_ccArPend=1;(function tryShow(n){if(document.querySelector('.ccr-ov,.cc-ov,.cc-match,.pbig')&&n<40){setTimeout(function(){tryShow(n+1);},1500);return;}_ccArPend=0;if(ccArenaIdx(CC.tr)<=CC.arSeen)return;CC.arSeen=cur;ccSave();ccArenaUnlock(cur);})(0);}}
+/* ---------- Route des trophées, arène par arène ---------- */
+function ccRoadStepHtml(s){var ok=CC.tr>=s.t,cl=CC.road[s.t],r=s.r,lab=r.k==='card'?ccPortrait(r.id,'cool',58)+'<small>'+esc(ccChar(r.id).n)+'</small>':r.k==='chest'?'<div class="cc-ri">'+CC_CHESTS[r.id].i+'</div><small>'+CC_CHESTS[r.id].n+'</small>':r.k==='emote'?'<div class="cc-ri">😀</div><small>Emote mystère</small>':r.k==='gem'?'<div class="cc-ri">💠</div><small>'+r.n+' gemmes</small>':'<div class="cc-ri">🪙</div><small>'+r.n+' or</small>';
+  return '<div class="cc-rs'+(r.k==='card'?' card':'')+(cl?' done':ok?' ready':'')+'"><div class="cc-rt">🏆 '+s.t+'</div>'+lab+(cl?'<b>✔</b>':ok?'<button class="cc-sbtn go" data-ccroad2="'+s.t+'">Récupérer</button>':'<span>🔒</span>')+'</div>';}
+function ccRoadHtml(){var cur=ccArenaIdx(CC.tr);CC.agift=CC.agift||{};
+  return '<div class="cc-h2">🏆 Route des trophées <small>des récompenses gratuites dans chaque arène · monte en trophées pour débloquer les arènes et leurs cartes</small></div>'+CC_ARENAS.map(function(A,i){var nx=CC_ARENAS[i+1],mx=nx?nx.min:1e9,steps=CC_ROAD.filter(function(s){return s.t>=Math.max(1,A.min)&&s.t<mx;}),locked=CC.tr<A.min,cards=ccArenaCards(i);
+    var pct=nx?Math.max(0,Math.min(100,(CC.tr-A.min)/(nx.min-A.min)*100)):100;
+    var gift=i>0?'<div class="cc-rs gift'+(CC.agift[A.k]?' done':!locked?' ready':'')+'"><div class="cc-rt">🏆 '+A.min+'</div><div class="cc-ri">🎁</div><small>Cadeau d\'arrivée<br>🥇 + 💠 40</small>'+(CC.agift[A.k]?'<b>✔</b>':!locked?'<button class="cc-sbtn go" data-ccgift="'+i+'">Récupérer</button>':'<span>🔒</span>')+'</div>':'';
+    return '<section class="ccar'+(i===cur?' cur':'')+(locked?' lock':'')+'" style="--a1:'+A.g1+';--a2:'+A.g2+';--sky:'+ccHex(A.sky)+'"'+(i===cur?' id="ccar-cur"':'')+'><div class="ccar-h"><span class="ccar-ico">'+ccArenaEmo(A)+'</span><div class="ccar-t"><small>ARÈNE '+(i+1)+'</small><b>'+esc(ccArenaName(A))+'</b><span>🏆 '+A.min+(nx?' – '+(nx.min-1):' et plus')+'</span></div>'+(i===cur?'<em class="here">📍 Tu es ici</em>':locked?'<em>🔒</em>':'<em>✔</em>')+'</div>'
+      +(i===cur&&nx?'<div class="ccar-bar"><i style="width:'+pct+'%"></i><span>🏆 '+CC.tr+' / '+nx.min+'</span></div>':'')
+      +(cards.length?'<div class="ccar-cards"><small>Cartes de l\'arène :</small>'+cards.map(function(s){var has=ccHas(s.r.id);return '<span class="ccar-c'+(has?' has':'')+'" title="'+esc(ccChar(s.r.id).n)+'">'+ccPortrait(s.r.id,has?'joie':'dodo',40)+'</span>';}).join('')+'</div>':'')
+      +'<div class="cc-road">'+gift+steps.map(ccRoadStepHtml).join('')+'</div></section>';}).join('');}
+function ccRoadClaim(t){var s=CC_ROAD.find(function(x){return x.t===t;});if(!s||CC.road[t]||CC.tr<t)return;CC.road[t]=1;var r=s.r;
+  if(r.k==='card'){if(!ccHas(r.id))CC.cards[r.id]={l:1,n:0};else CC.cards[r.id].n+=5;ccSave();ccReveal(r.id);ccRender();}
+  else if(r.k==='chest'){ccSave();ccOpenChest(r.id);}
+  else if(r.k==='emote'){var e=ccNewEmote();ccSave();if(e)emoteBigCC(e);ccRender();}
+  else ccGive(r);}
+function ccNextRoad(){var ready=CC_ROAD.filter(function(s){return CC.tr>=s.t&&!CC.road[s.t];}).length;CC.agift=CC.agift||{};CC_ARENAS.forEach(function(A,i){if(i>0&&CC.tr>=A.min&&!CC.agift[A.k])ready++;});var nx=CC_ROAD.filter(function(s){return s.t>CC.tr;}).sort(function(a,b){return a.t-b.t;})[0];var nc=CC_ROAD.filter(function(s){return s.t>CC.tr&&s.r.k==='card';}).sort(function(a,b){return a.t-b.t;})[0];return {ready:ready,next:nx,card:nc};}
+/* ---------- Invitations entre potes avec le mode du mois ---------- */
+var _ccPickMode=null,_ccModeFor={};
+var _ccFP0=ccFriendsPicker;ccFriendsPicker=function(m){_ccPickMode=typeof m==='string'?m:null;var r=_ccFP0();if(_ccPickMode){var md=ccModeDef(_ccPickMode);setTimeout(function(){var h=document.querySelector('#soc-ov .soc-h');if(h&&md)h.innerHTML=md.ico+' '+esc(md.n)+' entre potes';},60);}return r;};
+ccInvite=function(uid,name,mode){mode=typeof mode==='string'?mode:_ccPickMode;var md=mode?ccModeDef(mode):null;ccListen();
+  var o=socOverlay('<div class="soc-big">'+(md?md.ico:'⚔️')+'</div><div class="soc-h">Ciné Clash contre '+esc(name)+'</div>'+(md?'<div class="soc-t">Mode du mois : <b>'+esc(md.n)+'</b></div>':'')+'<div class="soc-t" id="cci-st">📨 Invitation en cours…</div>');
+  window.CineSocial.battleCreateRaw({b:uid,bName:name,status:'clash',ev:{},tk:{},mode:mode||null}).then(function(id){_ccWait=id;if(mode)_ccModeFor[id]=mode;o.querySelector('#cci-st').innerHTML='En attente de <b>'+esc(name)+'</b>… (il doit accepter sur son écran)';var x=document.createElement('button');x.className='soc-btn2';x.textContent='Annuler';x.onclick=function(){window.CineSocial.battleUpdate(id,{status:'clashno'});_ccWait=null;o.remove();};o.querySelector('.soc-box').appendChild(x);})
+  .catch(function(e){o.querySelector('#cci-st').textContent='❌ '+((e&&e.code)==='permission-denied'?'Règles Firestore à mettre à jour':'Erreur');});};
+ccInvitePopup=function(b){try{sfx.success();}catch(_){}var md=b.mode?ccModeDef(b.mode):null;
+  var o=socOverlay('<div class="soc-big">'+(md?md.ico:'⚔️')+'</div><div class="soc-h"><b>'+esc(b.aName||'Ton pote')+'</b> te défie à Ciné Clash !</div><div class="soc-t">'+(md?'Mode du mois : <b>'+esc(md.n)+'</b> · ':'')+'Combat amical en direct, chacun sur son écran.</div><div class="soc-row"><button class="soc-btn2" id="cci-no">Refuser</button><button class="soc-btn" id="cci-ok">⚔️ Accepter</button></div>');o.classList.add('soc-reco');
+  o.querySelector('#cci-no').onclick=function(){window.CineSocial.battleUpdate(b.id,{status:'clashno'});o.remove();};
+  o.querySelector('#cci-ok').onclick=function(){var st=Date.now()+4500;window.CineSocial.battleUpdate(b.id,{status:'clashgo',startAt:st});o.remove();ccStartMatch({pvp:{id:b.id,me:1,oppName:b.aName||'Ton pote',oppUid:b.a,startAt:st,mode:b.mode||null}});};};
+var _ccSM1=ccStartMatch;ccStartMatch=function(o){if(!o||(typeof Event!=='undefined'&&o instanceof Event))o={};if(o.pvp&&!o.pvp.mode&&_ccModeFor[o.pvp.id])o.pvp.mode=_ccModeFor[o.pvp.id];if(o.ghost&&!o.mode&&_ccPickMode)o.mode=_ccPickMode;return _ccSM1(o);};
+/* ---------- Pass : écran ---------- */
+function ccPassHtml(){var P=ccPassState(),S=ccSeason(),tier=ccPassTier(P.pts),maxed=tier>=CCP_T,inT=maxed?CCP_PER:P.pts-tier*CCP_PER,pct=inT/CCP_PER*100,q=ccQuests();
+  var h='<div class="ccp-head" style="--c1:'+S.c1+';--c2:'+S.c2+'"><div class="ccp-hl"><small>PASS CINÉ CLASH · SAISON '+S.num+'</small><b>'+S.ico+' '+esc(S.n)+'</b><span>⏳ Fin de saison dans '+ccLeft()+'</span></div>'
+    +'<div class="ccp-prog"><div class="ccp-lvl"><small>Palier</small>'+tier+'</div><div class="ccp-bar"><i style="width:'+pct+'%"></i><span>'+(maxed?'MAX ⭐ · bonus tous les '+CCP_PER+' points':'👑 '+inT+' / '+CCP_PER+' → palier '+(tier+1))+'</span></div><small>1 point par couronne gagnée, +1 par victoire, +1 en mode du mois, +3 par quête</small></div>'
+    +(P.prem?'<div class="ccp-prem on">✨ PREMIUM<br><small>actif</small></div>':'<button class="ccp-prem" id="ccp-buy">✨ PREMIUM<br><b>💠 '+CCP_PRICE+'</b></button>')+'</div>';
+  h+='<div class="ccp-act"><button class="cc-sbtn go" id="ccp-all">🎁 Tout récupérer</button><span>'+ccPassReady()+' récompense(s) prête(s)</span></div>';
+  var cols='';for(var k=1;k<=CCP_T;k++){var rw=ccPassRewards(k,S),on=tier>=k;
+    var f=rw[0],p=rw[1],fs=P.f[k]?'done':on?'ready':'lock',ps=P.p[k]?'done':(on&&P.prem)?'ready':'lock';
+    cols+='<div class="ccp-col'+(on?' on':'')+(k===tier+1?' next':'')+'"'+(k===Math.max(1,tier)?' id="ccp-cur"':'')+'>'
+      +'<button class="ccp-rw f '+fs+(f.k==='chest'||f.k==='skin'?' big':'')+'" data-ccpc="f'+k+'"><span class="ccp-ic">'+(f.k==='skin'?ccTowerMini(f.id):ccRwIco(f))+'</span><small>'+esc(ccRwLab(f))+'</small>'+(fs==='done'?'<i class="ccp-ok">✔</i>':fs==='ready'?'<i class="ccp-get">!</i>':'')+'</button>'
+      +'<div class="ccp-num"><b>'+k+'</b></div>'
+      +'<button class="ccp-rw p '+ps+(p.k==='chest'||p.k==='skin'?' big':'')+(P.prem?'':' nop')+'" data-ccpc="p'+k+'"><span class="ccp-ic">'+(p.k==='skin'?ccTowerMini(p.id):ccRwIco(p))+'</span><small>'+esc(ccRwLab(p))+'</small>'+(ps==='done'?'<i class="ccp-ok">✔</i>':ps==='ready'?'<i class="ccp-get">!</i>':P.prem?'':'<i class="ccp-lk">🔒</i>')+'</button></div>';}
+  var bankN=Math.max(0,Math.floor((P.pts-CCP_T*CCP_PER)/CCP_PER))-(P.bank||0);
+  cols+='<div class="ccp-col bank'+(maxed?' on':'')+'"><button class="ccp-rw f big '+(bankN>0?'ready':'lock')+'" id="ccp-bank"><span class="ccp-ic">🎁</span><small>Coffre bonus'+(bankN>0?' ×'+bankN:'')+'</small>'+(bankN>0?'<i class="ccp-get">!</i>':'')+'</button><div class="ccp-num"><b>★</b></div><div class="ccp-bankt">Après le palier 20 : un coffre bonus tous les '+CCP_PER+' points</div></div>';
+  h+='<div class="ccp-track"><div class="ccp-lanes"><span class="f">GRATUIT</span><span class="p">✨ PREMIUM</span></div><div class="ccp-scroll" id="ccp-scroll">'+cols+'</div></div>';
+  h+='<div class="cc-h2">📋 Quêtes du jour <small>+3 points de Pass et 🪙 60 chacune · nouvelles quêtes demain</small></div><div class="ccq-list">'+q.l.map(function(x){var d=CCQ.find(function(z){return z.id===x.id;})||{n:'?',goal:1};return '<div class="ccq'+(x.ok?' ok':'')+'"><span class="ccq-i">'+(x.ok?'✅':'🎯')+'</span><div><b>'+esc(d.n)+'</b><div class="ccq-bar"><i style="width:'+Math.min(100,x.p/d.goal*100)+'%"></i><span>'+x.p+' / '+d.goal+'</span></div></div><em>🎫 +3</em></div>';}).join('')+'</div>';
+  h+='<div class="cc-h2">🏰 Tes tours <small>les tours du Pass Premium s\'affichent dans l\'arène</small></div><div class="cct-list">'+Object.keys(CC_TSKINS).map(function(id){var s=CC_TSKINS[id],own=ccSkinOwned(id),eq=(CC.tsk||'classic')===id;return '<button class="cct'+(eq?' eq':'')+(own?'':' lock')+'" data-cctsk="'+id+'">'+ccTowerMini(id)+'<b>'+esc(s.n)+'</b><small>'+(eq?'✔ Équipées':own?'Équiper':'🔒 Pass Premium')+'</small></button>';}).join('')+'</div>';
+  return h;}
+function ccPassBind(hub){var b=hub.querySelector('#ccp-buy');if(b)b.onclick=ccPassBuy;var a=hub.querySelector('#ccp-all');if(a)a.onclick=ccPassAll;var bk=hub.querySelector('#ccp-bank');if(bk)bk.onclick=ccPassBank;
+  hub.querySelectorAll('[data-ccpc]').forEach(function(x){x.onclick=function(){var v=x.dataset.ccpc,tr=v[0],k=+v.slice(1);var P=ccPassState();if(P[tr][k])return;if(ccPassTier(P.pts)<k){var r=ccPassRewards(k,ccSeason())[tr==='f'?0:1];return toast('🔒 Palier '+k+' : '+ccRwLab(r)+(tr==='p'&&!P.prem?' (Premium)':''));}ccPassClaim(tr,k);};});
+  hub.querySelectorAll('[data-cctsk]').forEach(function(x){x.onclick=function(){var id=x.dataset.cctsk;if(!ccSkinOwned(id))return toast('🔒 '+CC_TSKINS[id].n+' : à gagner avec le Pass Premium');CC.tsk=id;ccSave();toast('🏰 '+CC_TSKINS[id].n+' équipées');ccRender();};});
+  var sc=hub.querySelector('#ccp-scroll'),cur=hub.querySelector('#ccp-cur');if(sc&&cur){sc.scrollLeft=Math.max(0,cur.offsetLeft-sc.clientWidth/2+cur.clientWidth/2);}}
+/* ---------- Hub : onglet Pass, route par arène, mode du mois, prochaine récompense ---------- */
+(function(){var oR=ccRender;ccRender=function(){var r=oR.apply(this,arguments);var hub=document.getElementById('cc-hub');if(!hub)return r;
+  try{var tabs=hub.querySelector('.cc-tabs');if(tabs&&!tabs.querySelector('[data-cct="pass"]')){var pb=document.createElement('button');pb.dataset.cct='pass';var nr=ccPassReady();pb.innerHTML='🎫 Pass'+(nr?'<i class="cc-dot">'+nr+'</i>':'');if(_ccTab==='pass'){tabs.querySelectorAll('button').forEach(function(x){x.classList.remove('on');});pb.classList.add('on');}pb.onclick=function(){_ccTab='pass';ccRender();};tabs.insertBefore(pb,tabs.children[1]);
+      var nx=ccNextRoad(),rb=tabs.querySelector('[data-cct="road"]');if(rb&&nx.ready)rb.insertAdjacentHTML('beforeend','<i class="cc-dot">'+nx.ready+'</i>');}
+    var panel=hub.querySelector('.cc-panel');
+    if(_ccTab==='pass'&&panel){panel.innerHTML=ccPassHtml();ccPassBind(hub);}
+    else if(_ccTab==='road'&&panel){panel.innerHTML=ccRoadHtml();panel.querySelectorAll('[data-ccroad2]').forEach(function(b){b.onclick=function(){ccRoadClaim(+b.dataset.ccroad2);};});panel.querySelectorAll('[data-ccgift]').forEach(function(b){b.onclick=function(){var i=+b.dataset.ccgift,A=CC_ARENAS[i];CC.agift=CC.agift||{};if(CC.agift[A.k]||CC.tr<A.min)return;CC.agift[A.k]=1;CC.gem+=40;ccSave();ccOpenChest('gold');setTimeout(function(){ccCoinPop('💠 +40');},400);};});var cu=panel.querySelector('#ccar-cur');if(cu)setTimeout(function(){try{if(ccArenaIdx(CC.tr)>0)cu.scrollIntoView({block:'start',behavior:'smooth'});}catch(_){}var rd=cu.querySelector('.cc-rs.ready')||cu.querySelector('.cc-rs:not(.done)');var rr=cu.querySelector('.cc-road');if(rd&&rr)rr.scrollLeft=Math.max(0,rd.offsetLeft-rr.offsetLeft-20);},80);}
+    else if(_ccTab==='battle'&&panel&&!panel.querySelector('.ccm-card')){
+      var ar=panel.querySelector('.cc-arena'),nx2=ccNextRoad();
+      if(ar){var strip=document.createElement('div');strip.className='cc-next';if(nx2.ready)strip.innerHTML='<span class="cc-next-i bounce">🎁</span><b>'+nx2.ready+' récompense(s) gratuite(s) à récupérer sur la Route !</b><button class="cc-sbtn go" id="cc-goroad">Voir</button>';
+        else if(nx2.card){var cc2=nx2.card,prev=CC_ROAD.filter(function(s){return s.t<=CC.tr;}).length?Math.floor(CC.tr/100)*100:0;strip.innerHTML='<span class="cc-next-card">'+ccPortrait(cc2.r.id,'hmm',50)+'<i>?</i></span><div class="cc-next-t"><small>PROCHAINE CARTE À DÉBLOQUER</small><b>'+esc(ccChar(cc2.r.id).n)+'</b><div class="cc-next-bar"><i style="width:'+Math.min(100,CC.tr/cc2.t*100)+'%"></i><span>🏆 '+CC.tr+' / '+cc2.t+'</span></div></div><button class="cc-sbtn" id="cc-goroad">Route</button>';}
+        else strip.innerHTML='<b>👑 Tu as tout débloqué sur la Route des trophées !</b>';
+        var sub=ar.querySelector('.cc-sub');ar.insertBefore(strip,sub?sub.nextSibling:null);var gr=strip.querySelector('#cc-goroad');if(gr)gr.onclick=function(){_ccTab='road';ccRender();};}
+      var md=ccModeOfMonth(),ms=ccModeState(),nxt=CC_MODES[(ccMonthIdx()+1)%CC_MODES.length];
+      var card=document.createElement('div');card.className='ccm-card';card.style.cssText='--m1:'+md.c1+';--m2:'+md.c2;
+      card.innerHTML='<div class="ccm-ico">'+md.ico+'</div><div class="ccm-txt"><small>🗓️ MODE DU MOIS · se termine dans '+ccLeft()+'</small><b>'+esc(md.n)+'</b><span>'+esc(md.d)+'</span><div class="ccm-prog"><div class="ccm-bar"><i style="width:'+Math.min(100,ms.w/CC_MODE_GOAL*100)+'%"></i><span>Défi : '+Math.min(ms.w,CC_MODE_GOAL)+' / '+CC_MODE_GOAL+' victoires</span></div><em>'+(ms.got?'✔ Récompense récupérée':'🎁 🔮 + emote + 🎫 10')+'</em></div><small class="ccm-next">Le mois prochain : '+nxt.ico+' ???</small></div><div class="ccm-btns">'+(ms.w>=CC_MODE_GOAL&&!ms.got?'<button class="cc-sbtn go big" id="ccm-rw">🎁 Récupérer</button>':'')+'<button class="cc-sbtn go big" id="ccm-go">⚔️ Jouer</button><button class="cc-sbtn big" id="ccm-fr">👥 Avec un pote</button></div>';
+      var row=panel.querySelector('.cc-evrow');panel.insertBefore(card,row?row:(ar?ar.nextSibling:null));
+      card.querySelector('#ccm-go').onclick=function(){ccStartMatch({mode:md.id});};
+      card.querySelector('#ccm-fr').onclick=function(){ccFriendsPicker(md.id);};
+      var rw=card.querySelector('#ccm-rw');if(rw)rw.onclick=function(){var s=ccModeState();if(s.got||s.w<CC_MODE_GOAL)return;s.got=1;ccPassState().pts+=10;var e=ccNewEmote();ccSave();ccOpenChest('magic');if(e)setTimeout(function(){emoteBigCC(e);},500);setTimeout(function(){ccCoinPop('🎫 +10 Pass');},300);};
+    }
+    if(_ccTab==='cards'&&panel&&!panel.querySelector('.cct-list')){var sk=document.createElement('div');sk.innerHTML='<div class="cc-h2">🏰 Tes tours</div><div class="cct-list">'+Object.keys(CC_TSKINS).filter(ccSkinOwned).map(function(id){var s=CC_TSKINS[id],eq=(CC.tsk||'classic')===id;return '<button class="cct'+(eq?' eq':'')+'" data-cctsk="'+id+'">'+ccTowerMini(id)+'<b>'+esc(s.n)+'</b><small>'+(eq?'✔ Équipées':'Équiper')+'</small></button>';}).join('')+'<button class="cct lock" id="cct-more">'+ccTowerMini('gold')+'<b>Plus de tours</b><small>🎫 Pass Premium</small></button></div>';panel.appendChild(sk);ccPassBind(hub);var mo=sk.querySelector('#cct-more');if(mo)mo.onclick=function(){_ccTab='pass';ccRender();};}
+    ccArenaCheck();
+  }catch(e){console.warn('cc v4',e);}
+  return r;};})();
+/* ---------- Styles ---------- */
+(function(){var st=document.createElement('style');st.textContent=''
++'.cc-tabs{grid-template-columns:repeat(5,1fr)!important}.cc-tabs button{position:relative}.cc-dot{position:absolute;top:-8px;right:-6px;min-width:20px;height:20px;padding:0 5px;border-radius:99px;background:#ff4d6d;border:2px solid #1b1330;color:#fff;font-style:normal;font-size:.72rem;line-height:16px;animation:ccDot 1.2s ease-in-out infinite}@keyframes ccDot{50%{transform:scale(1.18)}}'
++'.cc-sbtn.big{padding:9px 14px;font-size:.85rem}.cc-btn.gold{background:linear-gradient(180deg,#ffe066,#f59f00);color:#1b1330}'
++'.cc-endr{flex-wrap:wrap;justify-content:center;max-width:94vw;margin-left:auto;margin-right:auto}.cc3-pchip{background:#7b2cbf!important;color:#fff}.cc3-pchip.q{background:#2f9e44!important}.cc3-pchip.up{background:linear-gradient(90deg,#ffd23f,#ff9f1c)!important;color:#1b1330!important;animation:ccDot 1s ease-in-out 3}'
++'.ccp-pop{position:fixed;left:50%;top:42%;transform:translate(-50%,-50%);z-index:10090;background:#1b1330ee;color:#ffd23f;font-family:Fredoka,sans-serif;font-weight:900;font-size:1.6rem;padding:12px 26px;border-radius:99px;border:3px solid #ffd23f;pointer-events:none;animation:ccPop 1.3s ease forwards}@keyframes ccPop{0%{opacity:0;transform:translate(-50%,-30%) scale(.6)}20%{opacity:1;transform:translate(-50%,-50%) scale(1.1)}70%{opacity:1;transform:translate(-50%,-60%) scale(1)}100%{opacity:0;transform:translate(-50%,-110%) scale(.9)}}'
+/* Pass */
++'.ccp-head{position:relative;display:grid;grid-template-columns:1.2fr 1.6fr auto;gap:14px;align-items:center;padding:16px;border-radius:20px;border:3px solid #1b1330;background:radial-gradient(circle at 15% 20%,#ffffff33,transparent 45%),linear-gradient(135deg,var(--c1),var(--c2));box-shadow:0 6px 0 #1b1330;overflow:hidden}.ccp-head::after{content:"";position:absolute;inset:0;background:linear-gradient(115deg,transparent 30%,#ffffff2a 45%,transparent 60%);animation:ccShine 4s ease-in-out infinite;pointer-events:none}@keyframes ccShine{0%{transform:translateX(-100%)}60%,100%{transform:translateX(100%)}}'
++'.ccp-hl small{display:block;font-weight:800;letter-spacing:2px;font-size:.68rem;opacity:.9}.ccp-hl b{display:block;font-family:Fredoka,sans-serif;font-size:1.5rem;text-shadow:0 3px 0 #1b1330;line-height:1.15}.ccp-hl span{font-size:.78rem;font-weight:700;opacity:.95}'
++'.ccp-prog{display:grid;grid-template-columns:auto 1fr;gap:4px 10px;align-items:center}.ccp-prog>small{grid-column:1/3;font-size:.68rem;opacity:.85}.ccp-lvl{width:62px;height:62px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff3b0,#f59f00);border:3px solid #1b1330;color:#1b1330;font-family:Fredoka,sans-serif;font-weight:900;font-size:1.7rem;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1;box-shadow:0 4px 0 #1b1330}.ccp-lvl small{font-size:.55rem;letter-spacing:1px}'
++'.ccp-bar,.ccq-bar,.ccar-bar,.cc-next-bar,.ccm-bar{position:relative;height:22px;border-radius:99px;background:#1b1330aa;border:2px solid #1b1330;overflow:hidden}.ccp-bar i,.ccq-bar i,.ccar-bar i,.cc-next-bar i,.ccm-bar i{position:absolute;left:0;top:0;bottom:0;background:linear-gradient(180deg,#ffe066,#f59f00);border-radius:99px;transition:width .6s}.ccp-bar span,.ccq-bar span,.ccar-bar span,.cc-next-bar span,.ccm-bar span{position:relative;display:block;text-align:center;font-size:.72rem;font-weight:800;line-height:18px;text-shadow:0 1px 2px #000}'
++'.ccp-prem{border:3px solid #1b1330;border-radius:16px;padding:10px 16px;background:linear-gradient(180deg,#ffe066,#f59f00);color:#1b1330;font-family:Fredoka,sans-serif;font-weight:900;font-size:1rem;cursor:pointer;box-shadow:0 5px 0 #1b1330;text-align:center;animation:ccDot 1.6s ease-in-out infinite}.ccp-prem b{font-size:1.15rem}.ccp-prem.on{animation:none;background:linear-gradient(180deg,#8ce99a,#2fbf71);color:#fff}'
++'.ccp-act{display:flex;align-items:center;gap:10px;margin:12px 2px 6px;font-weight:700;font-size:.82rem}'
++'.ccp-track{position:relative;display:flex;gap:8px;margin:6px 0 4px}.ccp-lanes{flex:0 0 34px;display:flex;flex-direction:column;justify-content:space-between;padding:26px 0}.ccp-lanes span{writing-mode:vertical-rl;transform:rotate(180deg);font-weight:900;font-size:.68rem;letter-spacing:2px;padding:10px 4px;border-radius:10px;text-align:center}.ccp-lanes .f{background:#2563eb}.ccp-lanes .p{background:linear-gradient(180deg,#ffe066,#f59f00);color:#1b1330}'
++'.ccp-scroll{position:relative;flex:1;display:flex;gap:10px;overflow-x:auto;padding:8px 6px 14px;scroll-behavior:smooth;-webkit-overflow-scrolling:touch}.ccp-line{position:absolute;left:0;right:0;top:50%;height:8px;margin-top:-4px;background:#1b1330;border-radius:99px;min-width:100%}.ccp-line i{display:block;height:100%;background:linear-gradient(90deg,#ffe066,#ff9f1c);border-radius:99px}'
++'.ccp-col{position:relative;flex:0 0 108px;display:flex;flex-direction:column;align-items:center;gap:8px}.ccp-col::before{content:"";position:absolute;left:-6px;right:-6px;top:50%;height:8px;margin-top:-4px;background:#1b1330}.ccp-col.on::before{background:linear-gradient(90deg,#ffe066,#ff9f1c)}.ccp-col:first-child::before{left:50%}.ccp-col.bank{flex-basis:130px}'
++'.ccp-rw{position:relative;width:100%;height:112px;border:3px solid #1b1330;border-radius:16px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;cursor:pointer;color:#fff;font-weight:800;box-shadow:0 4px 0 #1b1330;transition:transform .15s}.ccp-rw:active{transform:translateY(3px);box-shadow:0 1px 0 #1b1330}.ccp-rw small{font-size:.66rem;line-height:1.1;padding:0 4px;text-align:center}'
++'.ccp-rw.f{background:linear-gradient(180deg,#3b82f6,#1e40af)}.ccp-rw.p{background:linear-gradient(180deg,#fcd34d,#d97706);color:#1b1330}.ccp-rw.lock{filter:saturate(.35) brightness(.72)}.ccp-rw.p.nop{filter:saturate(.5) brightness(.8)}.ccp-rw.done{opacity:.5}'
++'.ccp-rw.ready{animation:ccReady 1.1s ease-in-out infinite;filter:none}@keyframes ccReady{0%,100%{box-shadow:0 4px 0 #1b1330,0 0 0 0 #ffd23faa}50%{box-shadow:0 4px 0 #1b1330,0 0 18px 6px #ffd23faa;transform:translateY(-3px)}}'
++'.ccp-ic{font-size:2.1rem;line-height:1;filter:drop-shadow(0 3px 2px #0006)}.ccp-rw.big .ccp-ic{font-size:2.7rem}.ccp-ok,.ccp-get,.ccp-lk{position:absolute;top:-9px;right:-7px;font-style:normal;width:24px;height:24px;border-radius:50%;border:2px solid #1b1330;display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:900}.ccp-ok{background:#2fbf71;color:#fff}.ccp-get{background:#ff4d6d;color:#fff}.ccp-lk{background:#1b1330;font-size:.7rem}'
++'.ccp-num{position:relative;z-index:1}.ccp-num b{display:flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:50%;background:#334155;border:3px solid #1b1330;font-family:Fredoka,sans-serif;font-weight:900}.ccp-col.on .ccp-num b{background:linear-gradient(180deg,#ffe066,#f59f00);color:#1b1330}.ccp-col.next .ccp-num b{background:#fff;color:#1b1330;animation:ccDot 1s infinite}.ccp-bankt{font-size:.62rem;text-align:center;opacity:.85;height:112px;display:flex;align-items:center}'
++'.ccq-list{display:grid;gap:8px}.ccq{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:14px;border:3px solid #1b1330;background:#0003}.ccq>div{flex:1}.ccq b{font-size:.85rem}.ccq .ccq-bar{margin-top:4px;height:18px}.ccq .ccq-bar span{line-height:14px;font-size:.66rem}.ccq em{font-style:normal;font-weight:900;color:#ffd23f;font-size:.8rem}.ccq.ok{background:#2f9e4433}.ccq-i{font-size:1.4rem}'
++'.cct-list{display:flex;gap:10px;overflow-x:auto;padding:6px 2px 12px}.cct{flex:0 0 112px;border:3px solid #1b1330;border-radius:14px;padding:10px 6px;background:#0004;color:#fff;display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer}.cct b{font-size:.72rem;text-align:center}.cct small{font-size:.64rem;opacity:.85}.cct.eq{background:linear-gradient(180deg,#2fbf7155,#0004);box-shadow:0 0 0 2px #2fbf71}.cct.lock{filter:grayscale(.6) brightness(.75)}'
+/* mini tour CSS */
++'.cct-tw{position:relative;width:40px;height:52px;margin:0 auto}.cct-tw b{position:absolute;left:4px;right:4px;bottom:0;top:12px;background:linear-gradient(90deg,var(--sd),var(--st) 40%,var(--sd));border-radius:3px 3px 6px 6px;border:2px solid #1b1330}.cct-tw i{position:absolute;left:1px;right:1px;top:6px;height:9px;background:var(--tr);border:2px solid #1b1330;border-radius:2px;box-shadow:0 0 10px var(--gl,transparent)}.cct-tw em{position:absolute;left:0;right:0;top:0;height:8px;background:repeating-linear-gradient(90deg,var(--st) 0 7px,transparent 7px 11px)}.cct-tw.big{transform:scale(2.6);margin:50px auto 46px}.ccp-ic .cct-tw{transform:scale(.8)}'
++'.ccp-buy{position:relative;width:min(460px,94vw);border-radius:24px;border:4px solid #1b1330;padding:22px 18px;text-align:center;color:#fff;background:radial-gradient(circle at 50% 0%,#ffffff33,transparent 50%),linear-gradient(160deg,var(--c1),var(--c2));box-shadow:0 10px 40px #000a}.ccp-buyt{font-family:Fredoka,sans-serif;font-weight:900;font-size:1.8rem;color:#ffe066;text-shadow:0 3px 0 #1b1330}.ccp-buys{font-weight:700;opacity:.9;margin-bottom:10px}.ccp-perks{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0}.ccp-perks>div{background:#0005;border-radius:14px;padding:10px 6px;display:flex;flex-direction:column;align-items:center;gap:2px}.ccp-perks span{font-size:1.8rem}.ccp-perks b{font-size:.82rem}.ccp-perks small{font-size:.66rem;opacity:.85}.ccp-buyp{font-weight:800;margin:6px 0}.ccp-tip{display:block;font-size:.72rem;opacity:.9;margin-top:6px}'
+/* Mode du mois */
++'.ccm-card{display:flex;gap:14px;align-items:center;margin:12px 0;padding:14px;border-radius:20px;border:3px solid #1b1330;background:radial-gradient(circle at 10% 30%,#ffffff33,transparent 40%),linear-gradient(120deg,var(--m1),var(--m2));box-shadow:0 6px 0 #1b1330;position:relative;overflow:hidden}.ccm-card::after{content:"";position:absolute;inset:0;background:linear-gradient(115deg,transparent 30%,#ffffff22 45%,transparent 60%);animation:ccShine 5s ease-in-out infinite;pointer-events:none}'
++'.ccm-ico{font-size:3.6rem;filter:drop-shadow(0 6px 4px #0007);animation:heroFloat 2.4s ease-in-out infinite}.ccm-txt{flex:1;display:flex;flex-direction:column;gap:3px}.ccm-txt>small{font-weight:900;letter-spacing:1px;font-size:.66rem;opacity:.95}.ccm-txt>b{font-family:Fredoka,sans-serif;font-size:1.35rem;text-shadow:0 3px 0 #1b1330}.ccm-txt>span{font-size:.8rem;opacity:.95}.ccm-prog{display:flex;align-items:center;gap:8px;margin-top:4px}.ccm-prog .ccm-bar{flex:1;height:20px}.ccm-prog .ccm-bar span{line-height:16px;font-size:.68rem}.ccm-prog em{font-style:normal;font-weight:800;font-size:.72rem;white-space:nowrap}.ccm-next{opacity:.75;font-size:.68rem}.ccm-btns{display:flex;flex-direction:column;gap:6px;position:relative;z-index:1}'
+/* Prochaine récompense */
++'.cc-next{display:flex;align-items:center;gap:10px;margin:12px auto 2px;max-width:560px;padding:8px 12px;border-radius:16px;background:#1b133088;border:2px solid #1b1330;text-align:left}.cc-next b{font-size:.85rem}.cc-next-t{flex:1}.cc-next-t small{display:block;font-size:.6rem;letter-spacing:1px;font-weight:900;color:#ffd23f}.cc-next-bar{height:18px;margin-top:3px}.cc-next-bar span{line-height:14px;font-size:.66rem}.cc-next-card{position:relative;filter:brightness(.55) saturate(.4);animation:heroFloat 2.4s ease-in-out infinite}.cc-next-card i{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-style:normal;font-family:Fredoka,sans-serif;font-weight:900;font-size:1.6rem;color:#fff;filter:brightness(2)}.cc-next-i{font-size:2rem}.cc-next>b{flex:1}'
+/* Route par arène */
++'.ccar{scroll-margin-top:130px;margin:12px 0;border-radius:20px;border:3px solid #1b1330;overflow:hidden;background:linear-gradient(180deg,var(--sky),#1b1330 140%);box-shadow:0 5px 0 #1b1330}.ccar.lock{filter:saturate(.45) brightness(.7)}.ccar.cur{box-shadow:0 5px 0 #1b1330,0 0 0 3px #ffd23f}'
++'.ccar-h{display:flex;align-items:center;gap:12px;padding:12px 14px;background:linear-gradient(90deg,var(--a1),var(--a2));border-bottom:3px solid #1b1330}.ccar-ico{font-size:2.4rem;filter:drop-shadow(0 4px 3px #0007)}.ccar-t{flex:1;display:flex;flex-direction:column}.ccar-t small{font-size:.62rem;font-weight:900;letter-spacing:2px;opacity:.9}.ccar-t b{font-family:Fredoka,sans-serif;font-size:1.2rem;text-shadow:0 2px 0 #1b1330}.ccar-t span{font-size:.74rem;font-weight:700}.ccar-h em{font-style:normal;font-weight:900;font-size:.8rem;background:#1b1330aa;padding:4px 10px;border-radius:99px}.ccar-h em.here{background:#ffd23f;color:#1b1330;animation:ccDot 1.4s infinite}'
++'.ccar-bar{margin:10px 14px 0}.ccar-cards{display:flex;align-items:center;gap:6px;padding:8px 14px 0;flex-wrap:wrap}.ccar-cards small{font-weight:800;font-size:.72rem;margin-right:4px}.ccar-c{filter:grayscale(1) brightness(.6)}.ccar-c.has{filter:none}.ccar .cc-road{padding:10px 12px 14px}.cc-rs.card{background:linear-gradient(180deg,#c77dff44,#0004)}.cc-rs.gift{background:linear-gradient(180deg,#2fbf7144,#0004)}.cc-rs.ready.card{background:linear-gradient(180deg,#ffd23f77,#c77dff44)}'
+/* Révélation de carte */
++'.ccr-ov{position:fixed;inset:0;z-index:10085;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:16px;color:#fff;background:radial-gradient(circle at 50% 42%,#3a1f6e,#07040f 72%);overflow:hidden;animation:pbIn .3s ease;--rc:#4dabf7}.ccr-ov.out{animation:pbOut .28s ease forwards}.ccr-rare{--rc:#ff9f1c}.ccr-epic{--rc:#c77dff}.ccr-legend{--rc:#ffd23f}.ccr-arena{--rc:#ffd23f}'
++'.ccr-rays{position:absolute;left:50%;top:44%;width:170vmax;height:170vmax;margin:-85vmax 0 0 -85vmax;background:repeating-conic-gradient(from 0deg,rgba(255,255,255,.09) 0 9deg,transparent 9deg 18deg);background:repeating-conic-gradient(from 0deg,color-mix(in srgb,var(--rc) 24%,transparent) 0 9deg,transparent 9deg 18deg);animation:ccrSpin 22s linear infinite;pointer-events:none;opacity:.8}@keyframes ccrSpin{to{transform:rotate(360deg)}}'
++'.ccr-top{position:relative;font-family:Fredoka,sans-serif;font-weight:900;letter-spacing:3px;font-size:clamp(1rem,4.5vw,1.6rem);color:var(--rc);text-shadow:0 0 18px var(--rc),0 3px 0 #1b1330;animation:pbPop .6s cubic-bezier(.2,1.6,.4,1)}'
++'.ccr-stage{position:relative;width:min(440px,94vw);height:min(400px,52vh);perspective:1000px}.ccr-cv{position:absolute;inset:0;width:100%;height:100%;opacity:0;transition:opacity .6s}.show3d .ccr-cv{opacity:1}'
++'.ccr-card{position:absolute;left:50%;top:50%;width:170px;height:236px;margin:-118px 0 0 -85px;transition:transform .8s cubic-bezier(.3,1.3,.5,1),left .8s,top .8s;animation:ccrIn .8s cubic-bezier(.2,1.4,.4,1) backwards;z-index:2}@keyframes ccrIn{0%{transform:translateY(-120vh) rotate(-30deg) scale(.5)}100%{transform:none}}'
++'.ccr-card::before{content:"";position:absolute;inset:-30px;border-radius:40px;background:radial-gradient(circle,var(--rc),transparent 65%);opacity:.55;animation:ccrGlow 1s ease-in-out infinite}@keyframes ccrGlow{50%{opacity:.9;transform:scale(1.08)}}'
++'.ccr-ov:not(.flip) .ccr-in{animation:ccrShake .45s .9s ease-in-out 2}@keyframes ccrShake{0%,100%{transform:rotate(0)}25%{transform:rotate(-7deg) scale(1.04)}75%{transform:rotate(7deg) scale(1.04)}}'
++'.ccr-in{position:relative;width:100%;height:100%;transform-style:preserve-3d;transition:transform .9s cubic-bezier(.3,1.5,.5,1)}.flip .ccr-in{transform:rotateY(180deg)}'
++'.ccr-back,.ccr-face{position:absolute;inset:0;border-radius:18px;border:4px solid #1b1330;-webkit-backface-visibility:hidden;backface-visibility:hidden;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;box-shadow:0 0 0 3px var(--rc),0 14px 30px #000a}'
++'.ccr-back{background:repeating-linear-gradient(45deg,#3a0ca3 0 14px,#4c1d95 14px 28px)}.ccr-back span{font-size:4rem;filter:drop-shadow(0 0 16px var(--rc))}.ccr-back b{font-family:Fredoka,sans-serif;font-weight:900;letter-spacing:3px;color:#ffd23f}'
++'.ccr-face{transform:rotateY(180deg);background:radial-gradient(circle at 50% 35%,#ffffff44,transparent 60%),linear-gradient(180deg,var(--rc),#1e1b4b)}.ccr-face b{font-family:Fredoka,sans-serif;font-size:.95rem;text-align:center;padding:0 8px;text-shadow:0 2px 0 #1b1330}.ccr-face small{font-weight:800;text-transform:uppercase;font-size:.65rem;letter-spacing:2px}.ccr-cost{position:absolute;left:-12px;top:-12px;width:38px;height:38px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);background:radial-gradient(circle at 40% 35%,#ff9ae6,#c2189a);border:3px solid #1b1330;display:flex;align-items:center;justify-content:center;font-style:normal;font-family:Fredoka,sans-serif;font-weight:900;font-size:1.1rem}'
++'.flip .ccr-stage::after{content:"";position:absolute;inset:-40%;background:radial-gradient(circle,#fff,transparent 60%);animation:ccrFlash .7s .35s ease-out both;pointer-events:none;z-index:3}@keyframes ccrFlash{0%{opacity:0}30%{opacity:.95}100%{opacity:0}}'
++'.show3d .ccr-card{left:15%;top:15%;transform:scale(.42)}@media(max-width:520px){.show3d .ccr-card{left:12%;top:10%;transform:scale(.36)}}'
++'.ccr-info{position:relative;opacity:0;transform:translateY(24px);transition:opacity .5s,transform .5s;text-align:center;max-width:min(480px,92vw);pointer-events:none}.done .ccr-info{opacity:1;transform:none;pointer-events:auto}.ccr-n{font-family:Fredoka,sans-serif;font-weight:900;font-size:clamp(1.4rem,6vw,2rem);text-shadow:0 3px 0 #1b1330}.ccr-d{color:var(--rc);font-weight:800;font-size:.85rem}.ccr-info p{margin:6px 0 4px;opacity:.9;font-size:.9rem}'
++'.ccr-tap{position:absolute;bottom:calc(24px + env(safe-area-inset-bottom,0px));font-weight:800;opacity:.75;animation:ccDot 1.2s infinite}.flip .ccr-tap{display:none}'
+/* Nouvelle arène */
++'.cca-card{position:relative;width:min(380px,90vw);padding:26px 16px 20px;border-radius:24px;border:4px solid #1b1330;text-align:center;background:radial-gradient(circle at 50% 0%,#ffffff55,transparent 55%),linear-gradient(180deg,var(--sky),var(--a1) 60%,var(--a2));box-shadow:0 0 0 3px #ffd23f,0 16px 40px #000b;animation:ccrIn .9s cubic-bezier(.2,1.3,.4,1) both}.cca-ico{font-size:5rem;filter:drop-shadow(0 8px 6px #0008);animation:heroFloat 2.4s ease-in-out infinite}.cca-n{font-family:Fredoka,sans-serif;font-weight:900;font-size:1.7rem;text-shadow:0 3px 0 #1b1330}.cca-tr{font-weight:800;opacity:.95}.cca-sub{position:relative;margin-top:14px;font-weight:800;letter-spacing:1px;font-size:.8rem;color:#ffd23f}.cca-cards{position:relative;display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin:6px 0 10px}.cca-c{display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px;border-radius:14px;background:#0006;border:2px solid #1b1330;animation:ccrIn .6s cubic-bezier(.2,1.4,.4,1) both}.cca-c:not(.has) .emo-w{filter:brightness(.45) saturate(.3)}.cca-c small{font-weight:800;font-size:.7rem}.ccr-arena .cc-btn{position:relative}'
++'@media(max-width:700px){.ccr-top{letter-spacing:1px;text-align:center}.cc3-endcr i{font-size:1.7rem}.cc3-endcr span{white-space:nowrap;font-size:1.5rem}.cc-endr span{font-size:.82rem;padding:6px 10px}.cc-tabs button{font-size:.66rem;padding:9px 2px}.ccp-head{grid-template-columns:1fr auto;gap:10px}.ccp-prog{grid-column:1/3;grid-row:2}.ccp-hl b{font-size:1.2rem}.ccp-col{flex-basis:92px}.ccp-rw{height:100px}.ccm-card{flex-wrap:wrap}.ccm-ico{font-size:2.6rem}.ccm-btns{flex-direction:row;width:100%}.ccm-btns button{flex:1}.ccm-prog{flex-wrap:wrap}}';
+document.head.appendChild(st);})();
 
 
 /* ---------- 👥 SOIRÉE À DEUX ---------- */
