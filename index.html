@@ -13282,6 +13282,92 @@ renderFeed=function(){
   document.head.appendChild(st);
 })();
 
+/* ====== 💰 Mes ressources visibles partout (Paris, Boutique…) ====== */
+renderCurBar=function(){var h=Object.keys(CUR).map(function(k){return '<span class="cur-pill big c-'+k+'" title="'+CUR[k].n+'">'+CUR[k].i+' <b>'+(passState.cur[k]||0)+'</b></span>';}).join('');document.querySelectorAll('#cur-bar,.cur-live').forEach(function(el){el.innerHTML=h;});var pl=document.getElementById('pass-curline');if(pl)pl.innerHTML=h;};
+(function(){var oS=renderShop;renderShop=function(){var r=oS.apply(this,arguments);var el=document.getElementById('pass-shop');if(el&&!el.querySelector('.cur-live')){var d=document.createElement('div');d.className='cur-bar cur-live cur-sticky';el.insertBefore(d,el.firstChild);}renderCurBar();return r;};
+  var oB=renderBets;renderBets=function(){var r=oB.apply(this,arguments);var el=document.getElementById('pass-bets');if(el){var c=el.querySelector('#cur-bar');if(c){c.removeAttribute('id');c.classList.add('cur-live','cur-sticky');}}renderCurBar();return r;};
+  var st=document.createElement('style');st.textContent='.cur-sticky{position:sticky;top:6px;z-index:6;display:flex;gap:8px;flex-wrap:wrap;justify-content:center;padding:8px 10px;margin:0 0 12px;border-radius:14px;background:rgba(20,10,40,.78);backdrop-filter:blur(6px);box-shadow:0 6px 16px #0006}.cur-sticky .cur-pill.big{font-size:1rem;padding:6px 12px}';document.head.appendChild(st);})();
+
+/* ====== 👑 Série Premium pas encore sortie : Premium visible mais bloqué + chrono, et quêtes bonus ====== */
+function premReleaseAt(r){if(!r||!r.air)return null;return new Date(r.air+'T09:00:00');}
+function premExtraQuests(){
+  var cs=currentSeason();passState.premExtra=passState.premExtra||{};
+  if(passState.premExtra[cs.id]!=null)return passState.premExtra[cs.id];
+  var r=_premLast;if(r===undefined)return 0;var n=0;
+  if(r&&!r.out&&r.air){var y=cs.id.split('-'),rd=new Date(r.air+'T12:00');var start=new Date(+y[0],+y[1]-1,1);var day=rd<start?1:(rd.getFullYear()===start.getFullYear()&&rd.getMonth()===start.getMonth()?rd.getDate():seasonDays()+1);n=Math.max(0,Math.min(4,Math.floor((day-1)/6)));}
+  passState.premExtra[cs.id]=n;svPass();return n;
+}
+(function(){
+  var oQ=questsForDay;questsForDay=function(day){
+    var out=oQ(day),x=premExtraQuests();if(!x)return out;
+    var cs=currentSeason(),y=cs.id.split('-'),date=y[0]+'-'+y[1]+'-'+String(day).padStart(2,'0'),used={};out.forEach(function(q){used[q.tpl.id]=1;});
+    var pat=['m','d','e','m'];
+    for(var j=0;j<x;j++){var df=pat[j],id=cs.id+'_d'+day+'_x'+j,rr=passState.qrr[id]||0,R=qRand(cs.id+'_qx_'+day+'_'+j+(rr?'_r'+rr:''));
+      var cands=QTPL.filter(function(t){return t.g[df]&&!used[t.id]&&(!t.cloud||window.CineSocial);});if(!cands.length)continue;var t=cands[Math.floor(R()*cands.length)];used[t.id]=1;
+      var n=t.g[df];out.push({id:id,tpl:t,ico:t.ico,t:t.t.replace('{n}',n).replace(/\{s\}/g,n>1?'s':'').replace('{x}',n>1?'x':''),goal:n,diff:df,xp:QDIFF[df].xp,c:QDIFF[df].c,day:day,date:date,bonusPrem:1});}
+    return out;
+  };
+  var oR=renderQuests;renderQuests=function(){var r=oR.apply(this,arguments);var x=premExtraQuests(),el=document.getElementById('pass-quests');
+    if(x&&el&&!el.querySelector('.pq-premx')){var d=document.createElement('div');d.className='pq-premx';var rel=premReleaseAt(_premLast);d.innerHTML='👑 La série Premium sort tard'+(rel?' (le '+rel.toLocaleDateString('fr-FR',{day:'numeric',month:'long'})+')':'')+' → <b>+'+x+' quête'+(x>1?'s':'')+' bonus chaque jour</b> ce mois-ci pour rattraper le temps perdu 💪';var info=el.querySelector('.pq-info,.pq-sprint');if(info)info.parentNode.insertBefore(d,info.nextSibling);else el.insertBefore(d,el.firstChild);}
+    el&&el.querySelectorAll('.pq').forEach(function(p){var b=p.querySelector('[data-qc],[data-qrr]');var id=b&&(b.dataset.qc||b.dataset.qrr);if(id&&/_x\d+$/.test(id))p.classList.add('pq-bx');});
+    return r;};
+  var oL=premiumLaneHtml;premiumLaneHtml=function(r,L){var h=oL(r,L);if(!r||r.out||!premReleaseAt(r))return h;
+    return '<div class="prem-soon"><div class="prem-soon-h">🔒 PASS PREMIUM BLOQUÉ</div><div class="prem-soon-t"><b>'+esc(r.label)+'</b> sort dans :</div><div class="prem-cd" data-premcd="'+premReleaseAt(r).getTime()+'"></div><div class="prem-soon-s">Les récompenses Premium sont visibles mais bloquées jusqu\'à la sortie.'+(premExtraQuests()?' En attendant : <b>+'+premExtraQuests()+' quêtes bonus par jour</b> 🎯':'')+'</div></div><div class="prem-locked">'+h+'</div>';};
+  setInterval(function(){document.querySelectorAll('[data-premcd]').forEach(function(el){var ms=Math.max(0,+el.dataset.premcd-Date.now());var d=Math.floor(ms/864e5),h=Math.floor(ms/36e5)%24,m=Math.floor(ms/6e4)%60,s=Math.floor(ms/1e3)%60;el.innerHTML=[[d,'j'],[h,'h'],[m,'min'],[s,'s']].map(function(x){return '<div class="ps-blk"><b>'+String(x[0]).padStart(2,'0')+'</b><span>'+x[1]+'</span></div>';}).join('');if(ms===0){_premRes={};try{renderPass();}catch(_){}}});},1000);
+  var st=document.createElement('style');st.textContent='.prem-soon{margin:12px 0;padding:18px;border-radius:18px;text-align:center;color:#fff;background:linear-gradient(135deg,#3c096c,#7b2cbf);border:3px solid #ffd23f;box-shadow:0 6px 0 #1b1330}.prem-soon-h{font-family:Fredoka,sans-serif;font-weight:800;font-size:1.3rem;letter-spacing:1px}.prem-soon-t{margin:4px 0 8px}.prem-cd{display:flex;gap:8px;justify-content:center;margin:6px 0 10px}.prem-cd .ps-blk{min-width:64px;padding:6px 4px 4px}.prem-cd .ps-blk b{font-size:2.2rem}.prem-soon-s{font-size:.82rem;opacity:.9}.prem-locked{filter:grayscale(.6) brightness(.7);pointer-events:none;position:relative}.prem-locked .pt-claim{display:none}.pq-premx{margin:8px 0;padding:10px 12px;border-radius:12px;background:linear-gradient(90deg,#ffd23f33,#7b2cbf33);border:1px solid #ffd23f88;font-size:.86rem}.pq.pq-bx{box-shadow:inset 3px 0 0 #ffd23f}.pq.pq-bx .pq-t::before{content:"👑 ";}';document.head.appendChild(st);
+})();
+
+/* ====== 👥 Tier list À DEUX (en direct, avec un pote : vos films / séries vus à tous les deux) ====== */
+var _duoDocs=[],_duoCur=null,_duoType='film',_duoSel=null,_duoFriend=null;
+function duoListen(){if(duoListen.on||!window.CineSocial||!window.CineSocial.onBattles)return;duoListen.on=1;window.CineSocial.onBattles(function(l){_duoDocs=l.filter(function(b){return b.status==='tier';});if(_duoCur){var d=_duoDocs.find(function(x){return x.id===_duoCur.id;});if(d){_duoCur=d;if(document.getElementById('duo-board'))renderDuoTier();}}});}
+window.addEventListener('cine-social-ready',function(){setTimeout(duoListen,300);});setTimeout(duoListen,4000);
+function duoPool(f){
+  var P='https://image.tmdb.org/t/p/',m={};
+  items.forEach(function(i){var k=friendKey(i);if(!k||i.locked||i.status!=='termine')return;m[k]={k:k,t:i.title,p:i.poster||'',me:1,rm:+i.rating||0};});
+  (f.items||[]).forEach(function(x){if(!x.k||x.s!=='termine')return;var e=m[x.k]=m[x.k]||{k:x.k,t:x.t,p:x.p?P+x.p:''};e.him=1;e.rh=+x.r||0;if(!e.p&&x.p)e.p=P+x.p;});
+  return m;
+}
+function renderDuoTier(){
+  var el=document.getElementById('duo-wrap');if(!el)return;
+  if(!window.CineSocial){el.innerHTML='<div class="news-empty">👥 Connecte-toi à ton compte pour faire une tier list avec un pote.</div>';return;}
+  duoListen();
+  if(!_duoFriend){el.innerHTML='<div class="soc-t">⏳ Je cherche tes potes…</div>';window.CineSocial.friends().then(function(fr){
+    el.innerHTML='<div class="duo-pick"><div class="soc-h">👥 Avec qui tu fais la tier list ?</div>'+(fr.length?fr.map(function(f){return '<button class="soc-btn" data-duof="'+f.uid+'">'+esc(f.name)+'</button>';}).join(' '):'<div class="soc-t">Aucun pote trouvé.</div>')+'<div class="soc-t">On met tous vos films et séries vus (les tiens + les siens) et vous classez ensemble, en direct : chaque déplacement apparaît chez l\'autre.</div></div>';
+    el.querySelectorAll('[data-duof]').forEach(function(b){b.onclick=function(){_duoFriend=fr.find(function(x){return x.uid===b.dataset.duof;});var me=window.CineSocial.uid();var ex=_duoDocs.filter(function(d){return (d.a===me&&d.b===_duoFriend.uid)||(d.b===me&&d.a===_duoFriend.uid);}).sort(function(a,b){return (b.createdAt||0)-(a.createdAt||0);})[0];
+      if(ex){_duoCur=ex;renderDuoTier();return;}
+      el.innerHTML='<div class="soc-t">⏳ Je crée votre tier list…</div>';
+      window.CineSocial.duoTierCreate(_duoFriend.uid,_duoFriend.name).then(function(id){_duoCur={id:id,a:me,b:_duoFriend.uid,tiers:{}};renderDuoTier();}).catch(function(e){el.innerHTML='<div class="news-empty">❌ Impossible ('+((e&&e.code)==='permission-denied'?'règles Firestore « battles » à vérifier':'erreur')+')</div>';});};});
+  });return;}
+  if(!_duoCur){el.innerHTML='<div class="soc-t">⏳…</div>';return;}
+  var f=_duoFriend,pool=duoPool(f),pre=_duoType==='film'?'movie_':'tv_';
+  var T=(_duoCur.tiers&&_duoCur.tiers[_duoType])||{},placed={};TIERS.forEach(function(t){(T[t.k]=(T[t.k]||[]).filter(function(k){return pool[k];})).forEach(function(k){placed[k]=1;});});
+  var q=(el.querySelector('#duo-q')||{}).value||'';
+  var free=Object.keys(pool).filter(function(k){return k.indexOf(pre)===0&&!placed[k]&&(!q||ivNorm(pool[k].t).indexOf(ivNorm(q))>=0);}).sort(function(a,b){var A=pool[a],B=pool[b];return ((B.me&&B.him)?1:0)-((A.me&&A.him)?1:0)||((B.rm||0)+(B.rh||0))-((A.rm||0)+(A.rh||0));});
+  function tile(k){var x=pool[k];var who=x.me&&x.him?'👥':x.me?'🙋':'🧑';return '<div class="tl-p duo-p'+(_duoSel===k?' sel':'')+'" draggable="true" data-duop="'+k+'" title="'+esc(x.t)+(x.rm?' · toi ⭐'+x.rm:'')+(x.rh?' · '+esc(f.name)+' ⭐'+x.rh:'')+'" style="background-image:url('+esc(x.p)+')">'+(x.p?'':'<span>'+esc(x.t)+'</span>')+'<i class="duo-who">'+who+'</i></div>';}
+  var both=Object.keys(pool).filter(function(k){return k.indexOf(pre)===0&&pool[k].me&&pool[k].him;}).length;
+  el.innerHTML='<div class="tl-bar"><button class="pc-mini" id="duo-back">← Changer de pote</button><div class="tl-sw"><button class="'+(_duoType==='film'?'on':'')+'" data-duot="film">🎬 Films</button><button class="'+(_duoType==='serie'?'on':'')+'" data-duot="serie">📺 Séries</button></div><button class="pc-mini" id="duo-auto">✨ Classer avec nos notes</button><button class="pc-mini" id="duo-reset">🗑️ Tout déclasser</button><span class="duo-live">🔴 En direct avec <b>'+esc(f.name)+'</b> · '+both+' vus à deux</span></div>'
+    +'<div class="duo-legend">👥 vu par vous deux · 🙋 vu par toi · 🧑 vu par '+esc(f.name)+'</div>'
+    +'<div class="tl-board" id="duo-board">'+TIERS.map(function(t){return '<div class="tl-row" data-duorow="'+t.k+'"><div class="tl-lab" style="background:'+t.c+'">'+t.k+'</div><div class="tl-items">'+T[t.k].map(tile).join('')+'</div></div>';}).join('')+'</div>'
+    +'<div class="tl-poolh">🎞️ À classer ('+free.length+') <input id="duo-q" placeholder="🔍 Filtrer…" value="'+esc(q)+'"></div><div class="tl-pool" data-duorow="pool">'+free.slice(0,300).map(tile).join('')+'</div>';
+  var save=function(){var o={};o['tiers.'+_duoType]=T;_duoCur.tiers=_duoCur.tiers||{};_duoCur.tiers[_duoType]=T;window.CineSocial.battleUpdate(_duoCur.id,o);renderDuoTier();};
+  function move(k,to,before){TIERS.forEach(function(t){T[t.k]=T[t.k].filter(function(x){return x!==k;});});if(to!=='pool'){var arr=T[to],bi=before?arr.indexOf(before):-1;if(bi>=0)arr.splice(bi,0,k);else arr.push(k);}_duoSel=null;save();}
+  var qi=el.querySelector('#duo-q');qi.oninput=function(){var pos=qi.selectionStart;renderDuoTier();var n=document.getElementById('duo-q');n.focus();n.setSelectionRange(pos,pos);};
+  el.querySelector('#duo-back').onclick=function(){_duoFriend=null;_duoCur=null;renderDuoTier();};
+  el.querySelectorAll('[data-duot]').forEach(function(b){b.onclick=function(){_duoType=b.dataset.duot;_duoSel=null;renderDuoTier();};});
+  el.querySelectorAll('[data-duop]').forEach(function(p){p.addEventListener('dragstart',function(e){e.dataTransfer.setData('text/plain',p.dataset.duop);});p.addEventListener('click',function(e){e.stopPropagation();_duoSel=_duoSel===p.dataset.duop?null:p.dataset.duop;renderDuoTier();});});
+  el.querySelectorAll('[data-duorow]').forEach(function(r){r.addEventListener('dragover',function(e){e.preventDefault();r.classList.add('over');});r.addEventListener('dragleave',function(){r.classList.remove('over');});r.addEventListener('drop',function(e){e.preventDefault();r.classList.remove('over');var k=e.dataTransfer.getData('text/plain');var tg=e.target.closest('[data-duop]');move(k,r.dataset.duorow,tg?tg.dataset.duop:null);});r.addEventListener('click',function(){if(_duoSel)move(_duoSel,r.dataset.duorow,null);});});
+  el.querySelector('#duo-auto').onclick=function(){var mp=function(v){return v>=4.5?'S':v>=4?'A':v>=3?'B':v>=2.5?'C':v>=1.5?'D':'F';};TIERS.forEach(function(t){T[t.k]=[];});Object.keys(pool).forEach(function(k){if(k.indexOf(pre)!==0)return;var x=pool[k],n=(x.rm?1:0)+(x.rh?1:0);if(!n)return;T[mp(((x.rm||0)+(x.rh||0))/n)].push(k);});save();toast('✨ Classé avec la moyenne de vos notes');};
+  el.querySelector('#duo-reset').onclick=function(){if(!confirm('Tout remettre dans « À classer » (pour vous deux) ?'))return;TIERS.forEach(function(t){T[t.k]=[];});save();};
+}
+(function(){
+  var tabs=document.querySelector('#view-top-custom .tl-tabs'),tw=document.getElementById('tier-wrap');if(!tabs||!tw)return;
+  var b=document.createElement('button');b.dataset.tlv='duo';b.textContent='👥 Tier list à deux';tabs.insertBefore(b,tabs.children[1]||null);
+  var dw=document.createElement('div');dw.id='duo-wrap';dw.className='tier-wrap';dw.style.display='none';tw.parentNode.insertBefore(dw,tw.nextSibling);
+  var old=document.querySelector('#view-top-custom .top10-wrap');
+  tabs.querySelectorAll('[data-tlv]').forEach(function(x){x.addEventListener('click',function(){var duo=x.dataset.tlv==='duo';tabs.querySelectorAll('button').forEach(function(y){y.classList.toggle('on',y===x);});dw.style.display=duo?'':'none';if(duo){tw.style.display='none';if(old)old.style.display='none';renderDuoTier();}});});
+  var st=document.createElement('style');st.textContent='.duo-p{position:relative}.duo-who{position:absolute;right:2px;bottom:2px;font-style:normal;font-size:.8rem;background:#000a;border-radius:8px;padding:0 3px}.duo-live{margin-left:auto;font-size:.8rem;font-weight:700}.duo-legend{font-size:.78rem;color:var(--muted);margin:4px 0 8px}.duo-pick{text-align:center;padding:24px}.duo-pick .soc-btn{margin:6px}';document.head.appendChild(st);
+})();
+
 /* ---------- 👥 SOIRÉE À DEUX ---------- */
 function gameDuo(){
   var body=gStage('👥 Soirée à deux','');
@@ -14755,6 +14841,7 @@ setTimeout(function(){try{
       onActivity:function(cb){return db.collection('activity').orderBy('ts','desc').limit(60).onSnapshot(function(qs){var l=[];qs.forEach(function(d){l.push(Object.assign({id:d.id},d.data()));});cb(l);},function(e){cb([],e);});},
       onPresence:function(cb){return db.collection('presence').onSnapshot(function(qs){var l=[];qs.forEach(function(d){l.push(Object.assign({uid:d.id},d.data()));});cb(l);},function(){cb([]);});},
       battleCreate:function(to,toName,qs){return db.collection('battles').add({a:me.uid,aName:chatName(),b:to,bName:toName,status:'invite',qs:qs,cur:0,ans:{},createdAt:Date.now()}).then(function(r){return r.id;});},
+      duoTierCreate:function(to,toName){return db.collection('battles').add({a:me.uid,aName:chatName(),b:to,bName:toName,status:'tier',tiers:{},createdAt:Date.now()}).then(function(r){return r.id;});},
       battleUpdate:function(id,o){return db.collection('battles').doc(id).update(o).catch(function(){});},
       onBattles:function(cb){var A=[],B=[];function emit(){cb(A.concat(B));}
         db.collection('battles').where('a','==',me.uid).onSnapshot(function(qs){A=[];qs.forEach(function(d){A.push(Object.assign({id:d.id},d.data()));});emit();},function(){});
