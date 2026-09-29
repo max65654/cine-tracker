@@ -1,0 +1,5 @@
+Ciné Clash — ressources 3D et sons
+- Personnages, décors, textures et sons : Kenney (www.kenney.nl) — licence CC0 (domaine public)
+- Robot animé : Quaternius (quaternius.com) — licence CC0 (domaine public)
+- GLTFLoader.js et SkeletonUtils.js : three.js (threejs.org) — licence MIT
+Les personnages du jeu sont des créations originales (couleurs, accessoires) construites sur ces modèles libres.
