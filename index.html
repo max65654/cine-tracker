@@ -12321,7 +12321,6 @@ function buildFeed(){
   var ovr=_premCfg||{};
   var ny=new Date();ny.setMonth(ny.getMonth()+1);var nid=ny.getFullYear()+'-'+String(ny.getMonth()+1).padStart(2,'0');if(ovr[nid]&&ovr[nid].hint)nextD=Object.assign({},nextD,{hint:ovr[nid].hint});
   if(curD.hint)posts.push(feedPost('ct',new Date(today+'T09:00').getTime(),'👑 <b>PASS PREMIUM</b> — '+esc(curD.hint)+'<br><small>Débloque-le en regardant la série du mois en entier (quiz ou historique Netflix).</small>','', 'prem_'+cs.id));
-  if(nextD.hint)posts.push(feedPost('ct',new Date(today+'T08:00').getTime()-86400000*((new Date().getDate()%3)),'🤫 <b>RUMEUR</b> sur le Premium du mois prochain… '+esc(nextD.hint),'','hint_'+nid));
   var fl=shFlashNow(),nx=shFlashNext();
   if(fl)posts.push(feedPost('ct',now-60000,'⚡ <b>VENTE FLASH '+fl.n+'</b> en ce moment dans la Boutique : -40 % sur des exclusivités légendaires ! Fonce 🏃','','flash_'+today));
   else if(nx)posts.push(feedPost('ct',now-3600000*5,'📢 Prochaine vente flash : <b>'+nx.f.n+'</b> ('+nx.at.toLocaleDateString('fr-FR',{weekday:'long'})+' à '+nx.f.from+'h). Garde tes 💎 !','','nx_'+today));
@@ -17650,6 +17649,104 @@ function avKing(){var c=Object.assign({},avCfg());c.head='hd_crown';if(!c.back)c
 setTimeout(function(){try{ciAutoIntro();}catch(e){console.warn('intro',e);}},700);
 
 window.ciLoginDecor=ciLoginDecor;window.cineIntroPlay=cineIntroPlay;window.avOpenEditor=avOpenEditor;
+/* ---- Actus v3 ---- */
+/* ====== 📰 ACTUS v3 : posts en entier, traduction, scoopers & Toei, shorts/BA seulement, lecteur épuré, partage aux potes, pubs cliquables, indices du Pass ====== */
+/* --- Traduction automatique (anglais → français) --- */
+var _trC=ld('cineTrCache',{}),_trN=0;
+function trIsEn(t){t=String(t||'').replace(/<[^>]+>/g,' ');var w=t.toLowerCase().match(/[a-zà-ÿ']+/g)||[];if(w.length<4)return false;
+  var en=w.filter(function(x){return /^(the|and|of|to|is|in|for|with|on|at|from|his|her|will|has|have|new|first|season|star|stars|film|series|movie|trailer|release|reveals|set|after|about|who|this|that|it|its|as|by|be|are|was|debut|joins|cast|sequel|exclusive|box|office)$/.test(x);}).length;
+  var fr=w.filter(function(x){return /^(le|la|les|des|est|une|dans|pour|sur|avec|qui|du|au|aux|et|sa|son|ses|pas|plus|nouvelle|nouveau|film|série)$/.test(x);}).length;return en>=2&&en>fr*1.5;}
+function trFr(txt){txt=String(txt||'');if(!txt.trim())return Promise.resolve(txt);var k='t'+shHash(txt);if(_trC[k])return Promise.resolve(_trC[k]);
+  var q=txt.slice(0,4500);
+  return fTimeout(fetch('https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=fr&dt=t&q='+encodeURIComponent(q)).then(function(r){return r.ok?r.json():null;}).then(function(j){return j&&j[0]?j[0].map(function(x){return x[0];}).join(''):null;}).catch(function(){return null;}),8000)
+    .then(function(t){if(t)return t;return fTimeout(ivJson('https://api.mymemory.translated.net/get?langpair=en|fr&q='+encodeURIComponent(q.slice(0,480))).then(function(d){return d&&d.responseData&&d.responseData.translatedText||null;}),8000);})
+    .then(function(t){if(!t)return txt;_trC[k]=t;if(++_trN%5===0){var ks=Object.keys(_trC);if(ks.length>400)ks.slice(0,ks.length-400).forEach(function(x){delete _trC[x];});try{localStorage.setItem('cineTrCache',JSON.stringify(_trC));}catch(_){}}return t;});}
+function trScan(){document.querySelectorAll('.feed2 [data-trq]:not([data-trd])').forEach(function(el){el.dataset.trd=1;var t=el.querySelector('.tw-t');if(!t)return;
+  var parts=[].slice.call(t.querySelectorAll('b,.tw-sub'));if(!parts.length)parts=[t];parts.forEach(function(p){var src=p.textContent;if(!trIsEn(src))return;trFr(src).then(function(fr){if(fr&&fr!==src){p.textContent=fr;}});});
+  var tag=document.createElement('span');tag.className='tw-trad';tag.textContent='🌍 traduit de l\'anglais';t.appendChild(tag);});}
+/* --- Nouvelles sources : un scooper (DanielRPK sur Bluesky) et le Tokusatsu (Toei : Kamen Rider, Super Sentai…) --- */
+NEWS_FEEDS.push({n:'Tokusatsu Network',a:'🦸',c:'linear-gradient(135deg,#d00000,#ffba08)',u:'https://tokusatsunetwork.com/feed/',col:3});
+NEWS_FEEDS.push({n:'DanielRPK',a:'🕵️',c:'linear-gradient(135deg,#1b1b1b,#4361ee)',u:'',bsky:'https://bsky.app/profile/danielrpk1.bsky.social/rss',scoop:1,col:3});
+(function(){var oN=newsFetch;newsFetch=function(){return oN().then(function(l){l=l||[];var ck='cineScoopCache',c=null;try{c=JSON.parse(localStorage.getItem(ck)||'null');}catch(_){}
+  var get=c&&Date.now()-c.t<45*60000?Promise.resolve(c.l):Promise.all(NEWS_FEEDS.filter(function(f){return f.bsky;}).map(function(f){return rssItems(f.bsky).then(function(x){return (x||[]).slice(0,10).map(function(y){var txt=String(y.description||y.title||'').replace(/<[^>]+>/g,' ').replace(/\s+/g,' ').trim();if(txt.length<25)return null;return {src:f.n,t:ivCut(txt,140),d:txt.length>140?ivCut(txt,420):'',l:y.link,img:'',ts:new Date(String(y.pubDate||'').replace(' ','T')).getTime()||Date.now()};}).filter(Boolean);});})).then(function(a){var r=[].concat.apply([],a);try{localStorage.setItem(ck,JSON.stringify({t:Date.now(),l:r}));}catch(_){}return r;});
+  return fTimeout(get,9000).then(function(s){return l.concat(s||[]);});});};})();
+/* --- Chaînes YouTube : + Netflix France, Disney France, Apple TV (cinéma), HBO Max France, CANAL+ · seulement des shorts et des bandes-annonces --- */
+var YT_PRESET2=[{h:'NetflixFrance',id:'UCroNr00O68n25IqSNapMK8w',n:'Netflix France'},{h:'disneyfr',n:'Disney France'},{h:'AppleTV',id:'UC1Myj674wRVXB9I4c6Hm5zA',n:'Apple TV (cinéma)'},{h:'HBOMaxFR',n:'HBO Max France'},{h:'Canalplus',n:'CANAL+'}];
+(function(){try{if(localStorage.getItem('cineYtPreset2')!=='1'){var l=ytChannels();YT_PRESET2.forEach(function(p){if(!l.some(function(c){return c.h===p.h||(p.id&&c.id===p.id);}))l.push(Object.assign({},p));});ytSave(l);localStorage.setItem('cineYtPreset2','1');}}catch(_){}})();
+var YT_OK=/bande[- ]?annonce|trailer|teaser|\bba\b|extrait|clip|sneak peek|first look|premi[eè]res? images/i;
+(function(){var oY=ytFetchAll;ytFetchAll=function(){return oY().then(function(l){return (l||[]).filter(function(p){return p.kind==='ytinfo'||p.short||YT_OK.test(p.t||'');});});};})();
+/* --- Lecteur épuré : pas de boutons, pas de sous-titres ; toucher = pause / lecture --- */
+function ytClean(vid,loop){return 'https://www.youtube-nocookie.com/embed/'+vid+'?autoplay=1&controls=0&cc_load_policy=0&iv_load_policy=3&modestbranding=1&rel=0&playsinline=1&disablekb=1&fs=0&enablejsapi=1&hl=fr'+(loop?'&loop=1&playlist='+vid:'');}
+function ytPlayerHtml(vid,short,title){return '<div class="ytc'+(short?' short':'')+'" data-ytc="'+vid+'"><iframe src="'+ytClean(vid,true)+'" allow="autoplay; encrypted-media" title="vidéo"></iframe><div class="ytc-tap" data-yttap="1"></div><div class="ytc-ui"><button data-ytfs="1" title="Plein écran">⛶</button><button data-ytsh="'+vid+'" data-ytt="'+esc(title||'')+'" title="Partager à mes potes">📨</button></div><div class="ytc-p">⏸</div></div>';}
+function ytCmd(box,f){var fr=box.querySelector('iframe');try{fr.contentWindow.postMessage(JSON.stringify({event:'command',func:f,args:[]}),'*');}catch(_){}}
+document.addEventListener('click',function(e){
+  var y=e.target.closest&&e.target.closest('.feed2 [data-yt]');if(y&&!y.classList.contains('on')){e.stopPropagation();e.preventDefault();var it=y.closest('[data-pid]'),p=it&&_f2Posts[it.dataset.pid];y.outerHTML=ytPlayerHtml(y.dataset.yt,p?p.short:true,p?p.t:'');return;}
+  var tap=e.target.closest&&e.target.closest('[data-yttap]');if(tap){e.stopPropagation();e.preventDefault();var box=tap.closest('.ytc');var paused=box.classList.toggle('paused');ytCmd(box,paused?'pauseVideo':'playVideo');return;}
+  var fs=e.target.closest&&e.target.closest('[data-ytfs]');if(fs){e.stopPropagation();e.preventDefault();var b2=fs.closest('.ytc');try{(b2.requestFullscreen||b2.webkitRequestFullscreen).call(b2);}catch(_){}return;}
+  var sh=e.target.closest&&e.target.closest('[data-ytsh]');if(sh){e.stopPropagation();e.preventDefault();ytShare(sh.dataset.ytsh,sh.dataset.ytt);return;}
+  var ad=e.target.closest&&e.target.closest('.feed2 .tw-ad');if(ad){e.stopPropagation();e.preventDefault();var ai=ad.closest('[data-pid]'),ap=ai&&_f2Posts[ai.dataset.pid];var nb=document.querySelector('.nav-btn[data-view="attentes"]');if(nb)nb.click();if(ap&&ap.w)setTimeout(function(){try{openWishModal(ap.w.id);}catch(_){}},250);return;}
+},true);
+/* --- Partager un short ou une bande-annonce à un ou plusieurs potes --- */
+function ytShare(vid,title){if(!window.CineSocial){toast('Connecte-toi à ton compte pour partager à tes potes');return;}
+  var o=socOverlay('<div class="soc-h">📨 Partager la vidéo</div><div class="soc-t">⏳ Recherche de tes potes…</div>');
+  window.CineSocial.friends().then(function(fr){var box=o.querySelector('.soc-box');if(!fr.length){box.innerHTML='<div class="soc-t">Aucun pote trouvé.</div>';return;}
+    box.innerHTML='<div class="soc-h">📨 '+esc(title||'Vidéo')+'</div><img class="ytsh-th" src="https://i.ytimg.com/vi/'+vid+'/hqdefault.jpg" alt=""><div class="soc-fr">'+fr.map(function(f,i){return '<label class="soc-f"><input type="checkbox" value="'+i+'"> '+esc(f.name)+'</label>';}).join('')+'</div><textarea id="soc-msg" maxlength="200" placeholder="Un petit mot ?"></textarea><div class="soc-row"><button class="soc-btn2" id="soc-x">Annuler</button><button class="soc-btn" id="soc-send">📨 Envoyer</button></div>';
+    box.querySelector('#soc-x').onclick=function(){o.remove();};
+    box.querySelector('#soc-send').onclick=function(){var sel=[].slice.call(box.querySelectorAll('.soc-fr input:checked')).map(function(c){return fr[+c.value];});if(!sel.length)return toast('Coche au moins un pote');var m=box.querySelector('#soc-msg').value.trim();
+      Promise.all(sel.map(function(f){return window.CineSocial.recommend(f.uid,{k:'yt_'+vid,t:title||'Vidéo',p:'https://i.ytimg.com/vi/'+vid+'/hqdefault.jpg'},'ytshare:'+vid+'|'+m).then(function(){socNtfy(f.nt,'🎬 '+window.CineSocial.name()+' t\'envoie une vidéo',title||'');});})).then(function(){o.remove();toast('📨 Vidéo envoyée !');});};});}
+(function(){var oH=handleRecos;handleRecos=function(list){passState.recoDone=passState.recoDone||{};var rest=[];
+  (list||[]).forEach(function(r){if(!/^ytshare:/.test(r.msg||'')){rest.push(r);return;}if(r.seen||passState.recoDone[r.id])return;passState.recoDone[r.id]=1;svPass();try{window.CineSocial.markReco(r.id,'seen');}catch(_){}
+    var z=(r.msg||'').slice(8).split('|'),vid=z[0],m=z.slice(1).join('|');var o=socOverlay('<div class="soc-h">🎬 <b>'+esc(r.fromName||'Ton pote')+'</b> t\'envoie une vidéo</div><div class="soc-t">'+esc(r.t||'')+(m?'<br>« '+esc(m)+' »':'')+'</div>'+ytPlayerHtml(vid,false,r.t)+'<div class="soc-row"><button class="soc-btn" id="ytr-x">Merci 🍿</button></div>');o.querySelector('#ytr-x').onclick=function(){o.remove();};});
+  return oH(rest);};})();
+/* --- Posts : clic = le post en entier (texte + images de l'article, traduits si besoin), plus besoin d'aller sur le site --- */
+function artExtract(html,base){var doc;try{doc=new DOMParser().parseFromString(html,'text/html');}catch(_){return null;}
+  ['script','style','noscript','iframe','form','nav','aside','footer','header','.comments','.share','.related','.newsletter','[class*="advert"]','[class*="pub-"]','[id*="taboola"]','[class*="outbrain"]'].forEach(function(s){try{doc.querySelectorAll(s).forEach(function(n){n.remove();});}catch(_){}});
+  var cands=['[itemprop="articleBody"]','.article-content','.article__content','.article-body','.c-article__body','.entry-content','.post-content','.content-article','.article_content','article','main'],best=null,bs=0;
+  cands.forEach(function(s){doc.querySelectorAll(s).forEach(function(n){var sc=[].slice.call(n.querySelectorAll('p')).reduce(function(a,p){return a+(p.textContent.trim().length>40?p.textContent.length:0);},0);if(sc>bs){bs=sc;best=n;}});});
+  if(!best||bs<300)return null;var out=[],imgs=0,len=0;
+  best.querySelectorAll('p,h2,h3,blockquote,li,img,figure img').forEach(function(n){if(out.length>60||len>9000)return;var tg=n.tagName;
+    if(tg==='IMG'){if(imgs>=6)return;var src=n.getAttribute('data-src')||n.getAttribute('data-lazy-src')||(n.getAttribute('srcset')||'').split(' ')[0]||n.getAttribute('src')||'';if(!src||/^data:|pixel|logo|avatar|icon|emoji|gravatar/i.test(src))return;try{src=new URL(src,base).href;}catch(_){return;}if(out.some(function(o){return o.src===src;}))return;imgs++;out.push({k:'img',src:src,alt:n.getAttribute('alt')||''});return;}
+    var t=n.textContent.replace(/\s+/g,' ').trim();if(t.length<(tg==='P'?35:8))return;if(/abonnez|newsletter|cookies|publicité|lire aussi|à lire aussi|read more|sign up|subscribe/i.test(t)&&t.length<200)return;if(tg==='LI'&&n.closest('p'))return;len+=t.length;out.push({k:tg.toLowerCase(),t:t});});
+  return out.length?out:null;}
+function artHtml(blocks){return blocks.map(function(b){if(b.k==='img')return '<figure class="art-fig"><img src="'+esc(b.src)+'" alt="'+esc(b.alt)+'" loading="lazy" onerror="this.parentNode.remove()"></figure>';if(b.k==='h2'||b.k==='h3')return '<h3 class="art-h">'+esc(b.t)+'</h3>';if(b.k==='blockquote')return '<blockquote class="art-q">'+esc(b.t)+'</blockquote>';if(b.k==='li')return '<p class="art-li">• '+esc(b.t)+'</p>';return '<p class="art-p">'+esc(b.t)+'</p>';}).join('');}
+(function(){var oD=openFeedDetail;openFeedDetail=function(p){var r=oD.apply(this,arguments);var ovs=document.querySelectorAll('.fd-ov'),o=ovs[ovs.length-1];if(!o)return r;var body=o.querySelector('.fd-body');
+  /* vidéos : lecteur épuré + partage */
+  if((p.kind==='yt'||p.kind==='ytinfo')&&body){var fv=body.querySelector('.fd-vid');if(fv)fv.outerHTML=ytPlayerHtml(p.vid,p.short,p.t);}
+  if(p.acc==='news'&&body){var tt=body.querySelector('.fd-txt');if(tt&&trIsEn(tt.textContent)){[].slice.call(tt.querySelectorAll('b,.tw-sub')).forEach(function(n){trFr(n.textContent).then(function(f){n.textContent=f;});});}
+    if(p.A&&p.A.n==='DanielRPK')body.insertAdjacentHTML('afterbegin','<div class="tw-rumor">🕵️ Rumeur d\'un scooper, pas encore confirmée officiellement</div>');
+    if(p.link&&!/bsky\.app/.test(p.link)){var ld2=document.createElement('div');ld2.className='art-ld';ld2.textContent='⏳ Je récupère l\'article en entier…';body.appendChild(ld2);
+      proxyText(p.link).then(function(h){var bl=h&&artExtract(h,p.link);if(!bl){ld2.textContent='';return;}var en=trIsEn(bl.filter(function(b){return b.t;}).slice(0,4).map(function(b){return b.t;}).join(' '));
+        var go=en?Promise.all(bl.map(function(b){return b.t?trFr(b.t).then(function(f){return Object.assign({},b,{t:f});}):Promise.resolve(b);})):Promise.resolve(bl);
+        go.then(function(bb){var dv=document.createElement('div');dv.className='art';dv.innerHTML=(en?'<div class="tw-trad">🌍 Article traduit de l\'anglais</div>':'')+artHtml(bb);var im=o.querySelector('.fd-img');if(im&&bb.some(function(b){return b.k==='img';}))im.remove();var tx=body.querySelector('.fd-txt');if(tx){var ft=tx.querySelector('b');tx.innerHTML=ft?'<h2 class="art-title">'+ft.innerHTML+'</h2>':'';}ld2.replaceWith(dv);});}).catch(function(){ld2.textContent='';});}}
+  return r;};})();
+/* --- Marquage : traduction, rumeurs, pubs sans bouton --- */
+(function(){var oH=f2Html;f2Html=function(p){var h=oH(p);if(p&&p.acc==='news'){if(trIsEn((p.text||'').replace(/<[^>]+>/g,' ')))h=h.replace('<div class="f2-it"','<div data-trq="1" class="f2-it"');if(p.A&&p.A.n==='DanielRPK')h=h.replace('<div class="tw-t">','<div class="tw-t"><span class="tw-rumor">🕵️ Rumeur</span> ');}
+  var hint=f2HintFor(p);if(hint)h=h.replace(/<\/div>$/,'<div class="tw-hint">'+hint+'</div></div>');return h;};})();
+/* --- Deux fils vraiment infinis --- */
+F2_PATTERN=['mine','news','ds','anec','yt','news','pt','trend','ds','anec','news','yt','mine','pt','ds','news','anec','ad','trend','ds'];
+(function(){var oP=f2Pump;f2Pump=function(){var v=document.getElementById('view-feed');if(v&&v.style.display==='none')return;return oP.apply(this,arguments);};
+  var oM=f2MoreDisc;f2MoreDisc=function(){var S=_f2;if(S&&S.page>40)S.page=1+Math.floor(Math.random()*30);return oM.apply(this,arguments);};
+  var oA=f2Append;f2Append=function(n,top){var c1=document.getElementById('f2-c1'),c2=document.getElementById('f2-c2');var k=0;
+    if(!top&&c1&&c2&&window.innerWidth>=760&&c1.offsetHeight===0&&c2.offsetHeight===0){/* page cachée : on répartit une fois sur deux */for(var i=0;i<n;i++){var p=f2Next();if(!p)break;var d=document.createElement('div');d.innerHTML=f2Html(p);(i%2?c2:c1).appendChild(d.firstChild);k++;}}
+    else k=oA(n,top);if(!k&&!top&&_f2){f2MoreDisc();f2MoreAnec();try{f2Refill();}catch(_){}}return k;};})();
+/* --- 🔮 Indices discrets sur le prochain Pass (de plus en plus gros à l'approche) --- */
+function f2HintTarget(){var d=new Date(),y=d.getFullYear(),m=d.getMonth()+1;if(currentSeason().id<'2026-10'){y=2026;m=11;}else{m=m+1;if(m>12){m=1;y++;}}var id=y+'-'+String(m).padStart(2,'0');return {id:id,M:PASS_MONTHS[m-1],k:avMonthK(id),start:new Date(y,m-1,1)};}
+function f2Hints(){var T=f2HintTarget(),M=T.M||{},it=AV_MONTH_ITEMS[T.k]||[],em=AV_MONTH_EMO[T.k]||{},name=(M.name||'').replace(/^\S+\s/,''),ico=(M.name||'').split(' ')[0];
+  var days=Math.ceil((T.start-Date.now())/864e5);var lvl=days>15?1:days>6?2:3;
+  var obj=function(i){return it[i]?it[i][1].toLowerCase():'un objet mystère';};
+  var L1=[ico,'…'+ico,'(il paraît que '+obj(1)+' traîne quelque part)','PS : '+ico+' ?','🤫','Quelqu\'un a vu passer '+obj(4)+' ?','…ou alors c\'est '+em.ico+' ?'];
+  var L2=['On raconte que le prochain Pass sent déjà '+name.toLowerCase()+'…','Rien à voir, mais '+obj(0)+'. Voilà. 🤐','Un lutin du Tracker a laissé tomber '+obj(3)+' dans les coulisses '+ico,'Indice : '+em.ico+' + '+ico+' = ?','Les emotes du mois prochain portent un drôle de chapeau…','Dans '+days+' jours, un certain '+ico+' débarque.'];
+  var L3=['🔮 <b>Dans '+days+' jour'+(days>1?'s':'')+'</b> : le Pass <b>'+esc(M.name||'')+'</b> arrive ! Au programme : '+obj(0)+', '+obj(2)+' et 10 emotes '+em.ico,'🎟️ Le prochain Pass approche : '+esc(M.name||'')+'. On a aperçu '+obj(5)+' en légendaire 👀','👀 Fuite : le Pass de '+name.toLowerCase()+' cache '+obj(1)+' et '+obj(3)+'…'];
+  return {lvl:lvl,L:lvl===1?L1:lvl===2?L2:L3};}
+function f2HintFor(p){if(!p||!p.id||p.kind==='ad')return '';var H=f2Hints();var h=parseInt(shHash(p.id+H.lvl),36)%100;var chance=H.lvl===1?4:H.lvl===2?7:12;if(h>=chance)return '';var L=H.L;return (H.lvl===1?'<span class="hint-s">':'')+L[h%L.length]+(H.lvl===1?'</span>':'');}
+(function(){var q=false;new MutationObserver(function(){if(q)return;q=true;setTimeout(function(){q=false;try{trScan();}catch(_){}},400);}).observe(document.body,{childList:true,subtree:true});
+  var st=document.createElement('style');st.textContent='.feed2 .ad-go,.fd-box [data-fdgo]{display:none!important}.feed2 .tw-ad{cursor:pointer}.feed2 .tw-ad:hover{transform:translateY(-2px)}'
+  +'.tw-trad{display:block;margin-top:6px;font-size:.7rem;opacity:.65;font-style:italic}.tw-rumor{display:inline-block;background:#1b1b1b;color:#ffd23f;font-size:.72rem;font-weight:800;padding:2px 8px;border-radius:99px;margin-right:4px}.fd-body .tw-rumor{margin-bottom:8px}'
+  +'.tw-hint{margin-top:10px;font-size:.82rem;font-style:italic;opacity:.8;border-left:3px solid #8338ec;padding-left:8px}.tw-hint .hint-s{opacity:.55;font-size:.75rem}'
+  +'.ytc{position:relative;margin-top:10px;width:100%;aspect-ratio:16/9;border-radius:16px;overflow:hidden;background:#000}.ytc.short{aspect-ratio:9/16;max-height:640px}.ytc iframe{position:absolute;inset:0;width:100%;height:100%;border:0;pointer-events:none}.ytc-tap{position:absolute;inset:0;cursor:pointer}.ytc-ui{position:absolute;right:8px;top:8px;display:flex;gap:6px;opacity:0;transition:opacity .2s}.ytc:hover .ytc-ui,.ytc.paused .ytc-ui{opacity:1}.ytc-ui button{border:none;border-radius:10px;background:#000a;color:#fff;width:38px;height:38px;font-size:1.05rem;cursor:pointer}.ytc-p{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font-size:3rem;color:#fff;opacity:0;pointer-events:none;text-shadow:0 4px 12px #000}.ytc.paused .ytc-p{opacity:.9}.ytc:fullscreen{border-radius:0}'
+  +'.ytsh-th{width:100%;border-radius:12px;margin:8px 0}.art-ld{margin-top:12px;opacity:.7;font-size:.85rem}.art{margin-top:10px}.art-title{font-family:Fredoka,sans-serif;font-size:1.35rem;line-height:1.25;margin:4px 0 10px}.art-p{line-height:1.65;margin:0 0 12px;font-size:1rem}.art-h{font-family:Fredoka,sans-serif;margin:18px 0 8px;font-size:1.12rem}.art-q{border-left:4px solid var(--raspberry);padding:6px 12px;margin:12px 0;font-style:italic;background:rgba(255,77,109,.08);border-radius:0 10px 10px 0}.art-li{margin:0 0 6px;padding-left:6px}.art-fig{margin:14px 0}.art-fig img{width:100%;border-radius:14px;display:block}';
+  document.head.appendChild(st);})();
+
 /* ---- corrections du tracker (liste du 29/09) ---- */
 /* ====== ⚡ Les pages restent chargées quand on revient dessus (plus de rechargement ni d'attente) ====== */
 var _dataVer=0,_naving=false,_kept={},_scrollOf={},_curView='library';
