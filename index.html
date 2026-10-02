@@ -17747,6 +17747,160 @@ function f2HintFor(p){if(!p||!p.id||p.kind==='ad')return '';var H=f2Hints();var 
   +'.ytsh-th{width:100%;border-radius:12px;margin:8px 0}.art-ld{margin-top:12px;opacity:.7;font-size:.85rem}.art{margin-top:10px}.art-title{font-family:Fredoka,sans-serif;font-size:1.35rem;line-height:1.25;margin:4px 0 10px}.art-p{line-height:1.65;margin:0 0 12px;font-size:1rem}.art-h{font-family:Fredoka,sans-serif;margin:18px 0 8px;font-size:1.12rem}.art-q{border-left:4px solid var(--raspberry);padding:6px 12px;margin:12px 0;font-style:italic;background:rgba(255,77,109,.08);border-radius:0 10px 10px 0}.art-li{margin:0 0 6px;padding-left:6px}.art-fig{margin:14px 0}.art-fig img{width:100%;border-radius:14px;display:block}';
   document.head.appendChild(st);})();
 
+/* ---- Ciné Clash v6 ---- */
+/* ====== 🧟 CINÉ CLASH v6 : vrais modèles 3D gratuits (Kenney CC0 + Renard Khronos CC-BY), animés en direct ====== */
+var KN={g:{},p:null,list:['zombie-1','zombie-2','cyborg-female','survivor-female','survivor-male','skater-male','skater-female','male','pirate-captain','pirate-crew','pirate-officer','fox']};
+function knLoad(T){if(KN.p)return KN.p;T=window.THREE||T;var L=new T.GLTFLoader();
+  KN.p=Promise.all(KN.list.map(function(n){return new Promise(function(res){L.load(CCG.base+'kn/'+n+'.glb',function(g){KN.g[n]=g;res();},undefined,function(){res();});});})).then(function(){return KN;});return KN.p;}
+(function(){var o=ccgLoad;ccgLoad=function(T){return o(T).then(function(C){if(!C||!C.ok)return C;return knLoad(T).then(function(){return C;});});};})();
+function knBone(root,n){var b=null;root.traverse(function(o){if(!b&&o.name===n)b=o;});return b;}
+/* Un perso Kenney animé « à la main » (pas d'animations dans le fichier : on bouge les os nous-mêmes) */
+function knChar(T,name,opts){opts=opts||{};var src=KN.g[name];if(!src)return null;var g=new T.Group();var obj=T.SkeletonUtils.clone(src.scene);
+  var mats=[],isFox=name==='fox';obj.traverse(function(o){if(o.isMesh&&isFox){o.castShadow=true;o.frustumCulled=false;mats.push(o.material);return;}if(o.isMesh){o.castShadow=true;o.frustumCulled=false;var om=o.material,m=ccgToon(T,om.map||null,{color:om.map?0xffffff:(om.color?'#'+om.color.getHexString():'#cccccc'),skin:!!o.isSkinnedMesh});if(om.map){om.map.encoding=T.sRGBEncoding;}o.material=m;mats.push(m);}});
+  obj.updateMatrixWorld(true);var hb=null;obj.traverse(function(o){if(!hb&&o.isBone&&/head/i.test(o.name))hb=o;});var H=opts.h||1.9,box=new T.Box3().setFromObject(obj),h=box.max.y-box.min.y||1,k;if(hb){var hp=new T.Vector3();hb.getWorldPosition(hp);k=H*(isFox?.62:.78)/(hp.y||1);obj.scale.multiplyScalar(k);}else{k=H/h;obj.scale.multiplyScalar(k);obj.position.set(-(box.min.x+box.max.x)/2*k,-box.min.y*k,-(box.min.z+box.max.z)/2*k);}
+  var piv=new T.Group(),turn=new T.Group();turn.add(obj);piv.add(turn);g.add(piv);if(/pirate/.test(name))turn.rotation.y=Math.PI;var mixer=null,acts={},kind=name==='fox'?'fox':/pirate/.test(name)?'block':'human';
+  if(kind==='fox'){mixer=new T.AnimationMixer(obj);(src.animations||[]).forEach(function(a){acts[a.name]=mixer.clipAction(a);});}
+  var B={};if(kind==='human')['Hips','Spine','Chest','Neck','Head','LeftArm','RightArm','LeftForeArm','RightForeArm','LeftUpLeg','RightUpLeg','LeftLeg','RightLeg'].forEach(function(n){var b=knBone(obj,n);if(b){B[n]=b;b.userData.q0=b.quaternion.clone();}});
+  if(kind==='block')['armLeft','armRight','legLeft','legRight','body'].forEach(function(n){var b=knBone(obj,n);if(b){B[n]=b;b.userData.r0=b.rotation.clone();b.userData.p0=b.position.clone();}});
+  var st={cur:'idle',t:0,once:false,ot:0},E=new T.Euler(),Q=new T.Quaternion();
+  function rot(b,x,y,z){if(!b)return;E.set(x||0,y||0,z||0);Q.setFromEuler(E);b.quaternion.copy(b.userData.q0).multiply(Q);}
+  function brot(b,x,y,z){if(!b)return;b.rotation.set(b.userData.r0.x+(x||0),b.userData.r0.y+(y||0),b.userData.r0.z+(z||0));}
+  var A=opts.armDown==null?1.25:opts.armDown;
+  function pose(dt){st.t+=dt;var t=st.t,c=st.cur,p=st.once?Math.min(1,(t-st.ot)/.6):0;if(st.once&&t-st.ot>.75&&c!=='die'){st.once=false;c=st.cur=st.rest||'idle';}
+    var sw=0,fR=0,fL=0,uR=0,uL=0,lean=0,bob=0,legA=0;
+    if(c==='walk'||c==='sprint'){var f=c==='sprint'?11:7.5;sw=Math.sin(t*f);legA=.55*sw;fR=-.5*sw;fL=.5*sw;bob=Math.abs(Math.cos(t*f))*.05;lean=.08;}
+    else if(c==='attack'||c==='kick'){var k2=Math.sin(Math.min(1,p)*Math.PI);fR=2.4*k2;uR=A*k2;lean=.2*k2;}
+    else if(c==='shoot'||c==='hold'||c==='cast'){uR=A;fR=1.45;var r=c==='shoot'&&st.once?Math.sin(p*Math.PI)*.3:0;fR+=r;lean=-r*.3;if(c==='cast'){fL=1.3;uL=A;}}
+    else if(c==='win'){var w=Math.sin(t*9);uR=A+.9+.25*w;uL=A+.9-.25*w;bob=Math.abs(Math.sin(t*6))*.18;}
+    else if(c==='no'||c==='hit'){lean=-.15*Math.sin(Math.min(1,p)*Math.PI);fR=-.3;fL=-.3;}
+    else if(c==='jump'){bob=Math.sin(Math.min(1,p)*Math.PI)*.6;uR=uL=A+.5;}
+    else if(c==='die'){lean=-Math.min(1,p*1.4)*1.45;bob=-Math.min(1,p)*.1;uR=uL=A*.6;}
+    else{bob=Math.sin(t*2.2)*.02;fR=Math.sin(t*1.6)*.06;fL=-fR;}
+    if(kind==='human'){
+      rot(B.RightArm,-A+uR,0,fR);rot(B.LeftArm,fL,0,-A+uL);
+      rot(B.LeftUpLeg,legA,0,0);rot(B.RightUpLeg,-legA,0,0);
+      rot(B.Spine,lean,0,0);piv.position.y=bob;piv.rotation.x=c==='die'?lean:0;}
+    else if(kind==='block'){brot(B.armLeft,-fL,0,0);brot(B.armRight,-fR*.8,0,0);brot(B.legLeft,-legA,0,0);brot(B.legRight,legA,0,0);piv.position.y=bob;piv.rotation.x=c==='die'?lean:lean*.3;}
+    else{piv.position.y=bob*.5;piv.rotation.x=c==='die'?lean:0;}
+  }
+  obj.userData.y0=obj.position.y;
+  var cur=null;function play(name,once){if(kind==='fox'){var map={walk:'Walk',sprint:'Run',attack:'Run',idle:'Survey',hold:'Survey',shoot:'Survey',win:'Survey',die:'Survey'};var a=acts[map[name]||'Survey'];if(a&&cur!==a){a.reset();a.play();if(cur)cur.crossFadeTo(a,.15,false);cur=a;}}
+    st.cur=name;st.once=!!once;st.ot=st.t;g.userData.cur=name;}
+  g.userData={mixer:{update:function(dt){if(mixer)mixer.update(dt);pose(dt);}},play:play,obj:obj,mats:mats,kn:name};
+  play(opts.rest||'idle');st.rest=opts.rest||'idle';return g;}
+
+
+/* ---------- Nouvelles cartes avec les modèles 3D gratuits ---------- */
+[{id:'crew',n:'Équipage du Kraken',g:'Aventure',gid:12,cost:3,hp:430,dmg:85,hs:1.0,rng:1,spd:1.2,count:2,rar:'commun',col:'#9c6644',skin:'#e0ac69',gear:'pirate',kn:'pirate-crew',d:'Deux matelots bagarreurs qui foncent ensemble.'},
+ {id:'admiral',n:'Amiral Sabre-Noir',g:'Aventure',gid:12,cost:5,hp:1550,dmg:190,hs:1.2,rng:1.1,spd:1,rar:'épique',col:'#1d3557',skin:'#e0ac69',gear:'pirate',kn:'pirate-officer',d:'Le chef de la flotte fantôme : solide et terrible au sabre.'},
+ {id:'cyborg',n:'Cyborg Écarlate',g:'Science-fiction',gid:878,cost:4,hp:720,dmg:140,hs:1.0,rng:6,spd:1.1,rar:'épique',col:'#e63946',skin:'#f1c27d',gear:'robot',kn:'cyborg-female',d:'Moitié humaine, moitié machine : laser longue portée.'},
+ {id:'survivor',n:'Survivante de l\'Aube',g:'Horreur',gid:27,cost:3,hp:560,dmg:105,hs:.9,rng:5,spd:1.2,rar:'rare',col:'#bc4749',skin:'#8d5524',gear:'kn',kn:'survivor-female',d:'Elle a survécu à toutes les nuits d\'horreur. Tire de loin.'},
+ {id:'bhero',n:'Héros de Série B',g:'Action',gid:28,cost:3,hp:760,dmg:105,hs:1.0,rng:1,spd:1.15,rar:'commun',col:'#6c757d',skin:'#f1c27d',gear:'kn',kn:'survivor-male',d:'Pas de super-pouvoir, juste beaucoup de courage (et de chance).'},
+ {id:'skater',n:'Skateur Rebelle',g:'Comédie',gid:35,cost:2,hp:380,dmg:80,hs:.7,rng:1,spd:1.9,rar:'commun',col:'#ff6b6b',skin:'#f1c27d',gear:'kn',kn:'skater-male',d:'Super rapide : fonce sur les tours avant tout le monde.'},
+ {id:'punk',n:'Rockeuse Punk',g:'Musique',gid:10402,cost:4,hp:650,dmg:120,hs:1.3,rng:4.5,spd:1,splash:1.5,rar:'rare',col:'#2b2d42',skin:'#f1c27d',gear:'kn',kn:'skater-female',d:'Ses riffs de guitare sonnent tout un groupe d\'ennemis.'},
+ {id:'disco',n:'Roi du Disco',g:'Musique',gid:10402,cost:5,hp:950,dmg:150,hs:1.2,rng:4,spd:.95,splash:2,rar:'légendaire',col:'#f8f9fa',skin:'#e0ac69',gear:'kn',kn:'male',d:'Sa boule à facettes éblouit toute une zone. Légendaire.'},
+ {id:'fox',n:'Renard Rusé',g:'Animation',gid:16,cost:3,hp:520,dmg:110,hs:.8,rng:1,spd:1.8,rar:'rare',col:'#f4a261',skin:'#f4a261',gear:'kn',kn:'fox',d:'Vif et malin, il esquive et mord les talons.'}
+].forEach(function(c){if(!ccChar(c.id))CC_CHARS.push(c);});
+(function(){var z=ccChar('zombie');if(z)z.kn='zombie';var p=ccChar('pirate');if(p)p.kn='pirate-captain';})();
+/* Cadeau de la mise à jour : 3 nouvelles cartes offertes */
+(function(){if(CC.v6)return;CC.v6=1;['crew','skater','survivor'].forEach(function(id){if(!CC.cards[id])CC.cards[id]={l:1,n:0};});ccSave();setTimeout(function(){try{toast('🎁 Ciné Clash : 3 nouvelles cartes en 3D offertes (Équipage du Kraken, Skateur Rebelle, Survivante de l\'Aube) !');}catch(_){}},4000);})();
+(function(){var oB=ccBody;ccBody=function(T,c){if(c&&c.kn&&typeof KN!=='undefined'){var nm=c.kn==='zombie'?(Math.random()<.5?'zombie-1':'zombie-2'):c.kn;if(KN.g[nm]){var s=c.sc||1;var b=knChar(T,nm,{h:(nm==='fox'?1.25:1.92)*Math.min(1.5,s)});if(b)return b;}}return oB(T,c);};})();
+
+/* ---------- 📖 L'histoire de Ciné Clash ---------- */
+var CC_FACTIONS={
+ sf:{n:'L\'Escadre Stellaire',i:'🚀',c:'#3a86ff',d:'Les héros et les machines venus des films de science-fiction. Ils veulent la Pellicule d\'Or pour rallumer les étoiles éteintes de leurs écrans.'},
+ hor:{n:'La Nuit Éternelle',i:'🦇',c:'#9d0208',d:'Tout ce qui fait peur au cinéma. Leur rêve : que tous les films finissent dans le noir.'},
+ fan:{n:'Le Royaume des Contes',i:'🧙',c:'#7b2cbf',d:'Sorcières, mages et créatures des films de magie. Ils gardent les secrets du premier projecteur.'},
+ adv:{n:'Les Hors-la-loi',i:'🏴‍☠️',c:'#b5651d',d:'Pirates, cowboys et bêtes sauvages des films d\'aventure. Ils veulent la Pellicule… pour la revendre.'},
+ act:{n:'La Ligue de l\'Action',i:'💥',c:'#f77f00',d:'Cascadeurs, espions et justiciers. Ils sautent d\'abord, ils réfléchissent après.'},
+ stu:{n:'La Troupe du Studio',i:'🎭',c:'#ff4d6d',d:'Les comiques, les musiciens et les gens du tournage. Pour eux, le spectacle doit continuer, quoi qu\'il arrive.'}
+};
+var CC_LORE={
+ knight:['sf','Chevalier de la flotte de la Nébuleuse, il a juré de protéger le dernier cinéma de la galaxie. Son épée laser a été forgée dans un rayon de projecteur.','« Que la lumière de l\'écran soit avec toi. »'],
+ robot:['sf','Ancien robot de sécurité du Multiplex, il s\'est réveillé le soir de l\'explosion avec une seule mission : écraser les tours ennemies.','« BIP. Cible verrouillée. BIP. »'],
+ alien:['sf','Arrivé dans une soucoupe en carton d\'un vieux film des années 50, il trouve que les humains crient beaucoup trop.','« Gloubi… pop-corn ? »'],
+ kaiju:['sf','Réveillé par le bruit de l\'explosion, le Titan est sorti de l\'océan d\'un film en noir et blanc. Personne n\'a jamais vu sa fin de film.','« GRAAAAOOOOOH ! »'],
+ cyborg:['sf','Pilote d\'essai réparée avec des pièces de robots, elle voit tout en rouge… et ne rate jamais sa cible.','« Mise à jour terminée. Prête au combat. »'],
+ zombie:['hor','Une horde échappée d\'un film où l\'apocalypse ne s\'arrêtait jamais. Lents, mais ils ne lâchent rien.','« Cerveauuux… et pop-corn. »'],
+ vampire:['hor','Le Comte habite la salle 13, celle où personne ne va. Il aspire la vie de ses ennemis pour soigner ses blessures.','« La séance de minuit est à moi. »'],
+ mummy:['hor','Momie d\'un film d\'archéologues maudits, elle encaisse tout grâce à ses bandelettes bénies.','« Qui a réveillé ma pyramide ? »'],
+ survivor:['hor','La dernière fille encore debout à la fin de tous les films d\'horreur. Elle connaît toutes les règles pour survivre.','« Ne jamais dire « je reviens tout de suite ». »'],
+ witch:['fan','Gardienne de la forêt des Brumes, elle lance des sorts qui touchent plusieurs ennemis à la fois.','« Un peu de brume, beaucoup d\'ennuis. »'],
+ mage:['fan','Élève de première année à l\'école des Sorts du Grand Écran. Ses sorts marchent… la plupart du temps.','« Abracada… oups. »'],
+ cowboy:['adv','Shérif sans ville, il cherche le saloon de son film, disparu le soir de l\'explosion.','« Cette arène est trop petite pour nous deux. »'],
+ pirate:['adv','Capitaine borgne qui a perdu son trésor dans un film de pirates. Il croit que la Pellicule d\'Or est sa carte au trésor.','« À l\'abordage, moussaillons ! »'],
+ crew:['adv','Les deux matelots du Kraken : jamais l\'un sans l\'autre, toujours en train de se disputer.','« C\'est moi qui ai vu la terre en premier ! — Non, moi ! »'],
+ admiral:['adv','Chef de la flotte fantôme, il a navigué dans tous les films de pirates. Il ne sourit jamais, sauf quand il gagne.','« Hissez le pavillon noir. »'],
+ dino:['adv','Échappé d\'un parc d\'attractions de cinéma, le Rex n\'aime pas qu\'on fasse du bruit pendant la séance.','« ROOOAR ! (chut, le film commence) »'],
+ fox:['adv','Héros rusé d\'un dessin animé, il a sauté de son écran pour vivre de vraies aventures.','« Toujours un coup d\'avance. »'],
+ ninja:['act','Ombre silencieuse des films d\'arts martiaux, il frappe avant même qu\'on le voie arriver.','« … »'],
+ hero:['act','Justicier masqué qui vole au-dessus de l\'arène. Il cache sa vraie identité, même à ses alliés.','« Un grand écran implique de grandes responsabilités. »'],
+ spy:['act','Agent secret en smoking. Il préfère ses gadgets à la bagarre, mais il vise toujours juste.','« Le nom ? Clash. Ciné Clash. »'],
+ stunt:['act','La cascadeuse la plus folle du studio : elle saute d\'une tour à l\'autre sans filet.','« Pas besoin de doublure ! »'],
+ bhero:['act','Héros de films à petit budget, il gagne toujours à la fin… même si personne ne comprend comment.','« J\'ai un mauvais pressentiment… mais j\'y vais quand même. »'],
+ ghost:['stu','Fantôme farceur de la salle de projection. Il traverse les murs et adore faire peur aux spectateurs.','« Bouh ! Hi hi hi ! »'],
+ director:['stu','La réalisatrice la plus exigeante du studio. Quand elle crie « Action ! », toute l\'arène tremble.','« Coupez ! On la refait ! »'],
+ skater:['stu','Ado rebelle d\'une comédie des années 80, il traverse l\'arène sur sa planche plus vite que tout le monde.','« Trop cool, mec ! »'],
+ punk:['stu','Chanteuse du groupe le plus bruyant de tous les films musicaux. Ses riffs font trembler les tours.','« Plus fort ! »'],
+ disco:['stu','Le Roi du Disco a fait danser toutes les comédies musicales. Sa boule à facettes aveugle des groupes entiers.','« Ce soir, c\'est moi qui mène la danse ! »']
+};
+var CC_GEN_FAC={878:'sf',27:'hor',14:'fan',12:'adv',37:'adv',28:'act',53:'act',35:'stu',18:'stu',10402:'stu',16:'adv'};
+function ccLore(id){var c=ccChar(id)||{},L=CC_LORE[id];var f=L?L[0]:CC_GEN_FAC[c.gid]||'stu';return {f:f,F:CC_FACTIONS[f],s:L?L[1]:(c.d||''),q:L?L[2]:''};}
+function ccStoryHtml(){var by={};CC_CHARS.forEach(function(c){if(c.spell)return;var l=ccLore(c.id);(by[l.f]=by[l.f]||[]).push(c);});
+  return '<div class="ccs-intro"><div class="ccs-reel">🎞️</div><h3>La Pellicule d\'Or</h3><p>Le soir de la Grande Avant-Première, le projecteur du <b>Multiplex Lumière</b> a explosé. La <b>Pellicule d\'Or</b>, qui gardait chaque film à l\'intérieur de son écran, s\'est brisée en mille images… et les personnages se sont échappés.</p><p>Depuis, <b>six clans de cinéma</b> s\'affrontent dans les salles abandonnées pour récupérer les fragments. Celui qui réunira la Pellicule entière pourra <b>réécrire la fin de tous les films</b>.</p><p>Toi, tu es le <b>Projectionniste</b> 🎬 : le seul capable de diriger des héros de tous les clans. Chaque arène est une salle du Multiplex : des Séries B jusqu\'à l\'Île des Kaijus, la dernière salle, où dort le fragment le plus gros…</p></div>'
+   +Object.keys(CC_FACTIONS).map(function(k){var F=CC_FACTIONS[k],l=by[k]||[];return '<div class="ccs-fac" style="--fc:'+F.c+'"><div class="ccs-fh"><span>'+F.i+'</span><div><b>'+F.n+'</b><small>'+F.d+'</small></div></div><div class="ccs-row">'+l.map(function(c){var has=ccHas(c.id);return '<button class="ccs-ch'+(has?'':' lock')+'" data-cccard="'+c.id+'">'+cc3dArt(c.id,64)+'<b>'+esc(c.n)+'</b></button>';}).join('')+'</div></div>';}).join('');}
+
+/* ---------- 🖼️ Cartes : le perso en vrai 3D, qui sort de la carte, effets selon la rareté ---------- */
+var _cc3={cache:{},q:[],busy:false};
+function cc3dArt(id,size){var c=ccChar(id);if(!c||c.spell)return ccPortrait(id,'cool',size);var u=_cc3.cache[id];return '<span class="cc3a" data-cc3a="'+id+'" style="--s:'+size+'px">'+(u?'<img src="'+u+'" alt="">':ccPortrait(id,'joie',size))+'</span>';}
+function cc3Fill(root){(root||document).querySelectorAll('[data-cc3a]:not([data-d])').forEach(function(el){el.dataset.d=1;var id=el.dataset.cc3a;if(_cc3.cache[id]){el.innerHTML='<img src="'+_cc3.cache[id]+'" alt="">';return;}_cc3.q.push({id:id,cb:function(u){if(u)document.querySelectorAll('[data-cc3a="'+id+'"]').forEach(function(x){x.innerHTML='<img src="'+u+'" alt="">';});}});});cc3Run();}
+function cc3Run(){if(_cc3.busy||!_cc3.q.length)return;_cc3.busy=true;
+  ccLoadThree().then(function(T){return ccgLoad(T).then(function(){return T;});}).then(function(T){if(!CCG.ok){_cc3.busy=false;return;}
+    if(!_cc3.R){var cv=document.createElement('canvas');cv.width=256;cv.height=320;try{_cc3.R=new T.WebGLRenderer({canvas:cv,antialias:true,alpha:true,preserveDrawingBuffer:true});}catch(e){_cc3.busy=false;return;}_cc3.R.setSize(256,320,false);_cc3.R.outputEncoding=T.sRGBEncoding;
+      _cc3.S=new T.Scene();_cc3.S.add(new T.HemisphereLight(0xffffff,0x553377,.95));var d=new T.DirectionalLight(0xffffff,1.05);d.position.set(-2,5,6);_cc3.S.add(d);var rim=new T.DirectionalLight(0xffd23f,.7);rim.position.set(3,3,-4);_cc3.S.add(rim);_cc3.cam=new T.PerspectiveCamera(30,256/320,.1,200);}
+    (function next(){var j=_cc3.q.shift();if(!j){_cc3.busy=false;return;}if(_cc3.cache[j.id]){j.cb(_cc3.cache[j.id]);return setTimeout(next,0);}
+      try{var c=ccChar(j.id),b=ccBody(T,c);if(b.userData.play)b.userData.play(c.rar==='légendaire'?'win':(c.rng>2?'hold':'idle'));if(b.userData.mixer)for(var k=0;k<12;k++)b.userData.mixer.update(.04);
+        if(c.gear==='ghost')b.scale.setScalar(1.7);b.rotation.y=.45;b.updateMatrixWorld(true);var box=new T.Box3().setFromObject(b),sz=new T.Vector3(),ctr=new T.Vector3();var fx={fox:1.3,robot:2.3,dino:2.7,kaiju:3.6}[b.userData.kn==='fox'?'fox':c.gear];if(b.userData.kn&&!/pirate/.test(b.userData.kn)&&!fx)fx=1.95;if(fx){box.set(new T.Vector3(-fx*.32,0,-.4),new T.Vector3(fx*.32,fx,.4));}box.getSize(sz);box.getCenter(ctr);
+        var hgt=Math.max(sz.y,sz.x*.9,.5),dist=hgt/(2*Math.tan(15*Math.PI/180))*1.08;_cc3.cam.position.set(ctr.x,ctr.y+hgt*.08,ctr.z+dist);_cc3.cam.lookAt(ctr.x,ctr.y,ctr.z);_cc3.cam.far=dist*4;_cc3.cam.updateProjectionMatrix();
+        _cc3.S.add(b);_cc3.R.render(_cc3.S,_cc3.cam);var u=_cc3.R.domElement.toDataURL('image/png');_cc3.S.remove(b);_cc3.cache[j.id]=u;j.cb(u);}catch(e){console.warn('cc3',e);j.cb(null);}
+      setTimeout(next,10);})();}).catch(function(){_cc3.busy=false;});}
+ccCardHtml=function(id,inDeck){var c=ccChar(id),has=ccHas(id),cd=CC.cards[id]||{l:0,n:0},need=CC_LVL_NEED[cd.l]||999,F=ccLore(id).F;
+  return '<button class="cc-card cc6 r-'+c.rar+(has?'':' lock')+'" data-cccard="'+id+'"><div class="cc6-bg"></div><div class="cc-cost">'+c.cost+'</div><div class="cc6-fac" title="'+esc(F.n)+'">'+F.i+'</div><div class="cc-art cc6-art">'+cc3dArt(id,96)+'</div><div class="cc6-shine"></div><b>'+esc(c.n)+'</b>'+(has?'<div class="cc-lv">Niv. '+cd.l+'</div><div class="cc-prog"><i style="width:'+Math.min(100,cd.n/need*100)+'%"></i><span>'+cd.n+'/'+need+'</span></div>':'<div class="cc-lv">🔒 '+esc(c.g)+'</div>')+'</button>';};
+(function(){var oD=ccCardDetail;ccCardDetail=function(id){var r=oD.apply(this,arguments);var ovs=document.querySelectorAll('.cc-ov'),o=ovs[ovs.length-1];if(!o)return r;var c=ccChar(id),L=ccLore(id);
+  var art=o.querySelector('.cc-dart');if(art&&!c.spell){art.classList.add('cc6-dart','r-'+c.rar);art.innerHTML=cc3dArt(id,170);}
+  var p=o.querySelector('.cc-detail p');if(p&&!c.spell)p.insertAdjacentHTML('afterend','<div class="cc6-lore" style="--fc:'+L.F.c+'"><div class="cc6-lf">'+L.F.i+' <b>'+esc(L.F.n)+'</b></div><p>'+esc(L.s)+'</p>'+(L.q?'<i>'+esc(L.q)+'</i>':'')+'</div>');
+  cc3Fill(o);return r;};})();
+/* ---------- Onglet Histoire + plein écran ---------- */
+(function(){var oR=ccRender;ccRender=function(){var r=oR.apply(this,arguments);var hub=document.getElementById('cc-hub');if(!hub)return r;
+  var tabs=hub.querySelector('.cc-tabs');if(tabs&&!tabs.querySelector('[data-cct6]')){var b=document.createElement('button');b.dataset.cct6='story';b.textContent='📖 Histoire';if(_ccTab==='story'){tabs.querySelectorAll('button').forEach(function(x){x.classList.remove('on');});b.classList.add('on');}b.onclick=function(){_ccTab='story';ccRender();};tabs.appendChild(b);}
+  if(_ccTab==='story'){var pn=hub.querySelector('.cc-panel');if(pn){pn.innerHTML=ccStoryHtml();pn.querySelectorAll('[data-cccard]').forEach(function(x){x.onclick=function(){ccCardDetail(x.dataset.cccard);};});}}
+  var top=hub.querySelector('.cc-top');if(top&&!top.querySelector('.cc6-fs')){var f=document.createElement('button');f.className='cc6-fs';f.title='Plein écran';f.textContent=document.body.classList.contains('cc-full')?'✕':'⛶';f.onclick=ccFull;top.appendChild(f);}
+  cc3Fill(hub);return r;};})();
+function ccFull(){var st=document.getElementById('game-stage');var on=!document.body.classList.contains('cc-full');document.body.classList.toggle('cc-full',on);
+  try{if(on){var rq=st.requestFullscreen||st.webkitRequestFullscreen;if(rq)rq.call(st).catch&&rq.call(st).catch(function(){});}else if(document.fullscreenElement)document.exitFullscreen();}catch(_){}
+  document.querySelectorAll('.cc6-fs').forEach(function(b){b.textContent=on?'✕':'⛶';});}
+document.addEventListener('fullscreenchange',function(){if(!document.fullscreenElement&&document.body.classList.contains('cc-full')){document.body.classList.remove('cc-full');document.querySelectorAll('.cc6-fs').forEach(function(b){b.textContent='⛶';});}});
+(function(){var oC=closeGame;closeGame=function(){if(document.body.classList.contains('cc-full'))ccFull();return oC.apply(this,arguments);};})();
+(function(){var st=document.createElement('style');st.textContent=''
+ +'.cc6{overflow:visible!important;padding-top:28px!important}.cc6-bg{position:absolute;inset:0;border-radius:11px;overflow:hidden;z-index:0;background:inherit}.cc6>*{position:relative;z-index:1}.cc6>.cc-cost{position:absolute!important;left:-8px;top:-8px;z-index:5}'
+ +'.cc6-art{margin-top:-30px;height:96px;display:flex;align-items:flex-end;justify-content:center;transition:transform .25s}.cc6:hover .cc6-art{transform:translateY(-10px) scale(1.12)}.cc3a{display:inline-flex;width:var(--s);height:calc(var(--s)*1.25);align-items:flex-end;justify-content:center}.cc3a img{width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 6px 6px rgba(0,0,0,.45))}'
+ +'.cc6-fac{position:absolute!important;right:4px;top:4px;font-size:.9rem;z-index:3}.cc6-shine{position:absolute!important;inset:0;border-radius:11px;pointer-events:none;overflow:hidden;z-index:2!important}'
+ +'.cc6.r-rare .cc6-shine::after,.cc6.r-épique .cc6-shine::after,.cc6.r-légendaire .cc6-shine::after{content:"";position:absolute;top:-50%;left:-80%;width:50%;height:200%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.55),transparent);transform:rotate(20deg);animation:cc6Shine 3.2s ease-in-out infinite}'
+ +'@keyframes cc6Shine{0%,60%{left:-80%}100%{left:140%}}'
+ +'.cc6.r-épique{box-shadow:0 5px 0 #1b1330,0 0 14px rgba(199,125,255,.75)!important;animation:cc6Pulse 2.4s ease-in-out infinite}@keyframes cc6Pulse{50%{box-shadow:0 5px 0 #1b1330,0 0 26px rgba(199,125,255,1)}}'
+ +'.cc6.r-épique .cc6-bg{background:linear-gradient(135deg,#e0b3ff,#9d4edd 45%,#ff70a6 70%,#9d4edd)!important;background-size:300% 300%!important;animation:cc6Holo 5s linear infinite}@keyframes cc6Holo{to{background-position:300% 0}}'
+ +'.cc6.r-légendaire{box-shadow:0 5px 0 #1b1330,0 0 22px rgba(255,210,63,.9)!important}.cc6.r-légendaire .cc6-bg{background:linear-gradient(180deg,#fff3b0,#ffd23f 40%,#ff9f1c)!important}.cc6.r-légendaire .cc6-bg::before{content:"";position:absolute;left:50%;top:38%;width:240%;height:240%;transform:translate(-50%,-50%);background:repeating-conic-gradient(from 0deg,rgba(255,255,255,.55) 0 10deg,transparent 10deg 25deg);animation:cc6Rays 9s linear infinite}@keyframes cc6Rays{to{transform:translate(-50%,-50%) rotate(360deg)}}'
+ +'.cc6.r-légendaire .cc6-art{transform:translateY(-8px) scale(1.12)}.cc6.r-légendaire:hover .cc6-art{transform:translateY(-18px) scale(1.25)}.cc6.r-légendaire .cc3a img{filter:drop-shadow(0 0 10px #fff3b0) drop-shadow(0 6px 6px rgba(0,0,0,.45))}'
+ +'.cc6.r-légendaire::after{content:"✦ ✧ ✦";position:absolute;left:0;right:0;top:-14px;text-align:center;color:#fff3b0;font-size:.9rem;text-shadow:0 0 8px #ffd23f;animation:cc6Tw 1.6s ease-in-out infinite;z-index:4}@keyframes cc6Tw{50%{opacity:.25;transform:translateY(-3px)}}'
+ +'.cc6.lock .cc3a img{filter:grayscale(1) brightness(.35)}'
+ +'.cc6-dart{position:relative;display:flex;justify-content:center;margin-top:-60px}.cc6-dart .cc3a{animation:cc6Float 3s ease-in-out infinite}@keyframes cc6Float{50%{transform:translateY(-8px)}}.cc6-dart.r-légendaire::before{content:"";position:absolute;left:50%;top:50%;width:230px;height:230px;transform:translate(-50%,-50%);border-radius:50%;background:repeating-conic-gradient(rgba(255,210,63,.45) 0 10deg,transparent 10deg 25deg);animation:cc6Rays 9s linear infinite;z-index:-1}.cc6-dart.r-épique::before{content:"";position:absolute;left:50%;top:55%;width:180px;height:180px;transform:translate(-50%,-50%);border-radius:50%;background:radial-gradient(rgba(199,125,255,.7),transparent 70%);z-index:-1}'
+ +'.cc6-lore{margin:10px 0;padding:10px 12px;border-radius:14px;background:rgba(0,0,0,.18);border-left:5px solid var(--fc)}.cc6-lore p{margin:6px 0;font-size:.88rem;line-height:1.45}.cc6-lore i{display:block;font-size:.85rem;opacity:.85}.cc6-lf{font-size:.85rem}'
+ +'.ccs-intro{background:linear-gradient(135deg,#1b1330,#4a1760);color:#fff;border-radius:18px;padding:18px;margin-bottom:14px;line-height:1.55;border:3px solid #1b1330;box-shadow:0 5px 0 #1b1330}.ccs-intro h3{font-family:Fredoka,sans-serif;font-size:1.5rem;margin:0 0 8px;color:#ffd23f;text-align:center}.ccs-reel{font-size:2.6rem;text-align:center;animation:cc6Rays 6s linear infinite;display:inline-block;width:100%}'
+ +'.ccs-fac{margin:12px 0;border-radius:16px;padding:12px;background:rgba(255,255,255,.08);border:3px solid var(--fc)}.ccs-fh{display:flex;gap:10px;align-items:center}.ccs-fh>span{font-size:2rem}.ccs-fh b{display:block;font-family:Fredoka,sans-serif;font-size:1.1rem}.ccs-fh small{opacity:.85;font-size:.8rem}.ccs-row{display:flex;gap:8px;overflow-x:auto;padding:10px 2px 4px}.ccs-ch{flex:none;width:92px;border:none;border-radius:12px;background:rgba(0,0,0,.2);color:inherit;cursor:pointer;padding:6px 4px;display:flex;flex-direction:column;align-items:center;gap:2px}.ccs-ch b{font-size:.68rem;line-height:1.1}.ccs-ch.lock .cc3a img{filter:grayscale(1) brightness(.4)}'
+ +'.cc-top{position:relative}.cc6-fs{margin-left:auto;border:3px solid #1b1330;border-radius:10px;background:#ffd23f;color:#1b1330;font-weight:900;width:38px;height:34px;cursor:pointer;box-shadow:0 3px 0 #1b1330}'
+ +'body.cc-full #game-stage{position:fixed!important;inset:0!important;z-index:10040!important;margin:0!important;max-width:none!important;overflow-y:auto!important;border-radius:0!important;background:linear-gradient(180deg,#16214f,#0b1030)!important;padding:10px 12px calc(14px + env(safe-area-inset-bottom,0px))!important}body.cc-full{overflow:hidden}body.cc-full #game-stage .gs-head{position:sticky;top:0;z-index:5}';
+ document.head.appendChild(st);})();
+
 /* ---- Jeux ---- */
 /* ====== 🕸️ 6 degrés : les règles expliquées avant de jouer ====== */
 (function(){var oD=gameDeg;gameDeg=function(){var body=gStage('🕸️ 6 degrés','<div class="deg-rules"><div class="dr-big">🕸️</div><h3>Le but : relier deux acteurs</h3>'
