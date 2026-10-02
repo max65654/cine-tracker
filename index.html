@@ -10398,7 +10398,7 @@ function renderPass(){
   var dot=document.getElementById('pass-quest-dot');if(dot)dot.style.display=questClaimableCount()?'':'none';
   if(passTab==='quests'){renderQuests();return;}
   if(passTab==='collection'){renderPassCollection();return;}
-  var maxN=Math.max(30,L+4);
+  var maxN=60;
   var track=document.getElementById('pass-track');
   var html='';
   for(var n=1;n<=maxN;n++){
@@ -12478,7 +12478,7 @@ ivPendingSeasons=function(){
 };})();
 // La série Premium est ajoutée toute seule à tes Attentes
 function premiumToWish(r){
-  if(!r||passNotStarted())return;var cs=currentSeason();passState.premWish=passState.premWish||{};
+  if(!r||!r.name||!r.tv||passNotStarted())return;var cs=currentSeason();passState.premWish=passState.premWish||{};
   if(passState.premWish[cs.id])return;
   var has=wishlist.some(function(w){return String(w.tmdbId)===String(r.tv)&&w.tmdbType==='tv'&&(!w.season||+w.season===+r.season);});
   var inColl=items.find(function(i){return i.tmdbType==='tv'&&String(i.tmdbId)===String(r.tv);});
@@ -18001,6 +18001,78 @@ function uvGraph(box,ord,mine){var def=_uv.def,L=_uv.L,E=_uv.E,LN=uvLaneNames(de
  +'.uv-gwrap{padding:0 16px 30px}.uv-gsc{overflow-x:auto;border-radius:16px;background:rgba(127,127,127,.08);padding:6px}.uv-svg{display:block}.uv-lane{fill:rgba(127,127,127,.08)}.uv-ln{font:800 13px Fredoka,sans-serif;fill:currentColor;opacity:.75}.uv-yr{font:700 11px Inter,sans-serif;fill:currentColor;opacity:.55;text-anchor:middle}.uv-e{fill:none;stroke:#8ecae6;stroke-width:2.5;opacity:.7}.uv-e.cast{stroke:#ff4d6d;stroke-dasharray:5 5;stroke-width:1.8;opacity:.55}.uv-nd{cursor:pointer}.uv-nd circle{fill:#2b2d42;stroke:#adb5bd;stroke-width:3}.uv-nd.seen circle{stroke:#06d6a0}.uv-nd.own circle{stroke:#ffd23f}.uv-nd.fut circle{stroke-dasharray:4 3}.uv-nd.miss image{filter:grayscale(1);opacity:.55}.uv-nd:hover circle{stroke-width:5}'
  +'.uv-leg{display:flex;gap:14px;flex-wrap:wrap;font-size:.8rem;margin:0 4px 8px;opacity:.85}.uv-leg i{display:inline-block;width:22px;height:0;border-top:3px solid #8ecae6;vertical-align:middle}.uv-leg i.l2{border-top:2px dashed #ff4d6d}.uv-leg b.d{display:inline-block;width:12px;height:12px;border-radius:50%;border:3px solid #adb5bd;vertical-align:middle}.uv-leg b.seen{border-color:#06d6a0}.uv-leg b.own{border-color:#ffd23f}'
  +'.uv-tile{background:linear-gradient(135deg,var(--uc),#1b1330)!important}.uv-sp{white-space:nowrap}.uv-hero .sp-next{display:inline-block;margin-top:6px;border:none;border-radius:14px;padding:12px 20px;background:#fff;color:#1b1330;font-weight:800;font-size:1rem;cursor:pointer;box-shadow:0 8px 24px #0007}.uv-ln{fill:#8ecae6!important;opacity:1!important}.uv-ti{font-size:2.6rem;margin-top:14px}';document.head.appendChild(st);})();
+
+/* ---- Pass 60 paliers ---- */
+/* ====== 🎟️ PASS 60 PALIERS (plus dur), PREMIUM TOUS LES 5 PALIERS, PASS CLASH 40 PALIERS, EFFETS D'AFFICHE & GÉNÉRIQUES À GAGNER ====== */
+/* --- Effets quand on touche une affiche --- */
+var PFX={pf_flip:{n:'Salto',ico:'🔄',r:'commun'},pf_pop:{n:'Explosion de pop-corn',ico:'🍿',r:'rare'},pf_neon:{n:'Contour néon',ico:'💡',r:'rare'},pf_reel:{n:'Bobine qui tourne',ico:'🎞️',r:'épique'},pf_boom:{n:'Explosion de blockbuster',ico:'💥',r:'épique'},pf_star:{n:'Pluie d\'étoiles',ico:'🌟',r:'légendaire'},pf_glitch:{n:'Bug VHS',ico:'📼',r:'légendaire'}};
+/* --- Génériques d'ouverture --- */
+var INTROS={in_hero:{n:'Héroïque',ico:'🦸',r:'commun',c1:'rgba(225,29,46,.55)',c2:'rgba(74,0,12,.8)',k:0},in_neon:{n:'Néon 2084',ico:'🌃',r:'rare',c1:'rgba(247,37,133,.55)',c2:'rgba(26,0,51,.85)',k:3},in_vhs:{n:'Cassette VHS',ico:'📼',r:'rare',c1:'rgba(58,134,255,.5)',c2:'rgba(10,10,18,.85)',k:-2},in_fear:{n:'Frissons',ico:'🎃',r:'épique',c1:'rgba(106,153,78,.45)',c2:'rgba(5,8,5,.9)',k:-5},in_gold:{n:'Tapis rouge',ico:'🏆',r:'épique',c1:'rgba(255,210,63,.5)',c2:'rgba(43,29,0,.85)',k:5},in_west:{n:'Far West',ico:'🌵',r:'légendaire',c1:'rgba(224,159,62,.55)',c2:'rgba(43,20,5,.85)',k:-3}};
+function pfxOwned(id){return id==='pf_flip'||isOwned('pfx',id);}function introOwned(id){return id==='in_hero'||isOwned('intro',id);}
+var X_PRICE={'commun':{pc:90},'rare':{pc:180},'épique':{dm:7},'légendaire':{dm:14}};
+/* effet joué quand on touche une affiche de la collection */
+document.addEventListener('click',function(e){var c=e.target.closest&&e.target.closest('#library-grid .movie-card');if(!c||e.target.closest('button'))return;var fx=(passState.equip&&passState.equip.pfx)||'';if(!fx||!pfxOwned(fx))return;pfxPlay(c,fx);},true);
+function pfxPlay(el,fx){var r=el.getBoundingClientRect(),cx=r.left+r.width/2,cy=r.top+r.height/2;el.classList.remove('pfx-'+fx);void el.offsetWidth;el.classList.add('pfx-'+fx);setTimeout(function(){el.classList.remove('pfx-'+fx);},900);
+  var parts={pf_pop:['🍿'],pf_star:['⭐','🌟','✨'],pf_boom:['💥','🔥'],pf_reel:['🎞️']}[fx];if(!parts)return;for(var i=0;i<14;i++){var s=document.createElement('span');s.className='pfx-p';s.textContent=parts[i%parts.length];var a=Math.random()*6.283,d=60+Math.random()*90;s.style.cssText='left:'+cx+'px;top:'+cy+'px;--dx:'+Math.cos(a)*d+'px;--dy:'+(Math.sin(a)*d-40)+'px';document.body.appendChild(s);setTimeout(function(x){x.remove();}.bind(null,s),900);}}
+/* le générique choisi change les couleurs et la musique */
+(function(){var oP=cineIntroPlay;cineIntroPlay=function(opt){var id=(passState.equip&&passState.equip.intro)||'in_hero';if(!introOwned(id))id='in_hero';window.__ciV=INTROS[id];return oP.apply(this,arguments);};
+  var oJ=ciJingle;ciJingle=function(){var V=window.__ciV||INTROS.in_hero,k=V.k||0;if(!k)return oJ();var om=ciMidi;ciMidi=function(m){return om(m+k);};try{return oJ();}finally{ciMidi=om;}};
+  new MutationObserver(function(){var o=document.getElementById('cine-intro');if(o&&!o.dataset.v){var V=window.__ciV||INTROS.in_hero;o.dataset.v=1;var t=o.querySelector('.ci-tint');if(t)t.style.background='linear-gradient(180deg,'+V.c1+','+V.c2+')';o.classList.add('civ-'+((Object.keys(INTROS).find(function(k){return INTROS[k]===V;}))||'in_hero'));}}).observe(document.body,{childList:true});})();
+/* --- Pass : 60 paliers, plus dur --- */
+lvlCost=function(n){return 180+8*(Math.min(Math.max(n,1),60)-1);};
+var PASS_T2=[{k:'pepite'},{k:'pfx',r:'commun'},{k:'pepite_actor'},{k:'chest'},{k:'reroll'},{k:'actor_card'},{k:'pepite_decade'},{k:'intro',r:'rare'},{k:'quote'},{k:'chest'},
+ {k:'pepite_duo'},{k:'pfx',r:'rare'},{k:'boost'},{k:'actor_card'},{k:'pepite'},{k:'intro',r:'épique'},{k:'trailer'},{k:'chest'},{k:'pfx',r:'épique'},{k:'actor_card'},
+ {k:'pepite_decade'},{k:'reroll'},{k:'pfx',r:'légendaire'},{k:'pepite_actor'},{k:'chest'},{k:'intro',r:'légendaire'},{k:'pepite_duo'},{k:'actor_card'},{k:'pfx',r:'légendaire'},{k:'chest',special:true}];
+(function(){var oT=passTier;passTier=function(n){if(n<=30||n>60)return oT(n);var T=Object.assign({},PASS_T2[n-31]);
+  if(T.k==='pfx'||T.k==='intro'){var cl=passState.claimedIds&&passState.claimed[n]&&passState.claimedIds[n];if(cl)return {k:T.k,id:cl};var pool=T.k==='pfx'?PFX:INTROS,own=T.k==='pfx'?pfxOwned:introOwned;var ids=Object.keys(pool).filter(function(i){return !own(i);});var pr=ids.filter(function(i){return pool[i].r===T.r;});var id=(pr.length?pr:ids)[0];if(!id)return {k:'pepite',fallback:'Collection complète'};return {k:T.k,id:id};}
+  if(T.k==='pepite_decade'){var decs=[1980,1990,1970,2000,1960];T.decade=decs[n%decs.length];}return T;};
+  var oF=rewardFaceHtml;rewardFaceHtml=function(n,t){if(t&&(t.k==='pfx'||t.k==='intro')){var it=(t.k==='pfx'?PFX:INTROS)[t.id];return '<div class="pr-x">'+it.ico+'</div><div class="pr-lbl">'+(t.k==='pfx'?'Effet d\'affiche':'Générique')+'<br><b>'+esc(it.n)+'</b></div>';}return oF(n,t);};
+  var oC=claimTier;claimTier=function(n,btn){var t=passTier(n);if(t.k!=='pfx'&&t.k!=='intro')return oC(n,btn);if(passState.claimed[n]||passNotStarted()||passLevel()<n)return;passState.claimed[n]=true;passState.claimedIds=passState.claimedIds||{};passState.claimedIds[n]=t.id;grantOwned(t.k,t.id);svPass();renderPass();xBig(t.k,t.id);};})();
+function xBig(k,id){var it=(k==='pfx'?PFX:INTROS)[id];passCelebrate(it.ico,it.n,(k==='pfx'?'Effet quand tu touches une affiche':'Nouveau générique d\'ouverture')+' · '+it.r+' · à équiper dans ton profil',it.r==='légendaire'?'legend':it.r==='épique'?'epic':'rare');}
+/* le Pass affiche 60 paliers */
+(function(){var oR=renderPass;renderPass=function(){var r=oR.apply(this,arguments);try{if(passTab==='rewards'&&!passNotStarted()){var track=document.getElementById('pass-track');if(track&&!track.querySelector('[data-tier="60"]')&&!track._p60){track._p60=1;}}}catch(_){}return r;};})();
+/* --- Premium : une récompense tous les 5 paliers --- */
+PREMIUM_TIERS=[5,10,15,20,25,30,35,40,45,50,55,60];
+(function(){var oR=premiumReward,oC=claimPremium;var MAP={5:4,10:8,15:12,20:16,25:20,40:24,60:28};
+  premiumReward=function(n,r){if(MAP[n])return oR(MAP[n],r);if(n===30||n===45||n===55)return {k:'pcur',c:n===55?{dm:10,st:2}:{dm:6,st:1},ico:'💎',n:'Trésor Premium',sub:n===55?'10 💎 + 2 ⭐':'6 💎 + 1 ⭐'};if(n===35)return {k:'ppfx',ico:'🌟',n:'Effet d\'affiche Premium',sub:'Pluie d\'étoiles'};if(n===50)return {k:'pintro',ico:'🏆',n:'Générique Premium',sub:'Tapis rouge'};return oR(n,r);};
+  claimPremium=function(n){var k=MAP[n];if(k){var cs=currentSeason();var real=cs.id+'_'+n;if(passState.pclaimed[real])return;return premiumResolve().then(function(r){if(!premiumUnlocked(r)||passLevel()<n)return;var save=passState.pclaimed[cs.id+'_'+k];delete passState.pclaimed[cs.id+'_'+k];
+      oC(k);setTimeout(function(){passState.pclaimed[real]=Date.now();if(save)passState.pclaimed[cs.id+'_'+k]=save;else delete passState.pclaimed[cs.id+'_'+k];svPass();renderPass();},400);});}
+    return premiumResolve().then(function(r){var cs=currentSeason(),key=cs.id+'_'+n;if(!premiumUnlocked(r)||passState.pclaimed[key]||passLevel()<n)return;var rw=premiumReward(n,r);passState.pclaimed[key]=Date.now();if(rw.c)curAdd(rw.c);
+      if(rw.k==='ppfx'){grantOwned('pfx','pf_star');xBig('pfx','pf_star');}else if(rw.k==='pintro'){grantOwned('intro','in_gold');xBig('intro','in_gold');}else passCelebrate('💎','Trésor Premium',rw.sub,'premium');svPass();renderPass();});};})();
+/* --- Pass Ciné Clash : 40 paliers --- */
+CCP_T=40;
+ccPassRewards=function(k,S){var f,p;
+  if(k===40)f={k:'chest',id:'magic'};else if(k%10===0)f={k:'chest',id:'magic'};else if(k%5===0)f={k:'chest',id:'gold'};else if(k%5===3)f={k:'emote'};else if(k%7===0)f={k:'gem',n:20+k};else if(k%2===0)f={k:'gold',n:80+k*12};else f={k:'cards',n:6+Math.round(k*.7)};
+  if(k===40)p={k:'skin',id:S.skin};else if(k===20)p={k:'skin',id:S.skin==='gold'?'lava':'gold'};else if(k%10===5)p={k:'emote2'};else if(k%8===0)p={k:'chest',id:'magic'};else if(k%4===0)p={k:'chest',id:'gold'};else if(k%2)p={k:'gold',n:150+k*15};else p={k:'gem',n:12+k};
+  return [f,p];};
+/* --- Boutique : effets d'affiche, génériques et guichet (de quoi dépenser ses monnaies) --- */
+(function(){var oS=renderShop;renderShop=function(){var r=oS.apply(this,arguments);var el=document.getElementById('pass-shop');if(!el||el.querySelector('.sh-x'))return r;
+  var R=qRand('xshop_'+todayStr()),pick=function(pool,own,n){var ids=Object.keys(pool).filter(function(i){return !own(i);}),out=[];while(ids.length&&out.length<n)out.push(ids.splice(Math.floor(R()*ids.length),1)[0]);return out;};
+  var pf=pick(PFX,pfxOwned,2),it=pick(INTROS,introOwned,2);
+  var G=[{id:'g_boost',ico:'⚡',n:'Boost XP x2 (2 h)',d:'Toute l\'XP du Pass compte double pendant 2 heures.',p:{dm:5}},{id:'g_reroll',ico:'🎲',n:'Nouvelle quête',d:'Change une quête du jour que tu n\'aimes pas.',p:{pc:60}},{id:'g_gems',ico:'💠',n:'60 gemmes Ciné Clash',d:'Pour les coffres et les cartes de Ciné Clash.',p:{tk:40}},{id:'g_xp',ico:'🎟️',n:'+250 XP de Pass',d:'Un petit coup de pouce pour le prochain palier.',p:{st:3}},{id:'g_hc',ico:'💗',n:'Échange cœurs → pop-corn',d:'5 💗 contre 120 🍿.',p:{hc:5}}];
+  var box=document.createElement('div');box.className='sh-x';
+  box.innerHTML='<div class="sh-sec">🎬 Effets d\'affiche & génériques <small>(changent chaque jour)</small></div><div class="sh-row">'+pf.map(function(id){var x=PFX[id];return '<div class="sh-it r-'+(AV_RAR_CLS[x.r]||'rare')+'"><div class="sh-n">'+esc(x.n)+'</div><div class="sh-prev"><span class="sh-xp" data-xpv="'+id+'">'+x.ico+'</span></div><div class="sh-r">Effet d\'affiche · '+x.r+'</div><button class="sh-buy" data-shx="pfx:'+id+'">'+curHtml(X_PRICE[x.r])+'</button></div>';}).join('')
+    +it.map(function(id){var x=INTROS[id];return '<div class="sh-it r-'+(AV_RAR_CLS[x.r]||'rare')+'"><div class="sh-n">'+esc(x.n)+'</div><div class="sh-prev" style="background:linear-gradient(180deg,'+x.c1+','+x.c2+')!important">'+x.ico+'</div><div class="sh-r">Générique · '+x.r+'</div><button class="sh-buy" data-shx="intro:'+id+'">'+curHtml(X_PRICE[x.r])+'</button></div>';}).join('')+(pf.length+it.length?'':'<div class="soc-t">Tu as déjà tout 😎</div>')+'</div>'
+    +'<div class="sh-sec">🎫 Le guichet</div><div class="sh-row">'+G.map(function(g){return '<div class="sh-it r-rare"><div class="sh-n">'+g.n+'</div><div class="sh-prev">'+g.ico+'</div><div class="sh-dd">'+esc(g.d)+'</div><button class="sh-buy" data-shg="'+g.id+'">'+curHtml(g.p)+'</button></div>';}).join('')+'</div>';
+  var first=el.querySelector('.sh-sec');if(first)first.parentNode.insertBefore(box,first);else el.appendChild(box);
+  box.querySelectorAll('[data-shx]').forEach(function(b){b.onclick=function(){var z=b.dataset.shx.split(':'),k=z[0],id=z[1],x=(k==='pfx'?PFX:INTROS)[id];if(passNotStarted())return toast('🎟️ La boutique ouvre le 1er octobre');if(!curSpend(X_PRICE[x.r]))return toast('Pas assez de monnaie');grantOwned(k,id);svPass();xBig(k,id);renderShop();};});
+  box.querySelectorAll('[data-xpv]').forEach(function(s){s.onclick=function(){pfxPlay(s.parentNode,s.dataset.xpv);};});
+  box.querySelectorAll('[data-shg]').forEach(function(b){b.onclick=function(){var g=G.find(function(x){return x.id===b.dataset.shg;});if(passNotStarted())return toast('🎟️ La boutique ouvre le 1er octobre');if(!curSpend(g.p))return toast('Pas assez de monnaie');
+    if(g.id==='g_boost'){passState.boostUntil=Math.max(Date.now(),passState.boostUntil||0)+2*3600000;toast('⚡ XP x2 pendant 2 h !');}else if(g.id==='g_reroll'){passState.rerollFree=(passState.rerollFree||0)+1;toast('🎲 Tu peux changer une quête (onglet Quêtes)');}else if(g.id==='g_gems'){CC.gem+=60;ccSave();toast('💠 +60 gemmes Ciné Clash');}else if(g.id==='g_xp'){passState.xp=(passState.xp||0)+250;toast('🎟️ +250 XP');}else if(g.id==='g_hc'){curAdd({pc:120});toast('🍿 +120 pop-corn');}svPass();renderShop();try{renderPass();}catch(_){}};});
+  return r;};})();
+/* --- Profil : choisir son effet d'affiche et son générique --- */
+(function(){var oP=openProfileModal;openProfileModal=function(){var r=oP.apply(this,arguments);var ci=document.querySelector('#pm-av .pm-ci');if(!ci||document.getElementById('pm-x'))return r;passState.equip=passState.equip||{};
+  var d=document.createElement('div');d.id='pm-x';d.className='pm-ci';d.innerHTML='<b>✨ Effet d\'affiche</b><select id="pm-pfx"><option value="">Aucun</option>'+Object.keys(PFX).filter(pfxOwned).map(function(k){return '<option value="'+k+'"'+(passState.equip.pfx===k?' selected':'')+'>'+PFX[k].ico+' '+PFX[k].n+'</option>';}).join('')+'</select><b>🎬 Style</b><select id="pm-int">'+Object.keys(INTROS).filter(introOwned).map(function(k){return '<option value="'+k+'"'+((passState.equip.intro||'in_hero')===k?' selected':'')+'>'+INTROS[k].ico+' '+INTROS[k].n+'</option>';}).join('')+'</select>';
+  ci.parentNode.appendChild(d);d.querySelector('#pm-pfx').onchange=function(){passState.equip.pfx=this.value;svPass();toast(this.value?'✨ Touche une affiche pour voir l\'effet':'Effet retiré');};d.querySelector('#pm-int').onchange=function(){passState.equip.intro=this.value;svPass();toast('🎬 Générique changé : appuie sur « Revoir »');};return r;};})();
+(function(){var st=document.createElement('style');st.textContent='.pr-x{font-size:2.6rem;margin:6px 0}.sh-xp{cursor:pointer;display:inline-block}'
+ +'.pfx-p{position:fixed;z-index:10080;pointer-events:none;font-size:1.4rem;transform:translate(-50%,-50%);animation:pfxP .9s ease-out forwards}@keyframes pfxP{to{transform:translate(calc(-50% + var(--dx)),calc(-50% + var(--dy))) scale(.6);opacity:0}}'
+ +'.pfx-pf_flip{animation:pfxFlip .7s ease}@keyframes pfxFlip{50%{transform:rotateY(180deg) scale(1.08)}to{transform:rotateY(360deg)}}'
+ +'.pfx-pf_neon{animation:pfxNeon .9s ease}@keyframes pfxNeon{30%,70%{box-shadow:0 0 0 3px #f72585,0 0 30px #f72585,0 0 60px #4cc9f0}}'
+ +'.pfx-pf_reel{animation:pfxReel .8s ease}@keyframes pfxReel{50%{transform:rotate(-8deg) scale(1.1)}}'
+ +'.pfx-pf_boom{animation:pfxBoom .6s ease}@keyframes pfxBoom{20%{transform:scale(1.15);filter:brightness(1.8)}40%{transform:translateX(-6px)}60%{transform:translateX(6px)}}'
+ +'.pfx-pf_pop{animation:pfxPop .5s cubic-bezier(.2,1.8,.4,1)}@keyframes pfxPop{40%{transform:scale(1.12)}}'
+ +'.pfx-pf_star{animation:pfxStar .9s ease}@keyframes pfxStar{40%{transform:translateY(-10px) scale(1.06);filter:drop-shadow(0 0 18px #ffd23f)}}'
+ +'.pfx-pf_glitch{animation:pfxGl .7s steps(6)}@keyframes pfxGl{20%{transform:translate(4px,-2px);filter:hue-rotate(90deg) saturate(3)}40%{transform:translate(-5px,2px);filter:invert(.2)}60%{transform:translate(3px,1px);filter:hue-rotate(-90deg)}80%{transform:skewX(8deg)}}';document.head.appendChild(st);})();
 
 /* ---- Jeux ---- */
 /* ====== 🕸️ 6 degrés : les règles expliquées avant de jouer ====== */
