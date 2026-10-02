@@ -6697,7 +6697,7 @@ function addWish(it){
   }).catch(function(){toast('TMDB indisponible, réessaie.');resetWishSearch();});
 }
 function pushWish(o){
-  o.id=Date.now()+Math.random()*99|0;o.hype=3;o.addedAt=Date.now();
+  if(!o||!o.title)return;o.id=Date.now()+Math.random()*99|0;o.hype=3;o.addedAt=Date.now();
   wishlist.unshift(o);svW();renderWishGrid();
   if(o.tmdbType==='movie'&&o.tmdbId)enrichWishChannel(o,renderWishGrid);
   toast(o.title+(o.season?(' — Saison '+o.season):'')+' ajouté ✓');resetWishSearch();
@@ -18073,6 +18073,37 @@ ccPassRewards=function(k,S){var f,p;
  +'.pfx-pf_pop{animation:pfxPop .5s cubic-bezier(.2,1.8,.4,1)}@keyframes pfxPop{40%{transform:scale(1.12)}}'
  +'.pfx-pf_star{animation:pfxStar .9s ease}@keyframes pfxStar{40%{transform:translateY(-10px) scale(1.06);filter:drop-shadow(0 0 18px #ffd23f)}}'
  +'.pfx-pf_glitch{animation:pfxGl .7s steps(6)}@keyframes pfxGl{20%{transform:translate(4px,-2px);filter:hue-rotate(90deg) saturate(3)}40%{transform:translate(-5px,2px);filter:invert(.2)}60%{transform:translate(3px,1px);filter:hue-rotate(-90deg)}80%{transform:skewX(8deg)}}';document.head.appendChild(st);})();
+
+/* ---- Calendrier & animations ---- */
+/* ====== 📅 Calendrier stylé ====== */
+(function(){var oR=renderCalendar;renderCalendar=function(){var r=oR.apply(this,arguments);try{calDeco();}catch(e){console.warn('cal',e);}return r;};})();
+function calDeco(){var v=document.getElementById('view-calendar'),grid=document.getElementById('cal-grid');if(!v||!grid)return;var y=calDate.getFullYear(),m=calDate.getMonth(),pre=y+'-'+String(m+1).padStart(2,'0');
+  var mon=items.filter(function(i){return (i.watchedDate||'').slice(0,7)===pre;}),eps=0;try{getWatchEvents().forEach(function(ev){if(ev.isEpisode&&(ev.date||'').slice(0,7)===pre)eps++;});}catch(_){}
+  var mins=mon.reduce(function(a,i){return a+(+i.runtime||0);},0),daysOn={};mon.forEach(function(i){daysOn[i.watchedDate]=1;});
+  var best=mon.filter(function(i){return i.rating>0;}).sort(function(a,b){return b.rating-a.rating;})[0],imgs=mon.map(function(i){return i.banner||i.poster;}).filter(Boolean).slice(0,6);
+  var h=v.querySelector('.cal-hero');if(!h){h=document.createElement('div');h.className='cal-hero';var tb=v.querySelector('.cal-toolbar');tb.parentNode.insertBefore(h,tb);}
+  h.innerHTML='<div class="calh-bg">'+(imgs.length?imgs.map(function(u,i){return '<i style="background-image:url('+esc(u)+');--i:'+i+'"></i>';}).join(''):'<i class="calh-empty"></i>')+'</div><div class="calh-in"><div class="calh-m">'+new Date(y,m,1).toLocaleDateString('fr-FR',{month:'long'}).replace(/^./,function(c){return c.toUpperCase();})+' <span>'+y+'</span></div>'
+    +'<div class="calh-st"><div><b>'+mon.length+'</b>titre'+(mon.length>1?'s':'')+' vus</div><div><b>'+eps+'</b>épisodes</div><div><b>'+(mins?Math.round(mins/60):'–')+'</b>heures</div><div><b>'+Object.keys(daysOn).length+'</b>jours ciné</div></div>'
+    +(best?'<div class="calh-best">⭐ Coup de cœur du mois : <b>'+esc(best.title)+'</b></div>':'')+'</div>';
+  grid.querySelectorAll('[data-calday]').forEach(function(el){var d=el.dataset.calday,dt=new Date(d+'T12:00'),wd=dt.getDay();if(wd===0||wd===6)el.classList.add('we');var its=items.filter(function(i){return i.watchedDate===d&&(i.poster||i.banner);});
+    if(its.length){el.classList.add('has');el.style.setProperty('--cp','url('+(its[0].poster||its[0].banner)+')');if(its.length>1)el.insertAdjacentHTML('beforeend','<span class="cal-cnt">+'+(its.length-1)+'</span>');}
+    if(planned.some(function(p){return p.date===d;}))el.classList.add('plan');});}
+/* ====== ✨ Un tracker plus vivant : cartes qui penchent sous la souris, ondes au clic, titres qui brillent ====== */
+(function(){var hov=window.matchMedia&&window.matchMedia('(hover:hover)').matches;
+  if(hov)document.addEventListener('pointermove',function(e){var c=e.target.closest&&e.target.closest('.movie-card,.reco-card,.sp-card');if(!c){if(window._tiltC){window._tiltC.style.transform='';window._tiltC=null;}return;}if(window._tiltC&&window._tiltC!==c)window._tiltC.style.transform='';window._tiltC=c;var r=c.getBoundingClientRect(),x=(e.clientX-r.left)/r.width-.5,yy=(e.clientY-r.top)/r.height-.5;c.style.transform='perspective(700px) rotateY('+(x*10)+'deg) rotateX('+(-yy*10)+'deg) translateY(-4px)';c.style.setProperty('--gx',(x+.5)*100+'%');c.style.setProperty('--gy',(yy+.5)*100+'%');},{passive:true});
+  document.addEventListener('pointerdown',function(e){var b=e.target.closest&&e.target.closest('.nav-btn,.submit-btn,.soc-btn,.sub-action,.filter-chip,.cvt-btn,.pq-claim');if(!b)return;var r=b.getBoundingClientRect(),s=document.createElement('span');s.className='rip';var d=Math.max(r.width,r.height)*2;s.style.cssText='width:'+d+'px;height:'+d+'px;left:'+(e.clientX-r.left-d/2)+'px;top:'+(e.clientY-r.top-d/2)+'px';if(getComputedStyle(b).position==='static')b.style.position='relative';b.style.overflow='hidden';b.appendChild(s);setTimeout(function(){s.remove();},600);},{passive:true});
+  var st=document.createElement('style');st.textContent=''
+  +'.cal-hero{position:relative;border-radius:24px;overflow:hidden;margin-bottom:16px;min-height:170px;color:#fff;box-shadow:0 14px 34px rgba(0,0,0,.25)}.calh-bg{position:absolute;inset:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));filter:saturate(1.2)}.calh-bg i{background:#2b1d40 center/cover;animation:calKen 18s ease-in-out infinite alternate;animation-delay:calc(var(--i)*-3s)}.calh-bg i.calh-empty{background:linear-gradient(135deg,#5B3A8C,#FF4D6D)}@keyframes calKen{to{transform:scale(1.15)}}'
+  +'.calh-in{position:relative;padding:22px 24px;background:linear-gradient(90deg,rgba(20,8,40,.92),rgba(20,8,40,.55) 70%,rgba(20,8,40,.25));min-height:170px;display:flex;flex-direction:column;justify-content:center;gap:10px}.calh-m{font-family:Fredoka,sans-serif;font-size:clamp(2rem,6vw,3.2rem);font-weight:800;line-height:1;text-shadow:0 4px 20px #000}.calh-m span{opacity:.55;font-weight:600}.calh-st{display:flex;gap:10px;flex-wrap:wrap}.calh-st div{background:rgba(255,255,255,.14);backdrop-filter:blur(6px);border-radius:14px;padding:6px 12px;font-size:.78rem;display:flex;flex-direction:column;min-width:74px}.calh-st b{font-family:Fredoka,sans-serif;font-size:1.4rem;color:#ffd23f}.calh-best{font-size:.9rem;opacity:.95}'
+  +'#view-calendar .cal-grid{gap:6px!important}#view-calendar .cal-day{border-radius:14px!important;transition:transform .2s,box-shadow .2s;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.06);overflow:hidden}#view-calendar .cal-day:hover{transform:translateY(-3px) scale(1.03);box-shadow:0 10px 24px rgba(0,0,0,.18);z-index:2}#view-calendar .cal-day.we{background:linear-gradient(180deg,var(--card-bg),rgba(255,77,109,.06))}'
+  +'#view-calendar .cal-day.has{background:linear-gradient(180deg,rgba(15,8,30,.25),rgba(15,8,30,.82)),var(--cp) center/cover!important;color:#fff}#view-calendar .cal-day.has .cal-day-num{color:#fff!important;text-shadow:0 1px 4px #000}#view-calendar .cal-day.has .cal-event.watched{background:rgba(6,214,160,.85);color:#06231b}'
+  +'#view-calendar .cal-day.today{border-color:var(--raspberry)!important;animation:calToday 2.2s ease-in-out infinite}@keyframes calToday{50%{box-shadow:0 0 0 4px rgba(255,77,109,.25),0 0 22px rgba(255,77,109,.35)}}#view-calendar .cal-day.today .cal-day-num::after{content:" · aujourd\'hui";font-size:.62rem;opacity:.8}'
+  +'#view-calendar .cal-day.plan::before{content:"📽";position:absolute;right:6px;top:4px;font-size:.8rem}.cal-cnt{position:absolute;right:6px;bottom:5px;background:#ffd23f;color:#1b1330;font-weight:800;font-size:.66rem;border-radius:99px;padding:1px 6px}#view-calendar .cal-day-hd{text-transform:uppercase;letter-spacing:1px}'
+  +'@media(max-width:700px){.calh-in{padding:16px}.calh-st div{min-width:60px;padding:5px 8px}.calh-st b{font-size:1.1rem}#view-calendar .cal-grid{gap:3px!important}#view-calendar .cal-day.today .cal-day-num::after{content:""}}'
+  +'.movie-card,.reco-card,.sp-card{transition:transform .18s ease-out,box-shadow .25s;transform-style:preserve-3d;will-change:transform}.movie-card .poster-wrap::after{content:"";position:absolute;inset:0;pointer-events:none;background:radial-gradient(circle at var(--gx,50%) var(--gy,50%),rgba(255,255,255,.28),transparent 55%);opacity:0;transition:opacity .2s}.movie-card:hover .poster-wrap::after{opacity:1}'
+  +'.rip{position:absolute;border-radius:50%;background:rgba(255,255,255,.45);transform:scale(0);animation:rip .6s ease-out forwards;pointer-events:none}@keyframes rip{to{transform:scale(1);opacity:0}}'
+  +'header h1,.logo,.app-title{background-size:200% auto}.section-title h2{position:relative}.section-title h2::after{content:"";position:absolute;left:0;bottom:-4px;height:3px;width:0;background:linear-gradient(90deg,var(--raspberry),#ffd23f);border-radius:3px;animation:secLine 1s .2s ease-out forwards}@keyframes secLine{to{width:60%}}'
+  +'@media (prefers-reduced-motion:reduce){.calh-bg i,#view-calendar .cal-day.today,.section-title h2::after{animation:none!important}}';document.head.appendChild(st);})();
 
 /* ---- Jeux ---- */
 /* ====== 🕸️ 6 degrés : les règles expliquées avant de jouer ====== */
