@@ -421,10 +421,6 @@ body.dark .aib-header{color:#C9A8FF;}
 .aib-links a:hover{background:var(--violet);color:white;border-color:var(--violet);}
 body.dark .aib-links a{color:#C9A8FF;}
 body.dark .aib-links a:hover{background:#C9A8FF;color:#1A1525;}
-.aib-gallery{display:none;gap:8px;margin-top:10px;overflow-x:auto;padding-bottom:4px;}
-.aib-gallery img{height:70px;border-radius:8px;cursor:pointer;border:2px solid transparent;flex:none;object-fit:cover;opacity:.8;transition:all .15s;}
-.aib-gallery img:hover{opacity:1;transform:translateY(-2px);}
-.aib-gallery img.on{border-color:var(--raspberry);opacity:1;}
 .aib-translate-btn{font-family:'Fredoka',sans-serif;font-size:.78rem;font-weight:600;color:var(--violet);background:none;border:2px solid var(--border);border-radius:999px;padding:4px 12px;cursor:pointer;margin-top:8px;transition:all .15s;display:inline-flex;align-items:center;gap:4px;}
 .aib-translate-btn:hover{background:var(--violet);color:#fff;border-color:var(--violet);}
 .aib-translate-btn:disabled{opacity:.6;cursor:default;}
@@ -2075,7 +2071,7 @@ body.dark .subr-details summary{color:#C9A8FF;}
 @media(min-width:761px) and (max-width:1560px){header nav .nav-btn{padding:7px 11px!important;font-size:.8rem!important;}header .icon-btn{width:34px!important;height:34px!important;}}
 .iv-box{width:min(620px,100%)!important;text-align:left}.iv-tabs{display:flex;gap:6px;margin-bottom:10px}.iv-tab{flex:1;border:1px solid var(--border);background:none;color:inherit;border-radius:10px;padding:8px;cursor:pointer;font-family:inherit;font-size:.82rem}.iv-tab.on{background:var(--violet);color:#fff;border-color:transparent}.iv-file{display:inline-block;margin-top:10px}.iv-list{max-height:52vh;overflow:auto;display:flex;flex-direction:column;gap:6px;margin:8px 0}.iv-row{display:flex;align-items:center;gap:8px;padding:6px;border:1px solid var(--border);border-radius:10px}.iv-row.ex{opacity:.7}.iv-row img{width:36px;height:54px;object-fit:cover;border-radius:5px;background:var(--input-bg)}.iv-m{flex:1;min-width:0;font-size:.84rem}.iv-i{font-size:.72rem;color:var(--muted)}.iv-row select{font-size:.78rem}.iv-opts{display:flex;flex-direction:column;gap:8px;margin-top:10px}.iv-opt{text-align:left;border:1px solid var(--border);background:var(--input-bg);color:inherit;border-radius:12px;padding:10px 12px;cursor:pointer;font-family:inherit;font-size:.85rem;line-height:1.35}.iv-opt.good{background:rgba(6,214,160,.25);border-color:var(--mint)}.iv-opt.bad{background:rgba(255,77,109,.2);border-color:var(--raspberry)}
 .cur-bar{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 10px}.cur-pill{display:inline-flex;align-items:center;gap:3px;font-size:.7rem;font-weight:700;padding:2px 7px;border-radius:999px;background:rgba(0,0,0,.25);color:#fff;white-space:nowrap}.cur-pill.big{font-size:.85rem;padding:5px 11px;background:rgba(0,0,0,.35)}.c-dm{box-shadow:inset 0 0 0 1px #7df9ff}.c-st{box-shadow:inset 0 0 0 1px #ffd23f}.c-hc{box-shadow:inset 0 0 0 1px #ff8fab}.pt-cur{display:flex;flex-wrap:wrap;gap:2px;justify-content:center;margin-top:4px}.pt-cur .cur-pill{font-size:.6rem;padding:1px 5px}
-.pq-info,.pq-sprint{font-size:.8rem;padding:8px 12px;border-radius:12px;background:rgba(0,0,0,.2);margin-bottom:10px}.pq-sprint{background:linear-gradient(90deg,#ff4d6d,#ffb703);color:#fff;animation:pqGlow 1.6s ease-in-out infinite alternate}@keyframes pqGlow{from{box-shadow:0 0 0 rgba(255,183,3,.0)}to{box-shadow:0 0 22px rgba(255,183,3,.7)}}.pq-diff{font-size:.62rem;font-weight:700;padding:1px 6px;border-radius:999px;background:rgba(255,255,255,.18);margin-left:4px;vertical-align:middle}.pq.d-d .pq-diff{background:#8338ec}.pq.d-e .pq-diff{background:linear-gradient(90deg,#ff006e,#ffbe0b)}.pq.d-e{box-shadow:0 0 0 1px rgba(255,190,11,.55)}.pq-rw{font-size:.72rem;opacity:.9;margin-top:3px;display:flex;flex-wrap:wrap;gap:4px;align-items:center}.pq-lenb{opacity:.75;font-style:italic;width:100%}.pq-older summary{cursor:pointer;font-weight:600;margin:10px 0}.pq.pq-burst{animation:pqBurst .45s ease}@keyframes pqBurst{0%{transform:scale(1)}40%{transform:scale(1.06);box-shadow:0 0 30px #ffd23f}100%{transform:scale(.96);opacity:.6}}.pq.verify.ready{box-shadow:0 0 0 2px #06d6a0}
+.pq-info,.pq-sprint{font-size:.8rem;padding:8px 12px;border-radius:12px;background:rgba(0,0,0,.2);margin-bottom:10px}.pq-sprint{background:linear-gradient(90deg,#ff4d6d,#ffb703);color:#fff;animation:pqGlow 1.6s ease-in-out infinite alternate}@keyframes pqGlow{from{box-shadow:0 0 0 rgba(255,183,3,.0)}to{box-shadow:0 0 22px rgba(255,183,3,.7)}}.pq-diff{font-size:.62rem;font-weight:700;padding:1px 6px;border-radius:999px;background:rgba(255,255,255,.18);margin-left:4px;vertical-align:middle}.pq.d-d .pq-diff{background:#8338ec}.pq.d-e .pq-diff{background:linear-gradient(90deg,#ff006e,#ffbe0b)}.pq.d-e{box-shadow:0 0 0 1px rgba(255,190,11,.55)}.pq-rw{font-size:.72rem;opacity:.9;margin-top:3px;display:flex;flex-wrap:wrap;gap:4px;align-items:center}.pq-older summary{cursor:pointer;font-weight:600;margin:10px 0}.pq.pq-burst{animation:pqBurst .45s ease}@keyframes pqBurst{0%{transform:scale(1)}40%{transform:scale(1.06);box-shadow:0 0 30px #ffd23f}100%{transform:scale(.96);opacity:.6}}.pq.verify.ready{box-shadow:0 0 0 2px #06d6a0}
 .mb-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}.mb{background:rgba(0,0,0,.2);border-radius:14px;padding:10px;text-align:center;font-size:.78rem;display:flex;flex-direction:column;gap:3px;opacity:.75}.mb small{opacity:.8}.mb-ico{font-size:1.8rem;filter:grayscale(1)}.mb.got{opacity:1}.mb.got .mb-ico{filter:none;animation:socPop .6s}.mb.got.r-legend{box-shadow:0 0 0 2px #ffd23f,0 0 18px rgba(255,210,63,.6)}.mb.got.r-epic{box-shadow:0 0 0 2px #c77dff}.mb.got.r-rare{box-shadow:0 0 0 2px #4dabf7}
 .pass-premium{margin-top:14px;padding:12px;border-radius:18px;background:linear-gradient(135deg,rgba(255,210,63,.18),rgba(131,56,236,.25));border:1px solid rgba(255,210,63,.5)}.prem-head{display:flex;gap:10px;align-items:center;font-size:.82rem;margin-bottom:10px}.prem-head img{width:48px;border-radius:8px}.prem-ok{background:#06d6a0;color:#083;padding:1px 8px;border-radius:999px;font-weight:700;color:#fff}.prem-hint{display:block;opacity:.85;margin-top:3px}.prem-track{display:flex;gap:10px;overflow-x:auto;padding-bottom:6px}.prem-card{position:relative;flex:0 0 130px;min-height:190px;border-radius:14px;background:linear-gradient(160deg,#2b1055,#7a1fa2);color:#fff;padding:8px;display:flex;flex-direction:column;align-items:center;gap:4px;text-align:center;box-shadow:inset 0 0 0 2px rgba(255,210,63,.6)}.prem-card.ready{animation:premPulse 1.4s ease-in-out infinite alternate}@keyframes premPulse{from{box-shadow:inset 0 0 0 2px #ffd23f,0 0 0 rgba(255,210,63,0)}to{box-shadow:inset 0 0 0 2px #ffd23f,0 0 24px rgba(255,210,63,.8)}}.prem-card.claimed{opacity:.75}.prem-img{width:100%;height:86px;border-radius:10px;background:#0003 center/cover}.prem-ico{font-size:2.4rem;height:86px;display:flex;align-items:center}.prem-n{font-weight:700;font-size:.78rem}.prem-s{font-size:.68rem;opacity:.85}.prem-lvl{font-size:.62rem;opacity:.7}.prem-admin{margin-top:8px;border:1px dashed rgba(255,255,255,.5);background:none;color:inherit;border-radius:10px;padding:6px 10px;cursor:pointer;font-size:.75rem}
 .pbig{position:fixed;inset:0;z-index:10060;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle,rgba(20,10,40,.85),rgba(0,0,0,.94));animation:pbIn .35s ease}.pbig.out{animation:pbOut .4s ease forwards}@keyframes pbIn{from{opacity:0}to{opacity:1}}@keyframes pbOut{to{opacity:0;transform:scale(1.1)}}.pbig-rays{position:absolute;width:160vmax;height:160vmax;background:repeating-conic-gradient(from 0deg,rgba(255,210,63,.16) 0 10deg,transparent 10deg 20deg);animation:pbSpin 12s linear infinite}.pbig.r-legend .pbig-rays,.pbig.r-premium .pbig-rays{background:repeating-conic-gradient(from 0deg,rgba(255,210,63,.3) 0 8deg,transparent 8deg 16deg)}.pbig.r-epic .pbig-rays{background:repeating-conic-gradient(from 0deg,rgba(199,125,255,.28) 0 9deg,transparent 9deg 18deg)}@keyframes pbSpin{to{transform:rotate(360deg)}}.pbig-in{position:relative;text-align:center;color:#fff;display:flex;flex-direction:column;align-items:center;gap:8px;animation:pbPop .7s cubic-bezier(.2,1.6,.4,1)}@keyframes pbPop{0%{transform:scale(.2) rotate(-12deg);opacity:0}100%{transform:none;opacity:1}}.pbig-top{font-family:'Fredoka',sans-serif;letter-spacing:4px;font-size:1rem;color:#ffd23f;text-shadow:0 0 12px #ffd23f}.pbig-ico{font-size:7rem;filter:drop-shadow(0 0 30px rgba(255,210,63,.8));animation:pbBob 1.8s ease-in-out infinite}@keyframes pbBob{50%{transform:translateY(-10px) scale(1.05)}}.pbig-card{width:200px;height:290px;border-radius:18px;background:#222 center/cover;box-shadow:0 0 0 4px #ffd23f,0 0 50px rgba(255,210,63,.8);animation:pbCard 1s ease}@keyframes pbCard{0%{transform:rotateY(180deg) scale(.4)}100%{transform:none}}.pbig-n{font-family:'Fredoka',sans-serif;font-size:1.8rem;font-weight:700;text-shadow:0 4px 20px rgba(0,0,0,.6);max-width:90vw}.pbig-d{opacity:.85;max-width:80vw}
@@ -2217,7 +2213,6 @@ body.dark .subr-details summary{color:#C9A8FF;}
       <button type="button" class="aib-translate-btn" id="aib-translate-btn" style="display:none">🌐 Traduire le synopsis</button>
       <div class="aib-badges" id="aib-badges"></div>
       <div class="aib-links" id="aib-links"></div>
-      <div class="aib-gallery" id="aib-gallery"></div>
     </div>
     <div class="form-grid">
       <div class="poster-upload" id="poster-upload">
@@ -3945,24 +3940,6 @@ function fetchAutoInfo(it){
       +'<a href="https://www.google.com/search?q='+fq+'+'+(it.media_type==='tv'?'série':'film')+'" target="_blank" rel="noopener">🔎 Web</a>';
     document.getElementById('aib').classList.add('show');
     window._tmdbInfo={synopsis:d.overview||'',seriesStatus:d.status||'',nbSeasons:d.number_of_seasons||0,nbEpisodes:d.number_of_episodes||0,tmdbId:it.id,tmdbType:it.media_type,runtime:d.runtime||(d.episode_run_time&&d.episode_run_time[0]?d.episode_run_time[0]*(d.number_of_episodes||1):0),epRuntime:(d.episode_run_time&&d.episode_run_time[0])?d.episode_run_time[0]:0,tmdbRating:d.vote_average||0,genres:(d.genres||[]).map(function(g){return g.name;}),networkName:(d.networks&&d.networks[0]&&d.networks[0].name)||'',originalTitle:d.original_title||d.original_name||''};
-  }).catch(function(){});
-  fetchAutoGallery(it);
-}
-/* 🖼️ Plus qu'une seule affiche quand on ajoute un titre : une petite galerie (affiches +
-   images de fond) pour choisir la photo qu'on préfère. */
-function fetchAutoGallery(it){
-  var gal=document.getElementById('aib-gallery');if(!gal)return;gal.style.display='none';gal.innerHTML='';
-  var kind=it.media_type==='movie'?'movie':'tv';
-  fetch('https://api.themoviedb.org/3/'+kind+'/'+it.id+'/images?api_key='+TMDB+'&include_image_language=fr,en,null').then(function(r){return r.json();}).then(function(di){
-    var pics=(di.posters||[]).slice(0,6).map(function(p){return {u:'https://image.tmdb.org/t/p/w300'+p.file_path,full:'https://image.tmdb.org/t/p/w500'+p.file_path};})
-      .concat((di.backdrops||[]).slice(0,6).map(function(p){return {u:'https://image.tmdb.org/t/p/w300'+p.file_path,full:'https://image.tmdb.org/t/p/w780'+p.file_path};}));
-    if(!pics.length)return;
-    gal.style.display='flex';
-    gal.innerHTML=pics.map(function(p,i){return '<img src="'+p.u+'" data-gi="'+i+'" loading="lazy" alt="">';}).join('');
-    gal.querySelectorAll('img').forEach(function(img,i){img.onclick=function(){
-      gal.querySelectorAll('img').forEach(function(x){x.classList.remove('on');});img.classList.add('on');
-      posterDataUrl=pics[i].full;pu.style.backgroundImage='url('+posterDataUrl+')';pu.classList.add('has-img');
-    };});
   }).catch(function(){});
 }
 
@@ -11354,7 +11331,7 @@ function activityScan(){
   items.forEach(function(i){
     var o=_actSnap[i.id],s=i.status,r=+i.rating||0,v=(i.review||'').length;_actSnap[i.id]={s:s,r:r,v:v};
     if(o&&!i.locked){try{
-      if(s==='termine'&&o.s!=='termine'){passEventLog(i.type==='film'?'film':'series_end',1,i.type==='film'?{t:i.title}:{t:i.title,lenBonus:seriesLenBonus(i)});try{socFinishHooks(i);}catch(_){}}
+      if(s==='termine'&&o.s!=='termine'){passEventLog(i.type==='film'?'film':'series_end',1,{t:i.title});try{socFinishHooks(i);}catch(_){}}
       if(r>0&&r!==o.r)passEventLog('rate',1);
       if(v>=20&&o.v<20)passEventLog('review',1);
     }catch(_){}}
@@ -11716,10 +11693,6 @@ function passEventLog(t,n,meta){
   clearTimeout(passEventLog._t);passEventLog._t=setTimeout(function(){try{questCheckDone();monthBadgesCheck();}catch(_){}},400);
 }
 function evCount(t,fromD,toD){var n=0;(passState.evs||[]).forEach(function(e){if(e.t===t&&e.d>=fromD&&(!toD||e.d<=toD))n+=e.n||1;});return n;}
-function evMetaSum(t,key,fromD,toD){var n=0;(passState.evs||[]).forEach(function(e){if(e.t===t&&e.d>=fromD&&(!toD||e.d<=toD)&&e.m&&e.m[key])n+=e.m[key];});return n;}
-/* 🏆 Bonus XP d'une série terminée, selon sa longueur réelle (durée totale estimée) : plus elle
-   est longue, plus la quête « Termine une série entière » rapporte de points en plus. */
-function seriesLenBonus(i){var total=i.runtime||((i.nbSeasons||1)*8*(i.epRuntime||45));return Math.max(10,Math.min(600,Math.round(total/15)));}
 /* ---------- Quêtes ---------- */
 var QDIFF={f:{n:'Facile',xp:100,c:{tk:15}},m:{n:'Moyenne',xp:200,c:{tk:25,pc:10}},d:{n:'Difficile',xp:400,c:{dm:1,pc:20}},e:{n:'Épique',xp:700,c:{dm:3,st:1},card:true}};
 var QTPL=[
@@ -11776,8 +11749,7 @@ function claimQuest(id,btn){
   curAdd(q.c);
   if(q.diff==='e')setTimeout(function(){grantRandomActorCard();},1300);
   var card=btn&&btn.closest('.pq');if(card){card.classList.add('pq-burst');}
-  var bonus=q.tpl.id==='series_end'?evMetaSum('series_end','lenBonus',q.date):0;
-  setTimeout(function(){addPassXp(q.xp+bonus,'Quête : '+q.t+(bonus?' (+'+bonus+' XP longueur)':''),'quest');renderQuests();},card?450:0);
+  setTimeout(function(){addPassXp(q.xp,'Quête : '+q.t,'quest');renderQuests();},card?450:0);
 }
 function renderQuests(){
   var el=document.getElementById('pass-quests');if(!el)return;
@@ -11785,7 +11757,7 @@ function renderQuests(){
   var done=Q.list.filter(function(q){return passState.qclaim[q.id];}).length;
   function qHtml(q){
     var c=questProgress(q),ok=c>=q.goal,cl=!!passState.qclaim[q.id];
-    return '<div class="pq d-'+q.diff+(cl?' claimed':ok?' ready':'')+'"><div class="pq-ico">'+q.ico+'</div><div class="pq-main"><div class="pq-t">'+esc(q.t)+' <span class="pq-diff">'+QDIFF[q.diff].n+'</span></div><div class="pq-bar"><div style="width:'+Math.round(c/q.goal*100)+'%"></div><span>'+c+'/'+q.goal+'</span></div><div class="pq-rw">+'+q.xp+' XP '+curHtml(q.c)+(q.diff==='e'?'<span class="cur-pill">🃏 carte</span>':'')+(q.tpl.id==='series_end'?'<small class="pq-lenb">+ bonus selon la durée de la série 📏</small>':'')+'</div></div>'
+    return '<div class="pq d-'+q.diff+(cl?' claimed':ok?' ready':'')+'"><div class="pq-ico">'+q.ico+'</div><div class="pq-main"><div class="pq-t">'+esc(q.t)+' <span class="pq-diff">'+QDIFF[q.diff].n+'</span></div><div class="pq-bar"><div style="width:'+Math.round(c/q.goal*100)+'%"></div><span>'+c+'/'+q.goal+'</span></div><div class="pq-rw">+'+q.xp+' XP '+curHtml(q.c)+(q.diff==='e'?'<span class="cur-pill">🃏 carte</span>':'')+'</div></div>'
       +(cl?'<div class="pq-xp">✓</div>':ok?'<button class="pq-claim" data-qc="'+q.id+'">🎁 Récupérer</button>':'<button class="pq-rr" data-qrr="'+q.id+'" title="Changer cette quête (40 🍿)">🔄</button>')+'</div>';
   }
   var pend=ivPendingSeasons();
@@ -17141,7 +17113,7 @@ function avMonthLabel(id){var M=PASS_MONTHS[parseInt(id.slice(5),10)-1];return M
 (function(){avMonthKeys().forEach(function(mid){var k=avMonthK(mid),L=AV_MONTH_ITEMS[k]||[],tag=mid.replace('-','').slice(2);
   L.forEach(function(x,i){AV_ITEMS['mo'+tag+'_'+i]={s:x[0],n:x[1],r:x[2],src:i<5?'pass':'shop',k:x[3],mo:mid};});});})();
 function avMonthItems(mid){return Object.keys(AV_ITEMS).filter(function(id){return AV_ITEMS[id].mo===mid;});}
-function avDefault(){return {skin:'#eab98f',hairC:'#3d2b1f',pants:'#1d3557',shoes:'#2b2d42',topC:'#3a86ff',hair:'h_short',beard:'',head:'',face:'',top:'tp_tee',back:'',hand:'',name:''};}
+function avDefault(){return {skin:'#eab98f',hairC:'#3d2b1f',pants:'#1d3557',shoes:'#2b2d42',topC:'#3a86ff',hair:'h_short',beard:'',head:'',face:'',top:'tp_tee',back:'',hand:''};}
 function avCfg(){try{if(!passState.av||typeof passState.av!=='object')passState.av=avDefault();return passState.av;}catch(_){return avDefault();}}
 function avOwned(id){if(!id)return true;var it=AV_ITEMS[id];if(!it)return false;if(it.src==='free')return true;try{return isOwned('avi',id);}catch(_){return false;}}
 function avGrant(id){try{grantOwned('avi',id);svPass();}catch(_){}}
@@ -17412,7 +17384,7 @@ function avOpenEditor(tab){
   if(_avEd)try{_avEd.close();}catch(_){}
   var cfg=avCfg(),cur=tab||'top';
   var o=document.createElement('div');o.className='av-ov';
-  o.innerHTML='<div class="av-box"><div class="av-hd"><b>🧍 Mon perso</b><span>Il te représente partout dans l\'appli : sur ton profil, à l\'accueil et dans tes combats</span><input class="av-name" id="av-name" maxlength="16" placeholder="Son nom…" value="'+esc(cfg.name||'')+'"><button class="av-x">✕</button></div>'
+  o.innerHTML='<div class="av-box"><div class="av-hd"><b>🧍 Mon perso</b><span>Il te représente partout : dans Ciné Clash, sur ton profil et à l\'accueil</span><button class="av-x">✕</button></div>'
     +'<div class="av-body"><div class="av-left"><div class="av-stage"><canvas class="av-cv"></canvas><div class="av-hint">↔️ Fais-le tourner</div></div>'
     +'<div class="av-anims">'+[['win','👋'],['no','🙅'],['jump','🦘'],['attack','🥊'],['kick','🦵'],['sit','🪑']].map(function(a){return '<button data-ava="'+a[0]+'">'+a[1]+'</button>';}).join('')+'</div>'
     +'<div class="av-own" id="av-own"></div></div>'
@@ -17441,7 +17413,6 @@ function avOpenEditor(tab){
     AV_SLOTS.forEach(function(s){var own=Object.keys(AV_ITEMS).filter(function(id){return AV_ITEMS[id].s===s.k&&avOwned(id);});if(s.k!=='hair'&&s.k!=='top')own.push('','');if(own.length)cfg[s.k]=pick(own);});
     cfg.hairC=pick(AV_HAIRC);cfg.topC=pick(AV_COLS);cfg.pants=pick(AV_COLS);cfg.shoes=pick(AV_COLS);svPass();panel();redraw();stage.then(function(st){if(st)st.act('jump');});};
   function close(){o.classList.remove('in');setTimeout(function(){o.remove();},250);stage.stop();_avEd=null;try{_ccHubDirty(true);}catch(_){}try{avProfileRefresh();}catch(_){}}
-  o.querySelector('#av-name').onchange=function(){cfg.name=this.value.trim().slice(0,16);svPass();try{avProfileNameRefresh();}catch(_){}};
   o.querySelector('.av-x').onclick=close;o.querySelector('#av-ok').onclick=function(){close();toast('😎 Ton perso est prêt !');};
   o.addEventListener('click',function(e){if(e.target===o)close();});
   _avEd={close:close};panel();ownTxt();
@@ -17486,11 +17457,10 @@ var AV_TIERS={7:0,14:1,19:2,24:3,27:4};
 /* ---------- 👤 Profil : ton perso en grand + réglage du générique ---------- */
 var _avProf=null;
 function avProfileRefresh(){if(_avProf)_avProf.then(function(st){if(st)st.set(avCfg());});}
-function avProfileNameRefresh(){var el=document.getElementById('pm-av-name');if(!el)return;var n=(avCfg().name||'').trim();el.textContent=n;el.style.display=n?'':'none';}
 (function(){var oP=openProfileModal;openProfileModal=function(){var r=oP.apply(this,arguments);var pv=document.getElementById('pm-preview');if(!pv||document.getElementById('pm-av'))return r;
   var b=document.createElement('div');b.id='pm-av';b.className='pm-av';
-  var pref=ciPref(),acfg=avCfg();
-  b.innerHTML='<div class="pm-avst"><canvas></canvas></div><div class="pm-avr"><b>🧍 Mon perso</b><small id="pm-av-name" style="'+(acfg.name?'':'display:none')+'">'+esc(acfg.name||'')+'</small><small>Ton personnage à toi : il te représente partout dans l\'appli — même en haut de ta tour 👑 dans les combats — sur l\'accueil et ici.</small><button class="soc-btn" id="pm-aved">👕 Modifier mon perso</button>'
+  var pref=ciPref();
+  b.innerHTML='<div class="pm-avst"><canvas></canvas></div><div class="pm-avr"><b>🧍 Mon perso</b><small>Ton personnage à toi : dans Ciné Clash (c\'est même le roi de ta tour 👑), sur l\'accueil et ici.</small><button class="soc-btn" id="pm-aved">👕 Modifier mon perso</button>'
     +'<div class="pm-ci"><b>🎬 Générique</b><select id="pm-ci">'+[['day','Une fois par jour'],['always','À chaque ouverture'],['off','Jamais']].map(function(x){return '<option value="'+x[0]+'"'+(pref.mode===x[0]?' selected':'')+'>'+x[1]+'</option>';}).join('')+'</select><button class="soc-btn2" id="pm-cip">▶️ Revoir</button></div></div>';
   pv.parentNode.insertBefore(b,pv.nextSibling);
   if(_avProf)_avProf.stop();_avProf=avStage(b.querySelector('canvas'),{dist:4.2,camY:1.2,lookY:.62,fidget:['win','no','jump'],rot:.3,onTap:function(){avOpenEditor();}});
@@ -17606,19 +17576,12 @@ function cineIntroPlay(opt){opt=opt||{};if(_ciBusy)return;_ciBusy=true;
   var ended=false,timers=[],swap=null;
   function end(){if(ended)return;ended=true;timers.forEach(clearTimeout);clearInterval(swap);if(_ciAudio)_ciAudio.stop();o.classList.add('ci-out');setTimeout(function(){o.remove();_ciBusy=false;if(opt.done)opt.done();},450);}
   o.querySelector('.ci-skip').onclick=function(e){e.stopPropagation();end();};o.addEventListener('click',function(){if(o.classList.contains('ci-hit'))end();});
-  var tl=o.querySelectorAll('.ci-wall i');
-  function set(t,P){if(!P||!P.length)return;t.style.backgroundImage='url('+P[Math.floor(Math.random()*P.length)]+')';t.classList.remove('fl');void t.offsetWidth;t.classList.add('fl');}
-  /* 🎵 Le son et le générique démarrent dès que l'audio est prêt — sans attendre les affiches
-     (qui peuvent nécessiter un appel réseau TMDB de plusieurs secondes). Les affiches ne font
-     que décorer le mur en arrière-plan et se glissent dedans dès qu'elles arrivent. */
-  ciAudioReady().then(function(ok){
-    if(ok&&soundOn)ciJingle();o.classList.add('ci-go');
+  ciAudioReady().then(function(ok){ciPosters().then(function(P){P=P||[];var tl=o.querySelectorAll('.ci-wall i');
+    function set(t){if(!P.length)return;t.style.backgroundImage='url('+P[Math.floor(Math.random()*P.length)]+')';t.classList.remove('fl');void t.offsetWidth;t.classList.add('fl');}
+    tl.forEach(set);if(ok&&soundOn)ciJingle();o.classList.add('ci-go');
+    swap=setInterval(function(){for(var q=0;q<4;q++)set(tl[Math.floor(Math.random()*tl.length)]);},85);
     timers.push(setTimeout(function(){o.classList.add('ci-hit');clearInterval(swap);},3700));
-    timers.push(setTimeout(end,6000));
-    ciPosters().then(function(P){P=P||[];tl.forEach(function(t){set(t,P);});
-      swap=setInterval(function(){for(var q=0;q<4;q++)set(tl[Math.floor(Math.random()*tl.length)],P);},85);
-    });
-  });
+    timers.push(setTimeout(end,6000));});});
   var p=ciPref();p.last=todayStr();ciSavePref(p);}
 function ciAutoIntro(){var p=ciPref();if(p.mode==='off')return;if(p.mode==='day'&&p.last===todayStr())return;
   (function wait(k){if(document.getElementById('acl-ov')||document.getElementById('maint-ov')||document.documentElement.classList.contains('maint-lock')){if(k<240)setTimeout(function(){wait(k+1);},500);return;}cineIntroPlay();})(0);}
@@ -17663,7 +17626,7 @@ function ciLoginDecor(o,opts){opts=opts||{};if(!o||o.querySelector('.ci-deco'))r
  /* perso 3D : éditeur, vignettes, profil, hub */
  +'.av-ov{position:fixed;inset:0;z-index:10070;background:rgba(10,6,20,.78);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;padding:14px;opacity:0;transition:opacity .25s}.av-ov.in{opacity:1}'
  +'.av-box{width:min(1040px,100%);max-height:94vh;display:flex;flex-direction:column;background:linear-gradient(160deg,#2a1840,#12081f);color:#fff;border:3px solid #1b1330;border-radius:24px;box-shadow:0 10px 0 #1b1330,0 30px 90px #000a;overflow:hidden;font-family:Inter,sans-serif}'
- +'.av-hd{display:flex;align-items:center;gap:12px;padding:14px 18px;background:linear-gradient(90deg,#ff4d6d,#8338ec)}.av-hd b{font-family:Fredoka,sans-serif;font-size:1.35rem}.av-hd span{font-size:.8rem;opacity:.9;flex:1}.av-hd input.av-name{background:#ffffff26;border:2px solid #ffffff44;border-radius:10px;color:#fff;padding:7px 10px;font:700 .85rem Inter,sans-serif;width:130px}.av-hd input.av-name::placeholder{color:#ffffffaa}.av-x{background:#0004;border:none;color:#fff;width:36px;height:36px;border-radius:50%;font-size:1.1rem;cursor:pointer}'
+ +'.av-hd{display:flex;align-items:center;gap:12px;padding:14px 18px;background:linear-gradient(90deg,#ff4d6d,#8338ec)}.av-hd b{font-family:Fredoka,sans-serif;font-size:1.35rem}.av-hd span{font-size:.8rem;opacity:.9;flex:1}.av-x{background:#0004;border:none;color:#fff;width:36px;height:36px;border-radius:50%;font-size:1.1rem;cursor:pointer}'
  +'.av-body{display:grid;grid-template-columns:minmax(240px,36%) minmax(0,1fr);min-height:0;flex:1}.av-left{display:flex;flex-direction:column;padding:12px;gap:8px;background:radial-gradient(circle at 50% 40%,#4a1760,#12081f 75%)}'
  +'.av-stage{position:relative;flex:1;min-height:360px}.av-cv{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none;cursor:grab}.av-hint{position:absolute;left:0;right:0;bottom:4px;text-align:center;font-size:.72rem;opacity:.7;pointer-events:none}.av-no3d{padding:40px 10px;text-align:center}'
  +'.av-anims{display:flex;gap:6px;justify-content:center;flex-wrap:wrap}.av-anims button{width:44px;height:44px;border-radius:14px;border:2px solid #ffffff33;background:#ffffff14;font-size:1.25rem;cursor:pointer}.av-anims button:hover{background:#ffffff2a}.av-own{text-align:center;font-size:.78rem;opacity:.85}'
@@ -17677,7 +17640,7 @@ function ciLoginDecor(o,opts){opts=opts||{};if(!o||o.querySelector('.ci-deco'))r
  +'@media(max-width:760px){.av-ov{padding:0;align-items:stretch}.av-box{max-height:100dvh;border-radius:0;border:none}.av-body{grid-template-columns:1fr;grid-template-rows:auto 1fr;overflow:hidden}.av-left{padding:6px}.av-stage{flex:none;min-height:0;height:30vh}.av-own{display:none}.av-anims button{width:38px;height:38px;font-size:1.05rem}.av-grid{grid-template-columns:repeat(3,1fr)}.av-th{width:72px;height:72px}.av-hd span{display:none}.av-foot{padding-bottom:env(safe-area-inset-bottom,0px)}}'
  +'.av-bigst{width:min(320px,80vw);height:min(360px,46vh);margin:6px auto}.av-bigst canvas{width:100%;height:100%;display:block}.av-bigbtns{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}.pr-avi .av-th{width:88px;height:88px;margin:0 auto}'
  +'.sh-avtop{text-align:center;font-size:.85rem;margin:-6px 0 10px}.sh-avme{border:2px solid #1b1330;border-radius:99px;padding:3px 10px;background:#ffd23f;font-weight:800;cursor:pointer}.sh-avx{position:absolute;top:-10px;left:50%;transform:translateX(-50%);white-space:nowrap;background:#ff4d6d;color:#fff;font-size:.62rem;font-weight:900;padding:2px 8px;border-radius:99px;border:2px solid #1b1330;z-index:1}.sh-it .sh-r small{font-size:.66rem;opacity:.85}'
- +'.pm-av{display:flex;gap:14px;align-items:center;margin:12px 0;padding:10px;border-radius:18px;background:linear-gradient(135deg,#2a1840,#4a1760);color:#fff}.pm-avst{width:150px;height:190px;flex:none}.pm-avst canvas{width:100%;height:100%;display:block;cursor:pointer}.pm-avr{display:flex;flex-direction:column;gap:6px;align-items:flex-start}.pm-avr small{opacity:.85;font-size:.78rem}#pm-av-name{font-family:Fredoka,sans-serif;font-weight:700;font-size:1.05rem;opacity:1;color:#ffd23f}.pm-ci{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:4px;font-size:.85rem}.pm-ci select{padding:5px 8px;border-radius:10px;border:none}'
+ +'.pm-av{display:flex;gap:14px;align-items:center;margin:12px 0;padding:10px;border-radius:18px;background:linear-gradient(135deg,#2a1840,#4a1760);color:#fff}.pm-avst{width:150px;height:190px;flex:none}.pm-avst canvas{width:100%;height:100%;display:block;cursor:pointer}.pm-avr{display:flex;flex-direction:column;gap:6px;align-items:flex-start}.pm-avr small{opacity:.85;font-size:.78rem}.pm-ci{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:4px;font-size:.85rem}.pm-ci select{padding:5px 8px;border-radius:10px;border:none}'
  +'.av-hubbtn{position:absolute;left:12px;bottom:8px;z-index:2;background:#ffd23f;color:#1b1330;border:3px solid #1b1330;border-radius:99px;padding:5px 12px;font-weight:800;font-size:.8rem;cursor:pointer;box-shadow:0 3px 0 #1b1330}'
  +'.acc-maint{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-top:12px;padding:12px;border-radius:14px;background:linear-gradient(135deg,#ff4d6d22,#ffd23f22);border:2px solid #ff4d6d55}.acc-maint small{opacity:.85}';
 document.head.appendChild(st);})();
@@ -17768,13 +17731,9 @@ F2_PATTERN=['mine','news','ds','anec','yt','news','pt','trend','ds','anec','news
     if(!top&&c1&&c2&&window.innerWidth>=760&&c1.offsetHeight===0&&c2.offsetHeight===0){/* page cachée : on répartit une fois sur deux */for(var i=0;i<n;i++){var p=f2Next();if(!p)break;var d=document.createElement('div');d.innerHTML=f2Html(p);(i%2?c2:c1).appendChild(d.firstChild);k++;}}
     else k=oA(n,top);if(!k&&!top&&_f2){f2MoreDisc();f2MoreAnec();try{f2Refill();}catch(_){}}return k;};})();
 /* --- 🔮 Indices discrets sur le prochain Pass (de plus en plus gros à l'approche) --- */
-function f2HintTarget(){var d=new Date(),y=d.getFullYear(),m=d.getMonth()+1;if(currentSeason().id<'2026-10'){y=2026;m=11;}else{m=m+1;if(m>12){m=1;y++;}}var id=y+'-'+String(m).padStart(2,'0');
-  /* 🔮 Sécurité : l'indice ne doit jamais parler d'un Pass déjà arrivé (déjà le Pass en cours).
-     Dès que c'est le cas (ex. juste après le changement de mois), on passe directement au suivant. */
-  var cs=currentSeason().id;while(id<=cs){m=m+1;if(m>12){m=1;y++;}id=y+'-'+String(m).padStart(2,'0');}
-  return {id:id,M:PASS_MONTHS[m-1],k:avMonthK(id),start:new Date(y,m-1,1)};}
+function f2HintTarget(){var d=new Date(),y=d.getFullYear(),m=d.getMonth()+1;if(currentSeason().id<'2026-10'){y=2026;m=11;}else{m=m+1;if(m>12){m=1;y++;}}var id=y+'-'+String(m).padStart(2,'0');return {id:id,M:PASS_MONTHS[m-1],k:avMonthK(id),start:new Date(y,m-1,1)};}
 function f2Hints(){var T=f2HintTarget(),M=T.M||{},it=AV_MONTH_ITEMS[T.k]||[],em=AV_MONTH_EMO[T.k]||{},name=(M.name||'').replace(/^\S+\s/,''),ico=(M.name||'').split(' ')[0];
-  var days=Math.max(1,Math.ceil((T.start-Date.now())/864e5));var lvl=days>15?1:days>6?2:3;
+  var days=Math.ceil((T.start-Date.now())/864e5);var lvl=days>15?1:days>6?2:3;
   var obj=function(i){return it[i]?it[i][1].toLowerCase():'un objet mystère';};
   var L1=[ico,'…'+ico,'(il paraît que '+obj(1)+' traîne quelque part)','PS : '+ico+' ?','🤫','Quelqu\'un a vu passer '+obj(4)+' ?','…ou alors c\'est '+em.ico+' ?'];
   var L2=['On raconte que le prochain Pass sent déjà '+name.toLowerCase()+'…','Rien à voir, mais '+obj(0)+'. Voilà. 🤐','Un lutin du Tracker a laissé tomber '+obj(3)+' dans les coulisses '+ico,'Indice : '+em.ico+' + '+ico+' = ?','Les emotes du mois prochain portent un drôle de chapeau…','Dans '+days+' jours, un certain '+ico+' débarque.'];
@@ -18203,17 +18162,11 @@ function trailerKey(mt,id){var k=mt+'_'+id;return _trKeyC[k]||(_trKeyC[k]=ivJson
 (function(){var oF=fyPreview;fyPreview=function(k){var r=oF.apply(this,arguments);var pv=document.querySelector('#soc-ov .fy-pv');if(!pv)return r;var p=k.split('_'),mt=p[0]==='tv'?'tv':'movie',id=p[1];
   trailerKey(mt,id).then(function(key){if(!key||!document.body.contains(pv))return;pv.classList.add('fy-vid');pv.innerHTML='<iframe src="https://www.youtube-nocookie.com/embed/'+key+'?autoplay=1&rel=0&modestbranding=1&playsinline=1&hl=fr&cc_load_policy=0" allow="autoplay; encrypted-media; fullscreen" allowfullscreen title="bande-annonce"></iframe>';});return r;};})();
 /* ====== 🌍 Carte du monde : l'hymne du pays pendant quelques secondes ====== */
-/* 🎺 Cache persistant (localStorage) : une fois l'hymne d'un pays trouvé une fois, il est
-   instantané ensuite — avant, chaque visite refaisait la chaîne Wikidata → Wikimedia (jusqu'à 9 s). */
-var _anC=ld('cineAnthemCache',{}),_anAu=null,_anT=null,_anReqN={};
-function _anSave(){try{var ks=Object.keys(_anC);if(ks.length>300)ks.slice(0,ks.length-300).forEach(function(k){delete _anC[k];});localStorage.setItem('cineAnthemCache',JSON.stringify(_anC));}catch(_){}}
-function anthemUrl(iso){if(_anC[iso]!==undefined)return Promise.resolve(_anC[iso]);var q='SELECT ?f WHERE { ?c wdt:P297 "'+iso+'"; wdt:P85 ?a. ?a wdt:P51 ?f. } LIMIT 1';
-  return fTimeout(fetch('https://query.wikidata.org/sparql?format=json&query='+encodeURIComponent(q)).then(function(r){return r.json();}).then(function(j){var b=j&&j.results&&j.results.bindings[0];if(!b)return null;var f=decodeURIComponent(b.f.value.split('/').pop());
-    return fetch('https://commons.wikimedia.org/w/api.php?action=query&titles=File:'+encodeURIComponent(f)+'&prop=videoinfo&viprop=url|derivatives&format=json&origin=*').then(function(r){return r.json();}).then(function(c){var pg=c&&c.query&&c.query.pages,u=null;for(var x in pg){var vi=(pg[x].videoinfo||[])[0];if(vi){var d=(vi.derivatives||[]).find(function(z){return /mpeg|mp3/.test(z.type||'');});u=d?d.src:vi.url;}}return u;});}).catch(function(){return null;}),9000).then(function(u){_anC[iso]=u||null;_anSave();return u;});}
-function anthemPlay(iso){if(!iso||iso==='??')return;try{if(_anAu){_anAu.pause();}}catch(_){}clearTimeout(_anT);
-  var reqId=++_anReqN[iso]||(_anReqN[iso]=1);
-  if(_anC[iso]===undefined)toast('🎺 Recherche de l\'hymne : '+ppName(iso)+'…');
-  anthemUrl(iso).then(function(u){if(!u||_anReqN[iso]!==reqId)return;_anAu=new Audio(u);_anAu.volume=0;_anAu.play().then(function(){var v=0,up=setInterval(function(){v=Math.min(.7,v+.07);_anAu.volume=v;if(v>=.7)clearInterval(up);},80);toast('🎺 Hymne : '+ppName(iso));_anT=setTimeout(function(){var a=_anAu,dn=setInterval(function(){a.volume=Math.max(0,a.volume-.06);if(a.volume<=0){clearInterval(dn);a.pause();}},80);},9000);}).catch(function(){});});}
+var _anC={},_anAu=null,_anT=null;
+function anthemUrl(iso){if(_anC[iso])return _anC[iso];var q='SELECT ?f WHERE { ?c wdt:P297 "'+iso+'"; wdt:P85 ?a. ?a wdt:P51 ?f. } LIMIT 1';
+  return _anC[iso]=fTimeout(fetch('https://query.wikidata.org/sparql?format=json&query='+encodeURIComponent(q)).then(function(r){return r.json();}).then(function(j){var b=j&&j.results&&j.results.bindings[0];if(!b)return null;var f=decodeURIComponent(b.f.value.split('/').pop());
+    return fetch('https://commons.wikimedia.org/w/api.php?action=query&titles=File:'+encodeURIComponent(f)+'&prop=videoinfo&viprop=url|derivatives&format=json&origin=*').then(function(r){return r.json();}).then(function(c){var pg=c&&c.query&&c.query.pages,u=null;for(var x in pg){var vi=(pg[x].videoinfo||[])[0];if(vi){var d=(vi.derivatives||[]).find(function(z){return /mpeg|mp3/.test(z.type||'');});u=d?d.src:vi.url;}}return u;});}).catch(function(){return null;}),9000);}
+function anthemPlay(iso){if(!iso||iso==='??')return;try{if(_anAu){_anAu.pause();}}catch(_){}clearTimeout(_anT);anthemUrl(iso).then(function(u){if(!u)return;_anAu=new Audio(u);_anAu.volume=0;_anAu.play().then(function(){var v=0,up=setInterval(function(){v=Math.min(.7,v+.07);_anAu.volume=v;if(v>=.7)clearInterval(up);},80);toast('🎺 Hymne : '+ppName(iso));_anT=setTimeout(function(){var a=_anAu,dn=setInterval(function(){a.volume=Math.max(0,a.volume-.06);if(a.volume<=0){clearInterval(dn);a.pause();}},80);},9000);}).catch(function(){});});}
 (function(){var oS=ppShow;ppShow=function(iso){var r=oS.apply(this,arguments);anthemPlay(iso);return r;};})();
 /* ====== 🎟️ Kinepolis dans le tracker + aucune carte bancaire gardée ====== */
 function kineEmbed(url,title){var o=document.createElement('div');o.className='kine-full';o.innerHTML='<div class="kf-bar"><b>🎟️ '+esc(title||'Kinepolis')+'</b><a class="kf-ext" href="'+esc(url)+'" target="_blank" rel="noopener">↗ Ouvrir à part</a><button class="kf-x">✕</button></div><div class="kf-body"><iframe src="'+esc(url)+'" title="Kinepolis" referrerpolicy="no-referrer" sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox"></iframe><div class="kf-help">Si la page reste blanche, c\'est Kinepolis qui interdit l\'affichage dans une autre appli : touche « ↗ Ouvrir à part ».<br>🔒 Le tracker ne lit jamais ce que tu tapes sur Kinepolis et ne garde aucune carte bancaire.</div></div>';
@@ -18273,19 +18226,10 @@ function gOptions(ans,pool,lv){var same=pool.filter(function(x){return x.id!==an
 function clipQuestions3(N,ty,lv){return clipPrefetch().then(function(pool){var ok=pool.filter(function(r){return gCatOk(ty,r.cat);});if(ok.length<N)ok=ok.concat(gShuffle(pool.filter(function(r){return ok.indexOf(r)<0;})));var pick=gShuffle(ok).slice(0,N);
   return Promise.all(pick.map(function(r){return gOptions(r,pool,lv).then(function(o){var st=lv<=1?12+Math.floor(Math.random()*20):lv===2?18+Math.floor(Math.random()*45):30+Math.floor(Math.random()*(lv>=4?80:55));return {q:'De quel'+(r.cat==='serie'?'le série':r.cat==='anime'?' animé':r.cat==='cartoon'?' dessin animé':' film')+' vient cet extrait ?',clip:1,vid:r.vid,st:st,opts:o.opts,a:o.a,p:r.p,mt:r.mt,fr:r.fr};});}));}).then(function(qs){_clipPoolP=null;setTimeout(clipPrefetch,4000);return qs;});}
 /* --- un seul lecteur YouTube réutilisé + le suivant préparé à l'avance = démarrage immédiat --- */
-function clipEngine(box){var E={ready:false,loadFailed:false,P:[null,null],cur:0,tmo:null,onPlay:null};
+function clipEngine(box){var E={ready:false,P:[null,null],cur:0,tmo:null,onPlay:null};
   box.innerHTML='<div class="clp clp3"><div class="clp-vid"><div class="clp-pl" data-k="0"><div id="clpA"></div></div><div class="clp-pl" data-k="1"><div id="clpB"></div></div><div class="clp-mask top"></div><div class="clp-mask bot"></div><div class="clp-cover" id="clp-c"><span class="clp-ld">🎧 Prépare tes oreilles…</span></div></div><div class="clp-bar">'+CLIP_STEPS.map(function(s,i){return '<i class="'+(i===0?'on':'')+'" style="flex:'+s+'"></i>';}).join('')+'</div><div class="clp-btns"><button class="soc-btn2 clp-re">🔁 Revoir</button><button class="soc-btn clp-more">➕ Un peu plus</button></div></div>';
   var cover=box.querySelector('#clp-c');
-  /* L'API YouTube peut échouer à charger (bloqueur de pub, réseau…) : avant, ça faisait planter
-     silencieusement cette chaîne de promesses et le jeu restait bloqué pour toujours sur l'écran
-     de chargement. On vérifie maintenant explicitement que window.YT est bien là, et chaque
-     création de lecteur est protégée pour ne jamais faire échouer tout le chargement. */
-  E.load=ytApiLoad().then(function(){
-    if(!window.YT||!window.YT.Player){E.loadFailed=true;return;}
-    return Promise.all(['clpA','clpB'].map(function(id,k){return new Promise(function(res){var to=setTimeout(res,8000);
-      try{E.P[k]=new YT.Player(id,{width:'100%',height:'100%',playerVars:{controls:0,disablekb:1,modestbranding:1,rel:0,iv_load_policy:3,playsinline:1,fs:0,cc_load_policy:0,hl:'fr'},events:{onReady:function(){clearTimeout(to);try{E.P[k].mute();}catch(_){}res();},onError:function(){if(E.onErr)E.onErr(k);}}});}
-      catch(e){clearTimeout(to);res();}});}));
-  }).then(function(){E.ready=!E.loadFailed;}).catch(function(){E.loadFailed=true;E.ready=false;});
+  E.load=ytApiLoad().then(function(){return Promise.all(['clpA','clpB'].map(function(id,k){return new Promise(function(res){var to=setTimeout(res,8000);E.P[k]=new YT.Player(id,{width:'100%',height:'100%',playerVars:{controls:0,disablekb:1,modestbranding:1,rel:0,iv_load_policy:3,playsinline:1,fs:0,cc_load_policy:0,hl:'fr'},events:{onReady:function(){clearTimeout(to);try{E.P[k].mute();}catch(_){}res();},onError:function(){if(E.onErr)E.onErr(k);}}});});}));}).then(function(){E.ready=true;});
   E.cue=function(k,q){var p=E.P[k];if(!p||!p.cueVideoById)return;try{p.cueVideoById({videoId:q.vid,startSeconds:q.st});}catch(_){}};
   E.show=function(k){box.querySelectorAll('.clp-pl').forEach(function(el){el.style.visibility=+el.dataset.k===k?'visible':'hidden';});};
   E.play=function(q,secs,tapped){var k=E.cur,p=E.P[k];if(!p)return;clearTimeout(E.tmo);cover.classList.remove('hide');cover.innerHTML='<span class="clp-ld">🎧 Écoute bien…</span>';
@@ -18301,12 +18245,7 @@ gameClip=function(){var st={};var body=gStage('🎞️ Extrait éclair','<div cl
     body.innerHTML=gLoading('🎞️ Je prépare '+st.n+' extraits…');clipQuestions3(st.n,st.ty,st.lv).then(function(qs){if(qs.length<3){body.innerHTML='<div class="news-empty">Pas assez d\'extraits pour ce choix 😕 Essaie « Tout ».</div>';return;}playClip3(body,qs,st.lv);});};});};
 function playClip3(body,qs,lv){var r=0,sc=0,good=0,E=null,lvl=0,steps=lv>=3?[1,2,3,6,10]:CLIP_STEPS;
   body.innerHTML='<div id="clp-box"></div><div id="clp-q"></div>';E=clipEngine(body.querySelector('#clp-box'));
-  E.load.then(function(){
-    if(E.loadFailed||!E.ready){var c=body.querySelector('#clp-c');if(c){c.innerHTML='<span class="clp-ld">😕 Le lecteur vidéo n\'a pas pu démarrer (réseau ou bloqueur de pub ?)</span><button class="clp-play big" id="clp-retry">🔁 Réessayer</button>';c.querySelector('#clp-retry').onclick=function(){E.destroy();playClip3(body,qs,lv);};}
-      return;
-    }
-    E.cue(0,qs[0]);if(qs[1])E.cue(1,qs[1]);E.show(0);round(true);
-  });
+  E.load.then(function(){E.cue(0,qs[0]);if(qs[1])E.cue(1,qs[1]);E.show(0);var c=body.querySelector('#clp-c');c.innerHTML='<button class="clp-play big">▶ C\'est parti !</button>';c.querySelector('button').onclick=function(){round(true);};});
   function round(tapped){if(r>=qs.length){E.destroy();var ratio=good/qs.length;gLevelWin('clip',lv,ratio);gEnd('clip',{score:sc,text:'🎞️ '+good+' / '+qs.length+' trouvés · '+sc+' points · niveau '+G_LV[lv-1].n},sc*4,'Extrait éclair');return;}
     var q=qs[r];lvl=0;E.cur=r%2;E.show(E.cur);document.getElementById('gs-score').textContent='Extrait '+(r+1)+'/'+qs.length+' · '+sc+' pts';
     body.querySelectorAll('.clp-bar i').forEach(function(x,i){x.classList.toggle('on',i===0);});var more=body.querySelector('.clp-more');more.textContent='➕ Un peu plus ('+steps[1]+' s)';
@@ -18351,14 +18290,10 @@ GAMES=GAMES.filter(function(g){return g.id!=='mduel'&&g.id!=='mmatch';});GAMES.f
 /* --- Affiches de présentation des jeux --- */
 var G_ART={clash:{c:['#16214f','#e63946'],s:'COMBATS EN 3D'},clip:{c:['#0b0b0f','#e50914'],s:'1 SECONDE POUR TROUVER'},bmus:{c:['#2d0a4e','#ff9f1c'],s:'5 SECONDES DE MUSIQUE'},dle:{c:['#ff7b00','#ffd23f'],s:'LE FILM DU JOUR'},quiz:{c:['#3a0ca3','#4cc9f0'],s:'TA COLLECTION'},blur:{c:['#1b263b','#a8dadc'],s:'AFFICHE MYSTÈRE'},timeline:{c:['#283618','#dda15e'],s:'DANS L\'ORDRE'},who:{c:['#3d0000','#ff4d6d'],s:'QUI SUIS-JE ?'},deg:{c:['#0d1b2a','#06d6a0'],s:'6 DEGRÉS'},adv:{c:['#2d6a4f','#ffd166'],s:'L\'AVENTURE'},mseen:{c:['#5a189a','#f72585'],s:'ENTRE POTES'},mduo:{c:['#7b2cbf','#ff8fab'],s:'SOIRÉE À DEUX'},mrate:{c:['#9d0208','#ffba08'],s:'DUEL DE NOTES'},qpk:{c:['#1d3557','#ffd23f'],s:'QUIZ À DÉBLOQUER'}};
 (function(){var oR=renderGamesHub;renderGamesHub=function(){var r=oR.apply(this,arguments);try{clipPrefetch();}catch(_){}var hub=document.getElementById('games-hub');if(!hub)return r;var P=_ciPosters||[];
-  /* Les affiches de _ciPosters sont en w185 (petites, pensées pour le mur du générique) : en
-     fond plein écran d'une grande carte « Jeux » elles ressortaient floues. On reprend la même
-     image mais en plus haute résolution pour cet usage précis. */
-  function biggerPoster(u){return u?u.replace('/w185/','/w780/'):u;}
   hub.querySelectorAll('.gh-card[data-game]').forEach(function(b,i){var id=b.dataset.game,A=G_ART[id]||{c:['#2b2d42','#ff4d6d'],s:''},g=GAMES.find(function(x){return x.id===id;})||{};if(b.classList.contains('g3p'))return;b.classList.add('g3p');
-    var img=P.length?biggerPoster(P[(i*5+3)%P.length]):'';b.style.setProperty('--g1',A.c[0]);b.style.setProperty('--g2',A.c[1]);if(img)b.style.setProperty('--gi','url('+img+')');
+    var img=P.length?P[(i*5+3)%P.length]:'';b.style.setProperty('--g1',A.c[0]);b.style.setProperty('--g2',A.c[1]);if(img)b.style.setProperty('--gi','url('+img+')');
     var lv=gameStats.lv[id];b.insertAdjacentHTML('afterbegin','<span class="g3-art"><i class="g3-big">'+(g.ico||'🎮')+'</i></span><span class="g3-kick">'+esc(A.s)+'</span>'+(lv>1?'<span class="g3-lvb">'+G_LV[Math.min(4,lv)-1].i+' Niv. '+lv+'</span>':''));});
-  if(!P.length)ciPosters().then(function(){if(document.getElementById('games-hub')===hub&&!hub._g3re){hub._g3re=1;hub.querySelectorAll('.g3p').forEach(function(b,i){var Q=_ciPosters||[];if(Q.length)b.style.setProperty('--gi','url('+biggerPoster(Q[(i*5+3)%Q.length])+')');});}});
+  if(!P.length)ciPosters().then(function(){if(document.getElementById('games-hub')===hub&&!hub._g3re){hub._g3re=1;hub.querySelectorAll('.g3p').forEach(function(b,i){var Q=_ciPosters||[];if(Q.length)b.style.setProperty('--gi','url('+Q[(i*5+3)%Q.length]+')');});}});
   return r;};})();
 (function(){var st=document.createElement('style');st.textContent=''
  +'.g3-setup{display:flex;flex-direction:column;gap:12px;margin:14px auto;max-width:640px;text-align:left}.g3-row{display:flex;flex-wrap:wrap;align-items:center;gap:8px}.g3-row>b{min-width:90px;font-family:Fredoka,sans-serif}.g3-chips{display:flex;flex-wrap:wrap;gap:6px}.g3-c{border:2px solid var(--border);border-radius:99px;padding:7px 12px;background:var(--card-bg);color:inherit;font-weight:700;cursor:pointer;font-size:.85rem}.g3-c.on{background:var(--raspberry);color:#fff;border-color:var(--raspberry)}.g3-c.lock{opacity:.5}.g3-row input[type=range]{flex:1;accent-color:var(--raspberry);min-width:140px}.g3-nv{font-family:Fredoka,sans-serif;font-weight:800;font-size:1.3rem;min-width:30px}.g3-ld{width:100%;opacity:.7;padding-left:98px}@media(max-width:600px){.g3-ld{padding-left:0}}'
@@ -19520,7 +19455,7 @@ function cc9Ck(k,l,hint){return '<label class="cc9-ck"><input type="checkbox" da
 function cc9CrPane(){if(!_cr9)return;var D=_cr9.D,tb=_cr9.tab,h='',pn=_cr9.ov.querySelector('.cc9-pane');
   if(tb==='look'){h+='<div class="cc9-sec">🧍 Silhouette</div><div class="cc9-seg">'+CC9_BASES.map(function(b){return '<button class="'+(D.base===b[0]?'on':'')+'" data-base="'+b[0]+'">'+b[1]+'</button>';}).join('')+'</div>'+cc9Rg('h','📏 Taille',1.3,2.6,.05,' m');
     h+='<div class="cc9-sec">🎨 Couleurs</div><div class="cc9-cols">'+CC9_SLOTS.filter(function(s){return CC9_CMAP[D.base][s[0]];}).map(function(s){return '<label class="cc9-col"><input type="color" data-k="col.'+s[0]+'" value="'+(D.col[s[0]]||'#888888')+'"><span>'+s[1]+'</span>'+(s[0]==='eyes'?'<button class="cc9-mini" data-noeye="1" title="couleur d\'origine">↺</button>':'')+'</label>';}).join('')+'</div>';
-    h+='<div class="cc9-sec">🖼️ Partir d\'une image</div><div class="cc9-img"><div class="cc9-imgbtns"><label class="cc-sbtn go">📷 Choisir une image<input type="file" accept="image/*" data-img="1" hidden></label><button type="button" class="cc-sbtn" data-x9tpdb="1">🔍 Visuel ThePornDB</button></div><small>…ou colle-la ici (Ctrl+V). L\'appli repère les couleurs de ton perso (cheveux, peau, haut, pantalon, chaussures) et les met sur le modèle 3D. L\'image n\'est ni gardée ni envoyée : elle sert juste à piquer les couleurs.</small>'+(_cr9.pal.length?'<div class="cc9-palw"><span>Touche une couleur pour la mettre sur :</span>'+cc9SelRaw('tgt',_cr9.tgt,CC9_SLOTS.filter(function(s){return CC9_CMAP[D.base][s[0]];}))+'<div class="cc9-pal">'+_cr9.pal.map(function(c){return '<button style="background:'+c+'" data-pc="'+c+'"></button>';}).join('')+'</div></div>':'')+(_cr9.img?'<img class="cc9-thumb" src="'+_cr9.img+'" alt="">':'')+'</div>';}
+    h+='<div class="cc9-sec">🖼️ Partir d\'une image</div><div class="cc9-img"><label class="cc-sbtn go">📷 Choisir une image<input type="file" accept="image/*" data-img="1" hidden></label><small>…ou colle-la ici (Ctrl+V). L\'appli repère les couleurs de ton perso (cheveux, peau, haut, pantalon, chaussures) et les met sur le modèle 3D. L\'image n\'est ni gardée ni envoyée : elle sert juste à piquer les couleurs.</small>'+(_cr9.pal.length?'<div class="cc9-palw"><span>Touche une couleur pour la mettre sur :</span>'+cc9SelRaw('tgt',_cr9.tgt,CC9_SLOTS.filter(function(s){return CC9_CMAP[D.base][s[0]];}))+'<div class="cc9-pal">'+_cr9.pal.map(function(c){return '<button style="background:'+c+'" data-pc="'+c+'"></button>';}).join('')+'</div></div>':'')+(_cr9.img?'<img class="cc9-thumb" src="'+_cr9.img+'" alt="">':'')+'</div>';}
   else if(tb==='acc'){var on={};D.acc.forEach(function(a){on[a.k]=a;});h+='<div class="cc9-sec">🎩 Accessoires <small>(8 max)</small></div><div class="cc9-chips">'+CC9_ACC.map(function(a){return '<button class="'+(on[a[0]]?'on':'')+'" data-acc="'+a[0]+'">'+a[1]+'</button>';}).join('')+'</div>';
     if(D.acc.length)h+='<div class="cc9-accl">'+D.acc.map(function(a,i){var A=CC9_ACC.find(function(x){return x[0]===a.k;});return '<div><span>'+A[1]+'</span>'+(A[2]?'<input type="color" data-k="acc.'+i+'.col" value="'+(a.col||'#222222')+'">':'')+'<button class="cc9-mini" data-accx="'+a.k+'">✕</button></div>';}).join('')+'</div>';
     h+='<div class="cc9-sec">✋ Dans la main</div>'+cc9Sel('item','Objet tenu',CC9_ITEMS)+'<div class="cc9-sec">🎬 Gestes</div>'+cc9Sel('atk','Attaque au corps à corps',[['chop','🪓 Grand coup'],['stab','🗡️ Coup droit'],['punch','👊 Coup de poing'],['kick','🦵 Coup de pied']])+cc9Sel('sht','Attaque à distance',[['throw','🤾 Lancer'],['shoot','🔫 Tirer'],['cast','🪄 Sort magique']]);}
@@ -19543,7 +19478,6 @@ function cc9CrPane(){if(!_cr9)return;var D=_cr9.D,tb=_cr9.tab,h='',pn=_cr9.ov.qu
   pn.querySelectorAll('[data-acc]').forEach(function(b){b.onclick=function(){var k=b.dataset.acc,D=_cr9.D,i=D.acc.findIndex(function(a){return a.k===k;});if(i>=0)D.acc.splice(i,1);else{if(D.acc.length>=8)return toast('8 accessoires max');D.acc.push({k:k,col:k==='glasses'||k==='sun'?'#151515':k==='beard'||k==='mustache'?(D.col.hair||'#3b2a20'):'#e63946'});}cc9CrPane();cc9PvRebuild();};});
   pn.querySelectorAll('[data-accx]').forEach(function(b){b.onclick=function(){var D=_cr9.D;D.acc=D.acc.filter(function(a){return a.k!==b.dataset.accx;});cc9CrPane();cc9PvRebuild();};});
   var fi=pn.querySelector('[data-img]');if(fi)fi.onchange=function(){if(fi.files&&fi.files[0])cc9Img(fi.files[0]);};
-  var tp9=pn.querySelector('[data-x9tpdb]');if(tp9)tp9.onclick=function(){cc9TpdbPick();};
   var tg=pn.querySelector('[data-tgt]');if(tg)tg.onchange=function(){_cr9.tgt=tg.value;};
   pn.querySelectorAll('[data-pc]').forEach(function(b){b.onclick=function(){_cr9.D.col[_cr9.tgt]=b.dataset.pc;cc9CrPane();cc9PvRebuild();};});
   pn.querySelectorAll('[data-xe]').forEach(function(b){b.onclick=function(){var o=CC9_X[b.dataset.xe];if(!o)return;_cr9.D=JSON.parse(JSON.stringify(o));_cr9.tab='look';cc9CrAll();toast('✏️ Tu modifies '+o.n);};});
@@ -19577,39 +19511,6 @@ function cc9ImgCols(img){var W=60,H=80,cv=document.createElement('canvas');cv.wi
   var all={};for(j=y0;j<=y1;j++)for(i=x0;i<=x1;i++){var p=px(i,j);if(!far(p))continue;var key=(p[0]>>5)+','+(p[1]>>5)+','+(p[2]>>5);var B=all[key]||(all[key]={n:0,r:0,g:0,b:0});B.n++;B.r+=p[0];B.g+=p[1];B.b+=p[2];}
   var pal=Object.keys(all).map(function(k){return all[k];}).sort(function(a,b){return b.n-a.n;}).slice(0,10).map(function(B){return hx(B.r/B.n,B.g/B.n,B.b/B.n);});
   return {auto:{hair:region(0,.08,.3,.7),skin:region(.1,.28,.3,.7,1),top:region(.36,.56,.3,.7),acc:region(.3,.5,.1,.3),legs:region(.64,.84,.3,.7),shoes:region(.92,1,.2,.8)},pal:pal};}
-/* 🔍 Même chose que cc9Img, mais à partir d'une image distante (URL) plutôt qu'un fichier local —
-   utilisé par la recherche ThePornDB ci-dessous pour piquer les couleurs d'un visuel choisi. */
-function cc9ImgFromUrl(url){if(!url||!_cr9)return;var img=new Image();img.crossOrigin='anonymous';img.referrerPolicy='no-referrer';
-  img.onload=function(){try{var r=cc9ImgCols(img);if(!_cr9)return;_cr9.pal=r.pal;Object.keys(r.auto).forEach(function(k){if(r.auto[k]&&CC9_CMAP[_cr9.D.base][k])_cr9.D.col[k]=r.auto[k];});
-    var cv=document.createElement('canvas'),sc=Math.min(1,160/Math.max(img.width,img.height));cv.width=Math.max(1,Math.round(img.width*sc));cv.height=Math.max(1,Math.round(img.height*sc));cv.getContext('2d').drawImage(img,0,0,cv.width,cv.height);_cr9.img=cv.toDataURL('image/jpeg',.7);_cr9.tab='look';cc9CrAll();toast('🎨 Couleurs reprises du visuel choisi !');}
-    catch(e){toast('😕 Ce site protège son image, impossible d\'en lire les couleurs — essaie un autre visuel.');}};
-  img.onerror=function(){toast('😕 Image inaccessible');};
-  img.src=url;}
-/* 🔍 Recherche ThePornDB → un visuel de performer dont on reprend le style pour une carte Ciné
-   Clash. Réutilise la même clé API (ct_secret_tpdb_key) que la page secrète d'ajout direct. */
-function cc9TpdbPick(){
-  var key=getSecretTpdbKey();
-  if(!key){var k=prompt('Colle ta clé API ThePornDB (gratuite sur theporndb.net, section API) :');if(!k)return;key=k.trim();try{localStorage.setItem(SECRET_TPDB_KEY_K,key);}catch(_){}toast('Clé enregistrée 👍');}
-  var o=document.createElement('div');o.className='cc9-tpdb-ov';
-  o.innerHTML='<div class="cc9-tpdb"><div class="cc9-tpdb-h"><b>🔍 Visuel depuis ThePornDB</b><button type="button" class="cc9-x" id="cc9tp-x">✕</button></div><input id="cc9tp-q" placeholder="Nom d\'une ou d\'un performer…" autocomplete="off"><div id="cc9tp-r" class="cc9-tpdb-r"></div></div>';
-  document.body.appendChild(o);
-  var qi=o.querySelector('#cc9tp-q'),res=o.querySelector('#cc9tp-r'),st,list=[];
-  o.querySelector('#cc9tp-x').onclick=function(){o.remove();};
-  o.addEventListener('click',function(e){if(e.target===o)o.remove();});
-  qi.addEventListener('input',function(){clearTimeout(st);var q=qi.value.trim();if(q.length<2){res.innerHTML='';return;}
-    res.innerHTML='<div class="search-loading">Recherche…</div>';
-    st=setTimeout(function(){
-      var hdrs={headers:{'Authorization':'Bearer '+key,'Accept':'application/json'}};
-      fetch('https://api.theporndb.net/performers?q='+encodeURIComponent(q),hdrs).then(function(r){if(r.status===401||r.status===403)return Promise.reject({auth:1});return r.json();}).then(function(d){
-        list=(d&&(d.data||d.performers||d.results))||[];
-        if(!list.length){res.innerHTML='<div class="search-loading" style="cursor:default;">Aucun résultat.</div>';return;}
-        res.innerHTML=list.slice(0,16).map(function(p,i){var img=p.image||p.photo||(Array.isArray(p.posters)&&p.posters[0]&&(p.posters[0].url||p.posters[0]))||'';return '<button type="button" class="cc9-tpdb-c" data-i="'+i+'">'+(img?'<img src="'+img+'" referrerpolicy="no-referrer" loading="lazy" alt="" onerror="this.style.display=\'none\';">':'<span>🖼️</span>')+'<small>'+esc(p.name||'')+'</small></button>';}).join('');
-        res.querySelectorAll('[data-i]').forEach(function(b){b.onclick=function(){var p=list[parseInt(b.dataset.i)];var img=p&&(p.image||p.photo||(Array.isArray(p.posters)&&p.posters[0]&&(p.posters[0].url||p.posters[0])));if(!img)return toast('😕 Pas de visuel pour ce profil');cc9ImgFromUrl(img);o.remove();};});
-      }).catch(function(e){res.innerHTML='<div class="search-loading" style="cursor:default;">'+(e&&e.auth?'Clé API refusée — relance pour en saisir une autre.':'Impossible de contacter ThePornDB.')+'</div>';});
-    },380);
-  });
-  setTimeout(function(){qi.focus();},50);
-}
 /* essayer en combat : la carte est ajoutée seulement chez toi, dans une main d'essai */
 function cc9TryCard(D){var o=cc9Clean(D);if(!o)return toast('Carte invalide');if(!o.n||o.n==='Sans nom')o.n='Essai';o._draft=1;cc9Apply1(o);CC9_TRY.hand=[o.id,o.id,'knight','robot','witch','cowboy','ninja','pirate'];CC9_TRY.d='Ta carte '+o.n+' est dans ta main : teste-la !';cc9CrClose();setTimeout(function(){ccStartMatch({mode:'x9try'});},150);}
 var CC9_TRY={id:'x9try',ico:'🛠️',n:'Essai de carte',d:'Ta carte est dans ta main.',hand:['knight'],c1:'#3a0ca3',c2:'#1b1330'};
@@ -19628,12 +19529,6 @@ function cc9Publish(D,btn){var o=cc9Clean(D);if(!o)return toast('Carte invalide'
  +'.cc9-seg,.cc9-chips{display:flex;flex-wrap:wrap;gap:5px}.cc9-seg button,.cc9-chips button{border:2px solid #ffffff33;background:#ffffff12;color:#fff;border-radius:999px;padding:6px 10px;font-weight:700;font-size:.76rem;cursor:pointer}.cc9-seg button.on,.cc9-chips button.on{background:#06d6a0;border-color:#06d6a0;color:#0b1030}'
  +'.cc9-cols{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:6px}.cc9-col{display:flex;align-items:center;gap:7px;background:#ffffff10;border-radius:12px;padding:5px 8px;font-size:.76rem;font-weight:700}.cc9-col input{width:38px;height:30px;border:0;background:none;padding:0;cursor:pointer}.cc9-col span{flex:1}.cc9-mini{border:0;background:#ffffff22;color:#fff;border-radius:8px;padding:3px 7px;cursor:pointer}'
  +'.cc9-img{display:flex;flex-direction:column;gap:6px;background:#ffffff10;border:2px dashed #ffffff44;border-radius:14px;padding:10px}.cc9-img>label{align-self:flex-start;cursor:pointer}.cc9-img small{opacity:.8;font-size:.72rem}.cc9-thumb{max-width:120px;max-height:140px;border-radius:10px;align-self:flex-start}.cc9-palw{display:flex;flex-direction:column;gap:5px;font-size:.76rem}.cc9-pal{display:flex;flex-wrap:wrap;gap:6px}.cc9-pal button{width:34px;height:34px;border-radius:50%;border:3px solid #fff;cursor:pointer;box-shadow:0 2px 0 #0008}'
- +'.cc9-imgbtns{display:flex;gap:8px;flex-wrap:wrap}'
- +'.cc9-tpdb-ov{position:fixed;inset:0;z-index:10070;background:rgba(5,6,25,.85);display:flex;align-items:center;justify-content:center;padding:14px}.cc9-tpdb{width:min(560px,100%);max-height:80vh;display:flex;flex-direction:column;background:linear-gradient(170deg,#2b1a6b,#141033);border:3px solid #0b1030;border-radius:18px;box-shadow:0 8px 0 #0b1030;overflow:hidden;color:#fff}'
- +'.cc9-tpdb-h{display:flex;align-items:center;gap:10px;padding:12px 14px;background:#0b1030aa}.cc9-tpdb-h b{flex:1;font-size:1rem}'
- +'.cc9-tpdb #cc9tp-q{margin:12px 14px 0;background:#0b1030;color:#fff;border:2px solid #ffffff33;border-radius:10px;padding:9px 12px;font-size:.9rem}'
- +'.cc9-tpdb-r{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:8px;padding:12px 14px;overflow-y:auto;min-height:60px}'
- +'.cc9-tpdb-c{display:flex;flex-direction:column;gap:4px;border:2px solid #ffffff33;background:#ffffff12;border-radius:12px;padding:6px;cursor:pointer;color:#fff;text-align:center}.cc9-tpdb-c:hover{border-color:#ffd23f}.cc9-tpdb-c img{width:100%;height:90px;object-fit:cover;border-radius:8px}.cc9-tpdb-c small{font-size:.7rem;opacity:.85;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}'
  +'.cc9-accl{display:flex;flex-direction:column;gap:5px;margin-top:8px}.cc9-accl>div{display:flex;align-items:center;gap:8px;background:#ffffff10;border-radius:10px;padding:4px 8px;font-size:.78rem}.cc9-accl span{flex:1}.cc9-accl input{width:36px;height:26px;border:0;background:none}'
  +'.cc9-ck{display:flex;gap:8px;align-items:flex-start;margin:6px 0;background:#ffffff10;border-radius:12px;padding:7px 9px;cursor:pointer}.cc9-ck input{margin-top:3px;accent-color:#06d6a0;width:18px;height:18px}.cc9-ck span{display:flex;flex-direction:column;font-size:.8rem}.cc9-ck small{opacity:.75;font-size:.7rem}'
  +'.cc9-cr label{color:#fff;text-align:left}.cc9-rad input,.cc9-ck input{width:auto!important;flex:none;margin:2px 0 0!important}.cc9-rad span,.cc9-ck span{flex:1;text-align:left;color:#fff}.cc9-col input[type=color]{flex:none}'
@@ -19645,6 +19540,105 @@ function cc9Publish(D,btn){var o=cc9Clean(D);if(!o)return toast('Carte invalide'
  +'@media (max-width:760px){.cc9-cr-ov{padding:0}.cc9-cr{border-radius:0;height:100%;border:0}.cc9-crb{flex-direction:column;overflow-y:auto;padding:8px}.cc9-crl{flex:none}.cc9-cv{height:240px}.cc9-crr{min-height:auto}.cc9-pane{overflow:visible}.cc9-crh small{display:none}.cc9-crf{padding:8px}.cc9-crf .cc-sbtn{flex:1 1 45%}}';document.head.appendChild(st);})();
 /* fiche de carte : le pouvoir spécial des cartes de l'atelier */
 (function(){var oD=ccCardDetail;ccCardDetail=function(id){var r=oD.apply(this,arguments);try{var c=ccChar(id);if(!c||!c.x9)return r;var ovs=document.querySelectorAll('.cc-ov'),o=ovs[ovs.length-1],st=o&&o.querySelector('.cc7-stats');if(!st)return r;var h='';if(c.pw){var P=CC9_PW.find(function(x){return x[0]===c.pw;});if(P)h+='<div class="ccd-x"><b>🌟 Pouvoir spécial</b><small>'+esc(P[1])+'</small></div>';}var bs=[];if(c.charge)bs.push('🐂 Charge');if(c.leap)bs.push('🦘 Bond');if(c.sh)bs.push('🛡️ Bouclier +'+c.sh);if(c.splash)bs.push('💥 Zone '+c.splash);if(c.slow)bs.push('🐌 Ralentit '+c.slow+' s');if(c.drain)bs.push('🩸 Vol de vie '+Math.round(c.drain*100)+' %');if(c.count>1)bs.push('👥 ×'+c.count);if(bs.length)h+='<div class="ccd-x"><b>✨ Pouvoirs</b><small>'+esc(bs.join(' · '))+'</small></div>';h+='<div class="ccd-x"><small>🛠️ Carte inventée par Max dans l\'atelier.</small></div>';st.insertAdjacentHTML('afterend',h);}catch(e){console.warn('d9x',e);}return r;};})();
+/* ====== 🔧 v9b : corrections d'affichage, Extrait éclair plus rapide, Extrait en duo (direct et différé), petits plus utiles ====== */
+/* --- Extrait éclair : chaque lecteur sait quel extrait il a ; le suivant se prépare pendant la question en cours --- */
+(function(){var _ce0=clipEngine;clipEngine=function(box){var E=_ce0(box);E.cv={};var oc=E.cue;E.cue=function(k,q){if(!q)return;E.cv[k]=q.vid;return oc(k,q);};
+  var op=E.play;E.play=function(q,secs,tapped){var k=E.cur,p=E.P[k];if(p&&q&&E.cv[k]!==q.vid){try{p.mute();p.loadVideoById({videoId:q.vid,startSeconds:q.st});}catch(_){}E.cv[k]=q.vid;}return op.apply(this,arguments);};
+  E.prep=function(k,q){if(!q||E.cv[k]===q.vid)return;try{E.P[k].stopVideo();}catch(_){}E.cue(k,q);};return E;};})();
+/* la réserve d'extraits répond dès qu'il y en a assez (elle continue de se remplir derrière) */
+clipPrefetch=function(){if(_clipPoolP)return _clipPoolP;return _clipPoolP=clipCands().then(function(c){var out=[],i=0;return new Promise(function(res){var act=0,done=false;function fin(){if(!done){done=true;_clipPool=out;res(out);}}
+  function pump(){while(act<8&&i<c.length&&out.length<70){var x=c[i++];act++;clipDetail(x.mt,x.id).then(function(r){act--;if(r&&r.vid&&r.p)out.push(r);if(out.length>=36)fin();if((i>=c.length||out.length>=70)&&!act)fin();else pump();});}if(i>=c.length&&!act)fin();}
+  pump();setTimeout(function(){if(out.length>=10)fin();},3500);setTimeout(fin,9000);});});};
+function playClip3(body,qs,lv,E){var r=0,sc=0,good=0,lvl=0,steps=lv>=3?[1,2,3,6,10]:CLIP_STEPS;
+  if(!E){body.innerHTML='<div id="clp-box"></div><div id="clp-q"></div>';E=clipEngine(body.querySelector('#clp-box'));}
+  E.load.then(function(){E.prep(0,qs[0]);E.prep(1,qs[1]);E.show(0);var c=body.querySelector('#clp-c');c.classList.remove('hide');c.innerHTML='<button class="clp-play big">▶ C\'est parti !</button>';c.querySelector('button').onclick=function(){round(true);};});
+  function round(tapped){if(!document.body.contains(body)){E.destroy();return;}if(r>=qs.length){E.destroy();var ratio=good/qs.length;gLevelWin('clip',lv,ratio);gEnd('clip',{score:sc,text:'🎞️ '+good+' / '+qs.length+' trouvés · '+sc+' points · niveau '+G_LV[lv-1].n},sc*4,'Extrait éclair');return;}
+    var q=qs[r];lvl=0;E.cur=r%2;E.show(E.cur);E.prep(E.cur,q);E.prep((r+1)%2,qs[r+1]);var gs=document.getElementById('gs-score');if(gs)gs.textContent='Extrait '+(r+1)+'/'+qs.length+' · '+sc+' pts';
+    body.querySelectorAll('.clp-bar i').forEach(function(x,i){x.classList.toggle('on',i===0);});var more=body.querySelector('.clp-more');more.disabled=false;more.textContent='➕ Un peu plus ('+steps[1]+' s)';
+    var Q=body.querySelector('#clp-q');Q.innerHTML='<div class="dp-q">'+esc(q.q)+(q.fr?'':' <small class="clp-lang">🌍 VO</small>')+'</div><div class="dp-opts clp-opts">'+q.opts.map(function(t,k){return '<button class="dp-o" data-o="'+k+'">'+esc(t)+'</button>';}).join('')+'</div>';
+    E.onReplay=function(){E.play(q,steps[lvl]);};body.querySelector('.clp-re').onclick=E.onReplay;var answered=false;
+    more.onclick=function(){if(answered||lvl>=steps.length-1)return;lvl++;body.querySelectorAll('.clp-bar i').forEach(function(x,i){x.classList.toggle('on',i<=lvl);});more.textContent=lvl<steps.length-1?'➕ Un peu plus ('+steps[lvl+1]+' s)':'C\'est le max';E.play(q,steps[lvl]);};
+    E.onErr=function(k){if(k!==E.cur||answered)return;answered=true;toast('😕 Extrait indisponible, on passe au suivant');r++;round(true);};
+    E.play(q,steps[0],tapped);
+    Q.querySelectorAll('.dp-o').forEach(function(b){b.onclick=function(){if(answered)return;answered=true;more.disabled=true;var k=+b.dataset.o,ok=k===q.a,pts=ok?Math.max(1,5-lvl):0;sc+=pts;if(ok)good++;Q.querySelectorAll('.dp-o').forEach(function(x){x.disabled=true;if(+x.dataset.o===q.a)x.classList.add('good');else if(+x.dataset.o===k)x.classList.add('bad');});E.reveal(q);try{ok?sfx.success():sfx.fail&&sfx.fail();}catch(_){}
+      var nx=document.createElement('div');nx.className='clp-res';nx.innerHTML=(ok?'✅ Bien joué ! +'+pts+' pt'+(pts>1?'s':''):'❌ C\'était <b>'+esc(q.opts[q.a])+'</b>')+(q.p?'<img src="'+q.p+'" alt="">':'')+'<button class="soc-btn" id="clp-next">'+(r+1<qs.length?'Suivant →':'🏁 Résultat')+'</button>';Q.appendChild(nx);nx.querySelector('#clp-next').onclick=function(){try{E.P[E.cur].stopVideo();}catch(_){}r++;round(true);};};});}}
+/* le lecteur se prépare PENDANT que je cherche les extraits (avant : l'un après l'autre) */
+gameClip=function(){var st={};var body=gStage('🎞️ Extrait éclair','<div class="clp-setup"><div class="soc-t">Une seconde d\'un extrait (en VF dès que possible)… à toi de deviner ! Pas trouvé ? Demande un peu plus d\'extrait (mais tu gagnes moins de points).</div>'+gSetupHtml('clip')+'<div class="clp-modes"><button class="defi-o" data-cm="solo"><span>🎯</span>Jouer</button><button class="defi-o" data-cm="defi"><span>📨</span>Défier un pote</button></div></div>');
+  gSetupBind(body,'clip',st);clipPrefetch();try{ytApiLoad();}catch(_){}
+  body.querySelectorAll('[data-cm]').forEach(function(b){b.onclick=function(){if(b.dataset.cm==='defi'){if(!window.CineSocial)return toast('👥 Connecte-toi pour défier un pote');openDefiSetup({k:'clip',n:st.n});return;}
+    body.innerHTML='<div id="clp-box"></div><div id="clp-q"></div>';var E=clipEngine(body.querySelector('#clp-box'));var c=body.querySelector('#clp-c');if(c)c.innerHTML='<span class="clp-ld">🎞️ Je prépare '+st.n+' extraits…</span>';
+    Promise.all([clipQuestions3(st.n,st.ty,st.lv),E.load]).then(function(rs){var qs=rs[0]||[];if(qs.length<3){E.destroy();body.innerHTML='<div class="news-empty">Pas assez d\'extraits pour ce choix 😕 Essaie « Tout ».</div>';return;}playClip3(body,qs,st.lv,E);}).catch(function(){body.innerHTML='<div class="news-empty">😕 Impossible de charger les extraits (connexion ?)</div>';});};});};
+/* défi « chacun quand il veut » en Extrait éclair : même lecteur rapide */
+(function(){var oP=playDefi;playDefi=function(d){if(!d||!d.qs||!d.qs.some(function(q){return q.clip;}))return oP.apply(this,arguments);
+  var me=window.CineSocial.uid(),opp=d.a===me?d.bName:d.aName,qi=0,ans={},o=document.createElement('div');o.className='defi-ov';document.body.appendChild(o);
+  o.innerHTML='<div class="defi-big play"><button class="fd-x" id="dpc-x">✕</button><div class="dp-top"><span>🎞️ contre <b>'+esc(opp||'ton pote')+'</b></span><span id="dpc-n">Extrait 1 / '+d.qs.length+'</span></div><div id="dpc-clip"></div><div id="dpc-q"></div></div>';
+  var E=clipEngine(o.querySelector('#dpc-clip')),steps=CLIP_STEPS,lvl=0,start=0,tmo=null,answered=false;
+  o.querySelector('#dpc-x').onclick=function(){if(!confirm('Quitter le défi ? Tes réponses ne seront pas envoyées.'))return;clearTimeout(tmo);E.destroy();o.remove();};
+  E.load.then(function(){E.prep(0,d.qs[0]);E.prep(1,d.qs[1]);E.show(0);var c=o.querySelector('#clp-c');c.classList.remove('hide');c.innerHTML='<button class="clp-play big">▶ C\'est parti !</button>';c.querySelector('button').onclick=function(){round();};});
+  function finish(){E.destroy();var up={};up['ans.'+me]=ans;up['done.'+me]=true;window.CineSocial.battleUpdate(d.id,up);d.ans=Object.assign({},d.ans||{});d.ans[me]=ans;d.done=Object.assign({},d.done||{});d.done[me]=true;var oid=d.a===me?d.b:d.a;if(d.done[oid]){o.remove();defiResult(d);return;}
+    o.innerHTML='<div class="defi-big"><div class="soc-big">📨</div><div class="soc-h">Défi envoyé à '+esc(opp||'ton pote')+' !</div><div class="soc-t">Ton score : <b>'+defiScore(d,me)+'</b>. Tu seras prévenu quand il aura joué.</div><button class="po-go" id="dp-ok">OK</button></div>';o.querySelector('#dp-ok').onclick=function(){o.remove();};}
+  function answer(k){if(answered)return;answered=true;clearTimeout(tmo);var q=d.qs[qi];ans[qi]=k<0?{c:-1,ms:30000,ex:5}:{c:k,ms:start?Date.now()-start:15000,ex:lvl};o.querySelectorAll('.dp-o').forEach(function(x){x.disabled=true;if(+x.dataset.o===q.a)x.classList.add('good');else if(+x.dataset.o===k)x.classList.add('bad');});E.reveal(q);setTimeout(function(){try{E.P[E.cur].stopVideo();}catch(_){}qi++;round();},2600);}
+  function round(){if(qi>=d.qs.length){finish();return;}var q=d.qs[qi];lvl=0;answered=false;start=Date.now();E.cur=qi%2;E.show(E.cur);E.prep(E.cur,q);E.prep((qi+1)%2,d.qs[qi+1]);o.querySelector('#dpc-n').textContent='Extrait '+(qi+1)+' / '+d.qs.length;
+    o.querySelectorAll('.clp-bar i').forEach(function(x,i){x.classList.toggle('on',i===0);});var more=o.querySelector('.clp-more');more.textContent='➕ Un peu plus ('+steps[1]+' s)';
+    more.onclick=function(){if(answered||lvl>=steps.length-1)return;lvl++;o.querySelectorAll('.clp-bar i').forEach(function(x,i){x.classList.toggle('on',i<=lvl);});more.textContent=lvl<steps.length-1?'➕ Un peu plus ('+steps[lvl+1]+' s)':'C\'est le max';E.play(q,steps[lvl]);};
+    E.onReplay=function(){E.play(q,steps[lvl]);};o.querySelector('.clp-re').onclick=E.onReplay;E.onErr=function(k){if(k===E.cur&&!answered)toast('😕 Cet extrait ne se lance pas : réponds au hasard ou attends la fin du temps');};
+    o.querySelector('#dpc-q').innerHTML='<div class="dp-q">'+esc(q.q)+'</div><div class="dp-opts">'+q.opts.map(function(t,k){return '<button class="dp-o" data-o="'+k+'">'+esc(t)+'</button>';}).join('')+'</div>';
+    o.querySelectorAll('.dp-o').forEach(function(b){b.onclick=function(){answer(+b.dataset.o);};});tmo=setTimeout(function(){toast('⏱️ Temps écoulé');answer(-1);},30000);E.play(q,steps[0],true);}};})();
+/* défi EN DIRECT en Extrait éclair : la vidéo n'apparaissait pas ! Lecteur synchronisé au-dessus des questions */
+var _btClip=null;
+function btClipKill(){if(_btClip){clearTimeout(_btClip.t);try{_btClip.E.destroy();}catch(_){}_btClip.w.remove();_btClip=null;}document.body.classList.remove('bt-clip-on');}
+function btClipSync(b){var N=(b.qs||[]).length,i=b.cur||0;if(!b.qs||!b.qs.some(function(q){return q.clip;})||b.status==='done'||i>=N||!document.getElementById('battle-ov')){btClipKill();return;}
+  if(!_btClip||_btClip.id!==b.id){btClipKill();var w=document.createElement('div');w.id='bt-clipw';document.body.appendChild(w);var E=clipEngine(w);_btClip={id:b.id,E:E,w:w,qi:-1,lvl:0};_btClip.ready=E.load.then(function(){var j=b.cur||0;E.prep(j%2,b.qs[j]);E.prep((j+1)%2,b.qs[j+1]);});}
+  document.body.classList.add('bt-clip-on');var C=_btClip,E=C.E,q=b.qs[i],me=window.CineSocial.uid(),oid=b.a===me?b.b:b.a,L=_bLocal[b.id+'_'+i];if(!L)return;
+  if(C.qi!==i){C.qi=i;C.lvl=0;C.rev=false;clearTimeout(C.t);C.ready.then(function(){if(C.qi!==i)return;E.cur=i%2;E.show(E.cur);E.prep(E.cur,q);E.prep((i+1)%2,b.qs[i+1]);});
+    var cv=C.w.querySelector('#clp-c');if(cv){cv.classList.remove('hide');cv.innerHTML='<span class="clp-ld">'+(Date.now()<L.start?'⏳ Prêts…':'🎧 Écoute bien…')+'</span>';}
+    C.w.querySelectorAll('.clp-bar i').forEach(function(x,k){x.classList.toggle('on',k===0);});var more=C.w.querySelector('.clp-more');more.textContent='➕ Un peu plus ('+CLIP_STEPS[1]+' s)';
+    more.onclick=function(){if(C.rev||C.lvl>=CLIP_STEPS.length-1)return;C.lvl++;C.w.querySelectorAll('.clp-bar i').forEach(function(x,k){x.classList.toggle('on',k<=C.lvl);});more.textContent=C.lvl<CLIP_STEPS.length-1?'➕ Un peu plus ('+CLIP_STEPS[C.lvl+1]+' s)':'C\'est le max';E.play(q,CLIP_STEPS[C.lvl]);};
+    E.onReplay=function(){if(!C.rev)E.play(q,CLIP_STEPS[C.lvl]);};C.w.querySelector('.clp-re').onclick=E.onReplay;
+    C.t=setTimeout(function(){C.ready.then(function(){if(C.qi===i&&!C.rev)E.play(q,CLIP_STEPS[0],true);});},Math.max(0,L.start-Date.now()));}
+  if(!C.rev&&btRevealed(b,i,me,oid,L)){C.rev=true;C.ready.then(function(){if(C.qi===i)E.reveal(q);});}}
+(function(){var oR=battleRender;battleRender=function(b){var r=oR.apply(this,arguments);try{btClipSync(b);}catch(e){console.warn('btclip',e);}return r;};var oC=btClose;btClose=function(id){btClipKill();return oC.apply(this,arguments);};})();
+setInterval(function(){if(_btClip&&!document.getElementById('battle-ov'))btClipKill();},1500);
+/* --- en-tête : le badge « Niv. » ne passe plus par-dessus les boutons du menu qui défile --- */
+setInterval(function(){try{var n=document.querySelector('header nav');if(n)n.classList.toggle('nav-sc',n.scrollWidth>n.clientWidth+4&&getComputedStyle(n).flexWrap==='nowrap');}catch(_){}},1200);
+/* --- Ciné Clash au clavier (PC) : 1 à 4 = cartes, Espace = pouvoir du champion, Échap = annuler --- */
+document.addEventListener('keydown',function(e){var m=document.querySelector('.cc-match');if(!m||e.ctrlKey||e.metaKey||e.altKey)return;var t=e.target;if(t&&(/^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName)||t.isContentEditable))return;
+  var tap=function(b){if(!b)return;var r=b.getBoundingClientRect(),o={bubbles:true,cancelable:true,clientX:r.left+r.width/2,clientY:r.top+r.height/2,pointerId:91,isPrimary:true};try{b.dispatchEvent(new PointerEvent('pointerdown',o));window.dispatchEvent(new PointerEvent('pointerup',o));}catch(_){}};
+  if(/^[1-4]$/.test(e.key)){var b=m.querySelector('[data-hc="'+(+e.key-1)+'"]');if(b){tap(b);e.preventDefault();}}
+  else if(e.key===' '||e.code==='Space'){var ab=m.querySelector('#cc3-ab');if(ab&&ab.style.display!=='none'){ab.click();e.preventDefault();}}
+  else if(e.key==='Escape'){var s=m.querySelector('.cc3-card.sel');if(s){tap(s);e.preventDefault();}}});
+/* --- l'écran ne se met plus en veille pendant un combat, un extrait ou un défi --- */
+function vis9(sel){return [].some.call(document.querySelectorAll(sel),function(e){return e.offsetParent!==null||getComputedStyle(e).position==='fixed';});}
+var _wk=null;function wkWant(){return vis9('.cc-match,#clp-box,#bt-clipw,.bm-vis,#battle-ov,.defi-big.play');}
+setInterval(function(){try{if(!('wakeLock' in navigator)||document.hidden)return;var want=wkWant();if(want&&!_wk){navigator.wakeLock.request('screen').then(function(l){_wk=l;l.addEventListener('release',function(){_wk=null;});}).catch(function(){});}else if(!want&&_wk){_wk.release().catch(function(){});_wk=null;}}catch(_){}},2500);
+/* --- connexion perdue / retrouvée --- */
+window.addEventListener('offline',function(){try{toast('📴 Plus de connexion : tout reste sauvegardé sur ton appareil');}catch(_){}});
+window.addEventListener('online',function(){try{toast('🟢 De retour en ligne !');}catch(_){}});
+/* --- nouvelle version de l'appli en ligne → petit bouton pour recharger (vérifié quand tu reviens sur l'appli) --- */
+var _upd={tag:null,shown:false,t:0};
+function updCheck(){if(_upd.shown||location.protocol==='file:'||Date.now()-_upd.t<4*60000)return;_upd.t=Date.now();fetch(location.pathname,{method:'HEAD',cache:'no-store'}).then(function(r){if(!r||!r.ok)return;var tag=r.headers.get('etag')||r.headers.get('last-modified');if(!tag)return;if(!_upd.tag){_upd.tag=tag;return;}if(tag!==_upd.tag)updShow();}).catch(function(){});}
+function updShow(){if(_upd.shown)return;if(vis9('.cc-match,#battle-ov,.defi-ov,#clp-box,.cc9-cr-ov')){setTimeout(updShow,15000);return;}_upd.shown=true;var b=document.createElement('div');b.className='upd-pill';b.innerHTML='<span>✨ Nouvelle version de l\'appli !</span><button>🔄 Recharger</button><button class="x" title="Plus tard">✕</button>';document.body.appendChild(b);b.querySelector('button').onclick=function(){location.reload();};b.querySelector('.x').onclick=function(){b.remove();};}
+setTimeout(updCheck,8000);setInterval(updCheck,15*60000);document.addEventListener('visibilitychange',function(){if(!document.hidden)updCheck();});
+/* --- 🐞 journal technique : les bugs sont notés sur l'appareil, l'admin est prévenu et peut les copier --- */
+var _err9={last:0};
+function errLog(m,src){m=String(m||'').slice(0,240);if(!m||/ResizeObserver|Script error|vibrate|play\(\) request|NotAllowedError|AbortError|The operation was aborted|Load failed|Failed to fetch|NetworkError/i.test(m))return;var L=[];try{L=JSON.parse(localStorage.getItem('ctErrLog')||'[]');}catch(_){}var v='';try{var a=document.querySelector('.nav-btn.active');v=a?a.dataset.view:'';}catch(_){}
+  if(L.length&&L[L.length-1].m===m){L[L.length-1].n=(L[L.length-1].n||1)+1;L[L.length-1].t=Date.now();}else L.push({t:Date.now(),m:m,s:String(src||'').slice(0,120),v:v,n:1});L=L.slice(-40);try{localStorage.setItem('ctErrLog',JSON.stringify(L));}catch(_){}
+  try{if(cc8Admin()&&Date.now()-_err9.last>20000){_err9.last=Date.now();toast('🐞 Petit bug repéré : '+m.slice(0,70));}}catch(_){}}
+window.addEventListener('error',function(e){if(e&&e.target&&e.target!==window&&!e.message)return;errLog(e&&e.message,e&&(e.filename||'')+':'+(e&&e.lineno||''));});
+window.addEventListener('unhandledrejection',function(e){var r=e&&e.reason;errLog(r&&(r.message||r)||'promesse refusée',r&&r.stack&&String(r.stack).split('\n')[1]);});
+setInterval(function(){try{if(!cc8Admin())return;var mt=document.querySelector('.cc9-crbtn');if(!mt||mt.parentNode.querySelector('.err9-box'))return;var L=[];try{L=JSON.parse(localStorage.getItem('ctErrLog')||'[]');}catch(_){}
+  mt.insertAdjacentHTML('afterend','<div class="acc-maint err9-box"><div><b>🐞 Journal technique</b><br><small>'+(L.length?L.length+' bug'+(L.length>1?'s':'')+' noté'+(L.length>1?'s':'')+' sur cet appareil (le dernier : '+new Date(L[L.length-1].t).toLocaleString('fr-FR',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})+')':'Aucun bug noté sur cet appareil 🎉')+'</small></div><button class="acc-out">🔍 Voir</button></div>');
+  mt.parentNode.querySelector('.err9-box button').onclick=errShow;}catch(_){}},1600);
+function errShow(){var L=[];try{L=JSON.parse(localStorage.getItem('ctErrLog')||'[]');}catch(_){}var txt=L.slice().reverse().map(function(e){return new Date(e.t).toLocaleString('fr-FR')+' · '+(e.v||'?')+(e.n>1?' · ×'+e.n:'')+'\n'+e.m+(e.s?'\n  ↳ '+e.s:'');}).join('\n\n')||'Aucun bug noté 🎉';
+  var o=document.createElement('div');o.className='cc-ov';o.innerHTML='<div class="err9-ov"><b>🐞 Journal technique</b><small>Copie-le et envoie-le à Claude si quelque chose bug : ça aide à trouver le problème.</small><pre></pre><div class="soc-row"><button class="soc-btn2" data-e="clr">🗑️ Vider</button><button class="soc-btn2" data-e="cp">📋 Copier</button><button class="soc-btn" data-e="x">Fermer</button></div></div>';o.querySelector('pre').textContent='Mon Ciné Tracker · '+navigator.userAgent+'\n\n'+txt;document.body.appendChild(o);
+  o.onclick=function(e){var a=e.target.dataset&&e.target.dataset.e;if(e.target===o||a==='x')o.remove();else if(a==='cp'){try{navigator.clipboard.writeText(o.querySelector('pre').textContent).then(function(){toast('📋 Copié !');});}catch(_){}}else if(a==='clr'){try{localStorage.removeItem('ctErrLog');}catch(_){}o.remove();var b=document.querySelector('.err9-box');if(b)b.remove();toast('🗑️ Journal vidé');}};}
+(function(){var st=document.createElement('style');st.textContent=''
+ +'#maint-ov{overflow-y:auto!important;align-items:flex-start!important}#maint-ov .mb{margin-bottom:140px!important}#maint-ov .mt-parade{position:fixed!important}@media(max-width:760px){#maint-ov .mb{margin-top:max(196px,calc(100vh - 700px))!important}}@media(min-width:761px) and (max-height:900px){#maint-ov .ci-tag{display:none}}@media(min-width:761px) and (min-height:901px){#maint-ov .mb{margin-top:max(18vh,260px)!important}}'
+ +'header .brand{padding-right:14px}header nav.nav-sc{padding-left:10px!important;-webkit-mask-image:linear-gradient(90deg,transparent 0,#000 14px,#000 90%,transparent);mask-image:linear-gradient(90deg,transparent 0,#000 14px,#000 90%,transparent)}'
+ +'#bt-clipw{position:fixed;top:calc(8px + env(safe-area-inset-top,0px));left:50%;transform:translateX(-50%);width:min(94vw,560px);z-index:10056}#bt-clipw .clp-btns{margin-bottom:0}#bt-clipw .clp-bar{margin:6px 0}'
+ +'body.bt-clip-on #battle-ov{align-items:flex-start!important;overflow-y:auto;padding:calc(min(94vw,560px)*.5625 + 96px) 12px 16px!important}body.bt-clip-on #battle-ov .battle-box{margin:0 auto}'
+ +'.upd-pill{position:fixed;left:50%;top:calc(10px + env(safe-area-inset-top,0px));transform:translateX(-50%);z-index:10069;display:flex;align-items:center;gap:8px;background:#1b1330;color:#fff;border:2px solid #ffd23f;border-radius:99px;padding:6px 6px 6px 14px;box-shadow:0 8px 24px #0006;font-family:Fredoka,sans-serif;font-weight:700;font-size:.86rem;animation:updIn .35s ease-out;max-width:calc(100vw - 20px)}.upd-pill button{border:0;border-radius:99px;padding:6px 12px;background:#ffd23f;color:#1b1330;font-weight:800;cursor:pointer;font-family:inherit}.upd-pill button.x{background:#ffffff22;color:#fff;padding:6px 9px}@keyframes updIn{from{transform:translate(-50%,-140%)}}'
+ +'.err9-ov{background:#1b1330;color:#fff;border-radius:18px;padding:16px;width:min(640px,96vw);display:flex;flex-direction:column;gap:8px}.err9-ov small{opacity:.75}.err9-ov pre{background:#0b1030;border-radius:12px;padding:10px;max-height:55vh;overflow:auto;font-size:.72rem;white-space:pre-wrap;word-break:break-word;margin:0}';document.head.appendChild(st);})();
 /* ---- Jeux ---- */
 /* ====== 🕸️ 6 degrés : les règles expliquées avant de jouer ====== */
 (function(){var oD=gameDeg;gameDeg=function(){var body=gStage('🕸️ 6 degrés','<div class="deg-rules"><div class="dr-big">🕸️</div><h3>Le but : relier deux acteurs</h3>'
@@ -19829,17 +19823,18 @@ function recoBtnScan(root){if(!window.CineSocial)return;(root||document).querySe
   /* ---------- Mode EN LIGNE : Firebase (comptes + validation + synchro) ---------- */
   var CFG=window.CINE_CLOUD,ADMINS=(CFG.admins||[]).map(function(x){return String(x).toLowerCase();});
   /* 🛠️ Maintenance : seul l'admin peut entrer (réglable par l'admin depuis l'appli) */
-  var MAINT_DEFAULT=true,maintLocked=false,maintSub=null;
+  var MAINT_DEFAULT=true,maintLocked=false,maintSub=null,maintSure=false;
   (function(){var st=document.createElement('style');st.textContent='html.maint-lock body>*:not(#maint-ov):not(#acl-ov){visibility:hidden!important}#maint-ov{position:fixed;inset:0;z-index:2147483000;display:flex;align-items:center;justify-content:center;padding:20px;background:radial-gradient(circle at 50% 30%,#4a1760,#12061f 70%);color:#fff;font-family:Inter,system-ui,sans-serif;text-align:center}#maint-ov .mb{max-width:440px}#maint-ov .mi{font-size:4.5rem;display:inline-block;animation:mtSpin 3s ease-in-out infinite}@keyframes mtSpin{0%,100%{transform:rotate(-12deg)}50%{transform:rotate(12deg)}}#maint-ov h1{font-family:Fredoka,Inter,sans-serif;font-size:1.9rem;margin:10px 0 6px}#maint-ov p{opacity:.85;line-height:1.5;margin:6px 0}#maint-ov .mbar{height:10px;border-radius:99px;background:#ffffff22;overflow:hidden;margin:18px 0}#maint-ov .mbar i{display:block;height:100%;width:40%;border-radius:99px;background:linear-gradient(90deg,#ff4d6d,#ffd23f);animation:mtBar 1.6s ease-in-out infinite}@keyframes mtBar{0%{transform:translateX(-100%)}100%{transform:translateX(260%)}}#maint-ov button{border:none;border-radius:14px;padding:12px 22px;font-weight:800;font-size:1rem;cursor:pointer;margin:4px;background:#ff4d6d;color:#fff}#maint-ov button.ml{background:none;color:#fff;opacity:.55;font-size:.8rem;text-decoration:underline}.maint-pill{position:fixed;left:10px;bottom:calc(10px + env(safe-area-inset-bottom,0px));z-index:10050;border:2px solid #1b1330;border-radius:99px;padding:7px 12px;font-weight:800;font-size:.75rem;cursor:pointer;box-shadow:0 4px 14px #0005;font-family:Inter,sans-serif}.maint-pill.on{background:#ff4d6d;color:#fff}.maint-pill.off{background:#2fbf71;color:#fff}@media(max-width:760px){.maint-pill{bottom:calc(76px + env(safe-area-inset-bottom,0px))}}.acl-maint{background:#fff3cd;color:#7a4b00;border-radius:12px;padding:8px 10px;font-size:.82rem;font-weight:700;margin:0 0 10px}';(document.head||document.documentElement).appendChild(st);})();
-  function maintLock(){maintLocked=true;document.documentElement.classList.add('maint-lock');function put(){if(!document.body){return setTimeout(put,30);}var o=document.getElementById('maint-ov');if(!o){o=document.createElement('div');o.id='maint-ov';document.body.appendChild(o);}o.innerHTML='<div class="mb"><div class="mi">🛠️</div><h1>Mon Ciné Tracker est en maintenance</h1><p>Une grosse mise à jour arrive : nouveautés Ciné Clash, thèmes à débloquer et plein d\'autres surprises 🍿</p><div class="mbar"><i></i></div><p>Reviens un peu plus tard, l\'appli rouvre très bientôt !</p><button id="maint-re">🔄 Réessayer</button><br><button class="ml" id="maint-adm">Accès admin</button></div>';o.querySelector('#maint-re').onclick=function(){location.reload();};try{if(window.ciLoginDecor)ciLoginDecor(o,{maint:1});}catch(_){}o.querySelector('#maint-adm').onclick=function(){if(auth&&auth.currentUser){auth.signOut();}else{maintHideScreen();showLogin();}};}put();}
+  function maintLock(soft){maintLocked=true;if(!soft)maintSure=true;document.documentElement.classList.add('maint-lock');function put(){if(!document.body){return setTimeout(put,30);}var o=document.getElementById('maint-ov');if(!o){o=document.createElement('div');o.id='maint-ov';document.body.appendChild(o);}if(soft&&!maintSure){o.dataset.soft='1';o.innerHTML='<div class="mb"><div class="mi">🎬</div><h1>Mon Ciné Tracker</h1><div class="mbar"><i></i></div><p>Chargement…</p></div>';clearTimeout(window._mtSoft);window._mtSoft=setTimeout(function(){var x=document.getElementById('maint-ov');if(maintLocked&&x&&x.dataset.soft)maintLock();},7000);return;}o.dataset.soft='';o.innerHTML='<div class="mb"><div class="mi">🛠️</div><h1>Mon Ciné Tracker est en maintenance</h1><p>Une grosse mise à jour arrive : nouveautés Ciné Clash, thèmes à débloquer et plein d\'autres surprises 🍿</p><div class="mbar"><i></i></div><p>Reviens un peu plus tard, l\'appli rouvre très bientôt !</p><button id="maint-re">🔄 Réessayer</button><br><button class="ml" id="maint-adm">Accès admin</button></div>';o.querySelector('#maint-re').onclick=function(){location.reload();};try{if(window.ciLoginDecor)ciLoginDecor(o,{maint:1});}catch(_){}o.querySelector('#maint-adm').onclick=function(){if(auth&&auth.currentUser){auth.signOut();}else{maintHideScreen();showLogin();}};}put();}
   function maintHideScreen(){var o=document.getElementById('maint-ov');if(o)o.remove();}
-  function maintUnlock(){maintLocked=false;document.documentElement.classList.remove('maint-lock');maintHideScreen();}
+  function maintUnlock(){maintLocked=false;maintSure=false;clearTimeout(window._mtSoft);document.documentElement.classList.remove('maint-lock');maintHideScreen();}
   function maintWatch(){if(maintSub||!db)return;try{maintSub=db.collection('config').doc('premium').onSnapshot(function(d){var a=d&&d.exists&&d.data()._app,v=a&&typeof a.maintenance==='boolean'?a.maintenance:MAINT_DEFAULT;window.__cineMaintV=v;maintCache(v);if(isAdmin()){maintPill(v);maintAcc(v);return;}if(v&&!maintLocked){maintLock();}else if(!v&&maintLocked){location.reload();}},function(){});}catch(_){}}
   function maintPill(v){var p=document.getElementById('maint-pill');if(p)p.remove();}
   function maintAcc(v){var st=document.getElementById('acc-mt-st'),bt=document.getElementById('acc-mt');if(st)st.textContent=v?'ACTIVÉE : seul toi peux entrer':'désactivée : l\'appli est ouverte à tout le monde';if(bt)bt.textContent=v?'🟢 Rouvrir l\'appli à tout le monde':'🛠️ Mettre en maintenance';}
   function maintSet(nv){if(!confirm(nv?'Mettre l\'appli en maintenance ? Tes potes ne pourront plus y aller.':'Rouvrir l\'appli à tout le monde ?'))return;db.collection('config').doc('premium').set({_app:{maintenance:nv,t:Date.now()}},{merge:true}).then(function(){tst(nv?'🛠️ Maintenance activée':'🟢 Appli rouverte à tout le monde !');}).catch(function(e){tst('❌ '+(e&&e.message||e));});}
-  var _mc=null;try{_mc=localStorage.getItem('ctMaintLast');}catch(_){}if(_mc==='1')maintLock();
+  var _mc=null,_ma=null;try{_mc=localStorage.getItem('ctMaintLast');_ma=localStorage.getItem('ctMaintAdm');}catch(_){}if(_mc==='1'&&_ma!=='1')maintLock(1);
   function maintCache(v){try{localStorage.setItem('ctMaintLast',v?'1':'0');}catch(_){}}
+  function maintProbe(){if(!db||maintProbe._d)return;maintProbe._d=1;try{db.collection('config').doc('premium').get().then(function(c){var a=c&&c.exists&&c.data()._app,v=a&&typeof a.maintenance==='boolean'?a.maintenance:MAINT_DEFAULT;maintCache(v);var bx=document.querySelector('#acl-ov .acl-box'),n=bx&&bx.querySelector('.acl-maint');if(!v){maintLocked=false;maintSure=false;document.documentElement.classList.remove('maint-lock');if(n)n.remove();}else{maintSure=true;maintLocked=true;document.documentElement.classList.add('maint-lock');if(bx&&!n)bx.insertAdjacentHTML('afterbegin','<div class="acl-maint">🛠️ Appli en maintenance : seul l\'admin peut se connecter pour l\'instant</div>');}},function(){maintProbe._d=0;});}catch(_){}}
   var uidLocal=rget('cineAuthUid');
   var db=null,auth=null,me=null,userDoc=null;
   var css=document.createElement('style');css.textContent='.acl-ov{position:fixed;inset:0;z-index:10001;background:linear-gradient(135deg,#1b0b2e,#4a1760 60%,#c2410c);display:flex;align-items:center;justify-content:center;padding:18px;font-family:Inter,sans-serif}.acl-box{background:#fff;color:#2B2238;border-radius:22px;padding:26px;max-width:380px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.4);text-align:center}.acl-box h2{font-family:Fredoka,sans-serif;margin-bottom:6px}.acl-box p{font-size:.86rem;color:#6b5f7a;margin-bottom:14px}.acl-box input{width:100%;padding:12px;border-radius:12px;border:2px solid #ece1f7;margin-bottom:10px;font-size:.95rem;font-family:inherit;box-sizing:border-box}.acl-btn{width:100%;padding:12px;border:none;border-radius:12px;background:linear-gradient(135deg,#5b21d6,#ff4d6d);color:#fff;font-weight:700;font-size:1rem;cursor:pointer;font-family:inherit}.acl-link{background:none;border:none;color:#5b21d6;cursor:pointer;margin-top:12px;font-size:.85rem;text-decoration:underline}.acl-pw{position:relative}.acl-pw input{padding-right:46px}.acl-eye{position:absolute;right:8px;top:6px;background:none;border:none;font-size:1.2rem;cursor:pointer;padding:4px}.acl-forgot{font-weight:700;text-decoration:none}.acl-err{color:#e50914;font-size:.82rem;min-height:18px;margin-bottom:6px}';document.head.appendChild(css);
@@ -19861,9 +19856,9 @@ function recoBtnScan(root){if(!window.CineSocial)return;(root||document).querySe
         return snap;
       }).then(function(snap){
         userDoc=snap.data();
-        if(isAdmin()){maintUnlock();closeOverlay();startSync(u.uid);watchRequests();maintWatch();return;}
+        if(isAdmin()){try{localStorage.setItem('ctMaintAdm','1');}catch(_){}maintUnlock();closeOverlay();startSync(u.uid);watchRequests();maintWatch();return;}
         return db.collection('config').doc('premium').get().then(function(c){var a=c&&c.exists&&c.data()._app;return a&&typeof a.maintenance==='boolean'?a.maintenance:MAINT_DEFAULT;},function(){return MAINT_DEFAULT;}).then(function(mt){
-          maintCache(mt);if(mt){closeOverlay();maintLock();maintWatch();return;}
+          try{localStorage.removeItem('ctMaintAdm');}catch(_){}maintCache(mt);if(mt){closeOverlay();maintLock();maintWatch();return;}
           maintUnlock();
           if(!userDoc.approved){showPending();return;}
           closeOverlay();startSync(u.uid);maintWatch();});
@@ -19872,7 +19867,7 @@ function recoBtnScan(root){if(!window.CineSocial)return;(root||document).querySe
   }
   function showLogin(mode){
     mode=mode||'login';
-    maintHideScreen();var o=overlay((maintLocked?'<div class="acl-maint">🛠️ Appli en maintenance : seul l\'admin peut se connecter pour l\'instant</div>':'')+'<div style="font-size:2.4rem">🎬</div><h2>Mon Ciné Tracker</h2><p>'+(mode==='login'?'Connecte-toi à ton compte':'Crée ton compte — l\'admin devra valider ta demande')+'</p>'
+    maintHideScreen();maintProbe();var o=overlay((maintLocked&&maintSure?'<div class="acl-maint">🛠️ Appli en maintenance : seul l\'admin peut se connecter pour l\'instant</div>':'')+'<div style="font-size:2.4rem">🎬</div><h2>Mon Ciné Tracker</h2><p>'+(mode==='login'?'Connecte-toi à ton compte':'Crée ton compte — l\'admin devra valider ta demande')+'</p>'
       +(mode==='signup'?'<input id="acl-name" placeholder="Prénom / pseudo" maxlength="24">':'')
       +'<input id="acl-mail" type="email" placeholder="E-mail" autocomplete="email"><div class="acl-pw"><input id="acl-pass" type="password" placeholder="Mot de passe (6 caractères min.)" autocomplete="'+(mode==='login'?'current-password':'new-password')+'"><button type="button" class="acl-eye" id="acl-eye" title="Afficher / masquer le mot de passe">👁️</button></div>'
       +'<div class="acl-err" id="acl-err"></div><button class="acl-btn" id="acl-go">'+(mode==='login'?'Se connecter':'Envoyer ma demande')+'</button>'
