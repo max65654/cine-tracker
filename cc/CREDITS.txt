@@ -8,3 +8,6 @@ Les personnages du jeu sont des créations originales (couleurs, accessoires) co
 - Personnages « kk/ » (Lement, Mx, God Fray, Bat Bat, Yana, les Bloquise, Mr Keepa…) : construits sur le pack KayKit Adventurers de Kay Lousberg (www.kaylousberg.com) — licence CC0 (domaine public), recolorés et accessoirisés pour Ciné Clash
 - Arène « Île volante » (tuiles hexagonales, château, tours, ponts, murailles, arbres, montagnes, nuages, moulins, maisons…) : pack KayKit Medieval Hexagon de Kay Lousberg (www.kaylousberg.com) — licence CC0 (domaine public), recoloré par arène et par équipe pour Ciné Clash
 - meshopt_decoder.js : meshoptimizer d'Arseny Kapoulkine (github.com/zeux/meshoptimizer) — licence MIT
+- Tous les persos de base (Chevalier, Sorcière, Cowboy, Ninja, Pirate, Zombies, Alien, Vampire…) et les rois / archers des tours : pack KayKit Adventurers (avec leur équipement d'origine : épées, casques, capes, chapeaux, arbalètes…) de Kay Lousberg — licence CC0, recolorés et accessoirisés pour Ciné Clash
+- Image de l'écran de chargement (art/cc11_key.webp) : rendue à partir des packs KayKit Adventurers et Medieval Hexagon (CC0)
+- Voix des persos : générées en direct dans le navigateur (synthèse de formants), aucune voix enregistrée ni IA
