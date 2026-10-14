@@ -21335,6 +21335,10 @@ function g14HubPbr(T,R,b){try{if(gfx13Tier()==='eco')return;var env=g14Env(T,R);
  +'.cc-match .cc3-pl,.cc-match .cc3-hud,.cc-match .cc-quit,.cc-match .cc3-mus,.cc-match .cc3-boss,.cc-match .cc3-timer,.cc-match .cc-end,body.cc7 .cc-arena{-webkit-backdrop-filter:none!important;backdrop-filter:none!important}'
  +'.cc10 .cc3-hud{background:linear-gradient(180deg,rgba(18,22,42,.95),rgba(6,8,18,.99))!important}.cc10 .cc3-pl{background:linear-gradient(135deg,rgba(24,16,34,.94),rgba(78,14,32,.92))!important}'
  +'.cc-match .cc-quit,.cc-match .cc3-mus{background:rgba(10,14,30,.82)!important}.cc-match .cc3-boss{background:rgba(10,8,24,.9)!important}';document.head.appendChild(st);})();
+/* ====== v14e : plus de « 🇺🇸 date VO / pas encore de date VF » — la VF ne s'affiche que quand on la connaît ====== */
+(function(){if(typeof frvfLine!=='function')return;var oL=frvfLine;frvfLine=function(id,s,voDate){var I=frvfInfo(id,s);if(!I||I.none)return '';return oL(id,s,'');};})();
+(function(){if(typeof buildEpTracker!=='function')return;var oB=buildEpTracker;buildEpTracker=function(item){var h=oB.apply(this,arguments);try{if(typeof h==='string')h=h.replace(/<div class="ssn-info-field vf12"><label>[^<]*<\/label><div class="vf12-row"><span><\/span><button[^>]*>[^<]*<\/button><\/div><\/div>/g,'');}catch(_){}return h;};})();
+(function(){if(typeof renderWishGrid!=='function')return;var oR=renderWishGrid;renderWishGrid=function(){var r=oR.apply(this,arguments);try{document.querySelectorAll('#wish-grid .vf12-badge').forEach(function(b){if(/🇺🇸|pas encore de date/i.test(b.textContent))b.remove();});}catch(_){}return r;};})();
 /* ---- Jeux ---- */
 /* ====== 🕸️ 6 degrés : les règles expliquées avant de jouer ====== */
 (function(){var oD=gameDeg;gameDeg=function(){var body=gStage('🕸️ 6 degrés','<div class="deg-rules"><div class="dr-big">🕸️</div><h3>Le but : relier deux acteurs</h3>'
