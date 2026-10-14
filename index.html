@@ -9314,7 +9314,7 @@ var planSettings=ld('cinePlanSettings',{start:''});
 // Semaine type : temps dispo par jour (lundi → dimanche). Mercredi après-midi et week-end = plus de temps.
 if(!planSettings.week)planSettings.week=[90,90,240,90,120,300,240];
 var PLAN_DAYS=['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'];
-var PLAN_OPTS=[0,45,60,90,120,150,180,240,300,360,480];
+var PLAN_OPTS=[0,45,60,90,120,150,180,240,300,360,420,480,540,600,660,720,780,840];
 function planBudgetFor(dateS){var d=new Date(dateS+'T12:00');return planSettings.week[(d.getDay()+6)%7]||0;}
 var planProgress=ld('cinePlanProgress',{}); // tvId -> {s,e} prochain épisode à voir (quand la série n'est pas suivie épisode par épisode dans la collection)
 var planSeen=ld('cinePlanSeen',{});         // tvId -> nb d'épisodes déjà vus (pour donner l'XP des épisodes cochés ailleurs)
@@ -9725,13 +9725,13 @@ function rotateNights(series,prof,startS,todayS,doneToday){
     guard++;
     var budget=planDayBudget(day);if(day===todayS)budget=Math.max(0,budget-doneToday);
     var left=budget,first=true,served={},rounds=0,g2=0;
-    while(left>0&&g2<40){
+    while(left>0&&g2<90){
       g2++;
       if(!q.some(alive))break;
       var cur=q.find(function(x){return x.binge&&x.pos>0&&alive(x);});
       if(!cur){
         var tries=0;do{cur=q[r%q.length];r++;tries++;}while((!alive(cur)||served[cur.sr.info.id])&&tries<=q.length);
-        if(!alive(cur)||served[cur.sr.info.id]){if(budget>=180&&rounds<1){served={};rounds++;continue;}break;}
+        if(!alive(cur)||served[cur.sr.info.id]){if(budget>=180&&rounds<Math.max(1,Math.floor(budget/180))){served={};rounds++;continue;}break;}
       }
       var rt=cur.sr.info.rt||45,rem=cur.sr.eps.length-cur.pos;
       var n=Math.min(Math.floor(left/rt),cur.binge?999:cap,rem);
@@ -9839,7 +9839,7 @@ function computePlan(){
       while(bi<blocks.length&&left>0){
         var b=blocks[bi],rt=b.sr.info.rt||45,remain=b.eps.length-pos;
         var big=budget>=180;
-        var cap=b.kind==='alt'?Math.max(1,maxEpsAlt)*(big?2:1):999;
+        var cap=b.kind==='alt'?Math.max(1,maxEpsAlt)*(big?Math.max(2,Math.floor(budget/150)):1):999;
         cap-= (perSr[b.sr.info.id]||0);
         var n=Math.min(Math.floor(left/rt),cap,remain);
         if(n<=0){if(first&&budget>0&&cap>0)n=1;else break;}
@@ -10035,12 +10035,12 @@ rotateNights=function(series,prof,startS,todayS,doneToday){
     guard++;
     var budget=planDayBudget(day);if(day===todayS)budget=Math.max(0,budget-doneToday);
     var left=budget,first=true,served={},rounds=0,g2=0;
-    while(left>0&&g2<40){
+    while(left>0&&g2<90){
       g2++;if(!q.some(alive))break;
       var cur=q.find(function(x){return x.b&&x.inS&&alive(x);});
       if(!cur){
         var tries=0;do{cur=q[r%q.length];r++;tries++;}while((!alive(cur)||served[cur.sr.info.id])&&tries<=q.length);
-        if(!alive(cur)||served[cur.sr.info.id]){if(budget>=180&&rounds<1){served={};rounds++;continue;}break;}
+        if(!alive(cur)||served[cur.sr.info.id]){if(budget>=180&&rounds<Math.max(1,Math.floor(budget/180))){served={};rounds++;continue;}break;}
       }
       if(!cur.inS){var L=seasonLen(cur);cur.b=cur.forced||L<=10||(cur.sr.like||0)>=70;cur.inS=true;}
       var rt=cur.sr.info.rt||45,sl=seasonLeft(cur);
@@ -10126,7 +10126,7 @@ function renderPlanAvail(){
     +'<div class="pa-vacs">'+vacs.map(function(v){var c=planSettings.vac[v.id]||{mode:'normal'};var exc=Object.keys(c.exc||{}).sort();
       return '<div class="pa-v"><b>'+v.n+'</b> <small>du '+new Date(v.from+'T12:00').toLocaleDateString('fr-FR',{day:'numeric',month:'short'})+' au '+new Date(shiftDate(v.to,-1)+'T12:00').toLocaleDateString('fr-FR',{day:'numeric',month:'short'})+'</small>'
         +'<div class="pa-ctl"><select data-pav="'+v.id+'"><option value="normal"'+(c.mode==='normal'?' selected':'')+'>Comme d\'habitude</option><option value="more"'+(c.mode==='more'?' selected':'')+'>Plus de temps</option><option value="off"'+(c.mode==='off'?' selected':'')+'>Pas dispo</option></select>'
-        +(c.mode==='more'?'<select data-pamin="'+v.id+'">'+[120,180,240,300,360,480].map(function(m){return '<option value="'+m+'"'+((c.min||240)===m?' selected':'')+'>'+fmtMin(m)+' / jour</option>';}).join('')+'</select>':'')
+        +(c.mode==='more'?'<select data-pamin="'+v.id+'">'+[120,180,240,300,360,480,600,720,840].map(function(m){return '<option value="'+m+'"'+((c.min||240)===m?' selected':'')+'>'+fmtMin(m)+' / jour</option>';}).join('')+'</select>':'')
         +(c.mode!=='normal'?'<span class="pa-exc">'+(c.mode==='off'?'sauf (dispo) :':'sauf (pas dispo) :')+' <input type="date" min="'+v.from+'" max="'+shiftDate(v.to,-1)+'" data-paexc="'+v.id+'"> '+exc.map(function(d){return '<span class="pa-chip" data-parmexc="'+v.id+'|'+d+'">'+new Date(d+'T12:00').toLocaleDateString('fr-FR',{weekday:'short',day:'numeric'})+' ✕</span>';}).join('')+'</span>':'')
         +'</div></div>';}).join('')+'</div>'
     +'<div class="pa-off">🚫 Jours où je ne suis pas dispo : <input type="date" min="'+today+'" id="pa-offd"> <span class="pa-or">ou du</span> <input type="date" min="'+today+'" id="pa-f"> au <input type="date" min="'+today+'" id="pa-t"> <button class="pc-mini" id="pa-addr">Ajouter</button><div class="pa-chips">'+(offs.length?offs.map(function(d){return '<span class="pa-chip" data-parm="'+d+'">'+new Date(d+'T12:00').toLocaleDateString('fr-FR',{weekday:'short',day:'numeric',month:'short'})+' ✕</span>';}).join(''):'<small>Aucun pour l\'instant</small>')+'</div></div></details>';
@@ -14780,7 +14780,7 @@ ccMatch=function(root,T,opts){
     try{body.scale.multiplyScalar(window.CC11US||1.15);}catch(_){}g4.add(body);g4.userData=body.userData;g4.userData.body=body;
     var ring=new T.Mesh(new T.RingGeometry(.5*s*(c.gear==='kaiju'?1.4:1),.68*s*(c.gear==='kaiju'?1.4:1),X10?6:24,1,X10?Math.PI/6:0),new T.MeshBasicMaterial({color:COOP&&pl!=null&&pl!==PL?0x2fbf71:teamCol(side),side:T.DoubleSide,transparent:true,opacity:.85,depthWrite:false}));ring.rotation.x=-Math.PI/2;ring.position.y=.03;g4.add(ring);
     return g4;}
-  function spawn(side,id,x,y,lvl,ex){ex=ex||{};var c=ccChar(id);if(!c)return;if(c.spell){castSpell(side,c,x,y,lvl,ex);return;}if(c.with&&!ex._w){c.with.forEach(function(w){for(var q=0;q<w[1];q++)spawn(side,w[0],x+(q-(w[1]-1)/2)*1.2,y+(side===0?-.8:.8),lvl,Object.assign({},ex,{_w:1}));});}var m=ccMul(lvl)*(BOOST&&c.gid===BOOST?1.25:1)*(ex.fb||1)*(ex.ev?1.15:1),n=c.count||1,hk=MODE&&MODE.hpK||1,dk=MODE&&MODE.dmgK||1;for(var k=0;k<n;k++){var ox=n>1?(k-1)*.7:0,oy=n>1?(k%2)*.5:0;var g5=mkUnit(c,side,ex.pl);if(MODE&&MODE.sc)g5.scale.setScalar(MODE.sc);if(ex.boss)g5.scale.setScalar(1.7);if(ex.ev){var au=new T.Mesh(new T.RingGeometry(.72,.95,32),new T.MeshBasicMaterial({color:0xffd23f,side:T.DoubleSide,transparent:true,opacity:.9,depthWrite:false,blending:T.AdditiveBlending}));au.rotation.x=-Math.PI/2;au.position.y=.05;g5.add(au);}var u={id:++M.uidSeq,pl:ex.pl,ev:ex.ev?1:0,boss:ex.boss?1:0,side:side,c:c,x:x+ox,y:y+oy,hp:c.hp*m*hk,max:c.hp*m*hk,dmg:c.dmg*m*dk,cd:.6,r:.4*(c.sc||1),g:g5,fly:!!c.fly,born:M.t,lvl:lvl||1};g5.position.copy(P(u.x,u.y));u._drop=performance.now();S.add(g5);try{if(G13&&k===0)G13.spawnFx(g5.position.clone(),side===ME,c);}catch(_){}if(c.gear==='kaiju'||c.gear==='dino')u.r*=1.25;if(ex.boss){u.r*=1.6;M.boss=u;u.hp*=ex.hpK||1;u.max=u.hp;u.dmg*=1.3;}if(c.build){u.bx=u.x;u.by=u.y;u.decay=u.max/(c.life||30);u.nsp=M.t+(c.spawnT||3);u.r=.9;}if(c.sh){u.sh=c.sh*m;}u.bar=mkBar(u,(c.gear==='kaiju'?5.4:c.gear==='dino'?4.4:c.gear==='robot'?3.9:2.9*Math.min(1.5,(c.sc||1)))+(u.fly?1.3:0),1.1*Math.min(1.6,(c.sc||1)));M.units.push(u);}}
+  function spawn(side,id,x,y,lvl,ex){ex=ex||{};var c=ccChar(id);if(!c)return;if(c.spell){castSpell(side,c,x,y,lvl,ex);return;}if(c.with&&!ex._w){c.with.forEach(function(w){for(var q=0;q<w[1];q++)spawn(side,w[0],x+(q-(w[1]-1)/2)*1.2,y+(side===0?-.8:.8),lvl,Object.assign({},ex,{_w:1}));});}var m=ccMul(lvl)*(BOOST&&c.gid===BOOST?1.25:1)*(ex.fb||1)*(ex.ev?1.15:1),n=c.count||1,hk=MODE&&MODE.hpK||1,dk=MODE&&MODE.dmgK||1;for(var k=0;k<n;k++){var ox=n>1?(k-1)*.7:0,oy=n>1?(k%2)*.5:0;var g5=mkUnit(c,side,ex.pl);if(MODE&&MODE.sc)g5.scale.setScalar(MODE.sc);if(ex.boss)g5.scale.setScalar(1.7);if(ex.ev){var au=new T.Mesh(new T.RingGeometry(.72,.95,32),new T.MeshBasicMaterial({color:0xffd23f,side:T.DoubleSide,transparent:true,opacity:.9,depthWrite:false,blending:T.AdditiveBlending}));au.rotation.x=-Math.PI/2;au.position.y=.05;g5.add(au);}var u={id:++M.uidSeq,pl:ex.pl,ev:ex.ev?1:0,boss:ex.boss?1:0,side:side,c:c,x:x+ox,y:y+oy,hp:c.hp*m*hk,max:c.hp*m*hk,dmg:c.dmg*m*dk,cd:.6,r:.4*(c.sc||1),g:g5,fly:!!c.fly,born:M.t,lvl:lvl||1};g5.position.copy(P(u.x,u.y));u._drop=performance.now();S.add(g5);try{if(G13&&G13.unitHook)G13.unitHook(g5);}catch(_){}try{if(G13&&k===0)G13.spawnFx(g5.position.clone(),side===ME,c);}catch(_){}if(c.gear==='kaiju'||c.gear==='dino')u.r*=1.25;if(ex.boss){u.r*=1.6;M.boss=u;u.hp*=ex.hpK||1;u.max=u.hp;u.dmg*=1.3;}if(c.build){u.bx=u.x;u.by=u.y;u.decay=u.max/(c.life||30);u.nsp=M.t+(c.spawnT||3);u.r=.9;}if(c.sh){u.sh=c.sh*m;}u.bar=mkBar(u,(c.gear==='kaiju'?5.4:c.gear==='dino'?4.4:c.gear==='robot'?3.9:2.9*Math.min(1.5,(c.sc||1)))+(u.fly?1.3:0),1.1*Math.min(1.6,(c.sc||1)));M.units.push(u);}}
   function castSpell(side,c,x,y,lvl,ex){ex=ex||{};var m=ccMul(lvl)*(BOOST&&c.gid===BOOST?1.25:1)*(ex.fb||1)*(ex.ev?1.15:1),ctr={x:x,y:y};
     var foes=M.units.filter(function(u){return u.side!==side&&alive(u)&&dist(u,ctr)<c.r+u.r;}),ftw=M.towers.filter(function(t){return t.side!==side&&alive(t)&&dist(t,ctr)<c.r+t.r;});
     if(c.sdmg){foes.forEach(function(u){u.hp-=c.sdmg*m;u._fl=performance.now();});ftw.forEach(function(t){t.hp-=c.sdmg*m*.3;t.active=true;t._fl=performance.now();});}
@@ -15040,7 +15040,7 @@ function ccHub3D(host){
   var fl=new T.Mesh(new T.PlaneGeometry(.8,.5),ccgToon(T,null,{color:'#3a86ff',side:T.DoubleSide}));fl.position.set(.45,3.3,0);tw.add(fl);var pole=new T.Mesh(new T.CylinderGeometry(.04,.04,1.3),stD);pole.position.set(0,2.95,0);tw.add(pole);
   tw.position.set(0,0,-3);S.add(tw);
   }
-  var chars=ids.map(function(id,i){var c=ccChar(id),b=ccBody(T,c);if(i===1&&b.userData.av)b.userData.me=1;var pos=[[-2.3,0,.5],[0,0,1.3],[2.3,0,.5]][i];b.position.set(pos[0],0,pos[2]);b.rotation.y=[.35,0,-.35][i];b.traverse(function(o){if(o.isMesh)o.castShadow=true;});S.add(b);b.userData.c=c;b.userData.next=performance.now()+1500+i*1300;return b;});
+  var chars=ids.map(function(id,i){var c=ccChar(id),b=ccBody(T,c);try{if(typeof g14HubPbr==='function')g14HubPbr(T,R,b);}catch(_){}if(i===1&&b.userData.av)b.userData.me=1;var pos=[[-2.3,0,.5],[0,0,1.3],[2.3,0,.5]][i];b.position.set(pos[0],0,pos[2]);b.rotation.y=[.35,0,-.35][i];b.traverse(function(o){if(o.isMesh)o.castShadow=true;});S.add(b);b.userData.c=c;b.userData.next=performance.now()+1500+i*1300;return b;});
   var ring=new T.Mesh(new T.RingGeometry(.9,1.1,40),new T.MeshBasicMaterial({color:0xffe066,transparent:true,opacity:0,side:T.DoubleSide,depthWrite:false}));ring.rotation.x=-Math.PI/2;ring.position.y=.03;S.add(ring);
   function act(ch,name){var ud=ch.userData;if(!ud.play)return;ud.play(name,true,.1);ud.until=performance.now()+1100;ring.position.set(ch.position.x,.03,ch.position.z);ring.material.opacity=.9;ring.scale.setScalar(.6);}
   var ray=new T.Raycaster(),mv=new T.Vector2();
@@ -15049,7 +15049,7 @@ function ccHub3D(host){
   function size(){var w=cv.clientWidth||host.clientWidth,h=cv.clientHeight||190;if(!w)return;R.setSize(w,h,false);cam.aspect=w/h;var ar=w/h,nar=ar<1.3,wide=ar>2.2;cam.fov=nar?44:wide?30:34;camH=nar?5.8:wide?4.6:5.2;camR=nar?14.5:wide?11.5:13.5;lookY=wide?1.05:.9;cam.position.set(0,camH,camR);cam.lookAt(0,lookY,0);cam.updateProjectionMatrix();}
   size();var ro=null;try{ro=new ResizeObserver(size);ro.observe(host);}catch(_){}
   var raf=0,last=performance.now(),t0=last,running=true;
-  function loop(now){if(!running)return;raf=requestAnimationFrame(loop);if(!document.body.contains(cv)){stop();return;}if(document.querySelector('.cc-match')||document.hidden){last=now;return;}
+  function loop(now){if(!running)return;raf=requestAnimationFrame(loop);if(!document.body.contains(cv)){stop();return;}if(document.querySelector('.cc-match')||document.hidden||cv._off){last=now;return;}
     var dt=Math.min(.1,(now-last)/1000);last=now;var t=(now-t0)/1000;
     chars.forEach(function(ch,i){var ud=ch.userData;if(ud.mixer)ud.mixer.update(dt);if(ud.inner)ud.inner.position.y=Math.sin(t*2.4+i)*.1;if(ud.tail)ud.tail.rotation.z=Math.sin(t*3.5)*.25;
       if(ud.until&&now>ud.until){ud.until=0;ud.play&&ud.play('idle',false,.2);}
@@ -20915,7 +20915,7 @@ function gfx13Init(T,R,S,cam,sun,o){
     var mkRT=function(ms){var p={minFilter:T.LinearFilter,magFilter:T.LinearFilter,format:T.RGBAFormat,type:hf?T.HalfFloatType:T.UnsignedByteType,depthBuffer:true,stencilBuffer:true};var rt=ms?new T.WebGLMultisampleRenderTarget(8,8,p):new T.WebGLRenderTarget(8,8,p);if(ms)rt.samples=isMob?2:4;return rt;};
     var okRT=function(rt){try{R.setRenderTarget(rt);var st=gl.checkFramebufferStatus(gl.FRAMEBUFFER);R.setRenderTarget(null);return st===gl.FRAMEBUFFER_COMPLETE;}catch(e){try{R.setRenderTarget(null);}catch(_){}return false;}};
     var rt=mkRT(msaa);if(!okRT(rt)){rt.dispose();msaa=false;rt=mkRT(false);if(!okRT(rt)){rt.dispose();hf=false;rt=mkRT(false);}}
-    comp=new T.EffectComposer(R,rt);comp.setPixelRatio(Math.min(R.getPixelRatio(),isMob?1.5:1.75));
+    comp=new T.EffectComposer(R,rt);comp.setPixelRatio(Math.min(R.getPixelRatio(),isMob?1.3:1.6));
     rp=new T.RenderPass(S,cam);comp.addPass(rp);
     if(tier==='ultra'&&CF.ao&&!isMob&&T.SSAOPass&&T.SSAOShader){try{ssao=new T.SSAOPass(S,cam,8,8);var fr=Math.max(1,cam.far-cam.near);
       ssao.kernelRadius=.85;ssao.minDistance=.03/fr;ssao.maxDistance=1.6/fr;ssao.kernelSize=16;ssao.kernel.length=0;ssao.generateSampleKernel();
@@ -21077,6 +21077,264 @@ function cc13ArtLoad(){if(CC13_ART._p)return CC13_ART._p;CC13_ART._p=fetch(CCG.b
   try{cc13ArtLoad();}catch(_){}})();
 /* nouvel écran de chargement : les persos de Max sur l'île (rendu Blender) */
 CC11_ART=CCG.base+'art/cc13_key.webp?v=1';
+/* ====== 🛠️ v14 : corrections — « dernier épisode » qui sortait de nulle part, VF qui cachait ou changeait des choses ====== */
+/* 1) Finale de saison : on se fie au type d'épisode de TMDB (« finale »). Une saison dont TMDB ne connaît qu'un ou deux épisodes
+      (saison juste annoncée, comme Nemesis saison 2) n'a plus de « dernier épisode », et une saison qui sort d'un coup non plus. */
+computeEpisodeFlags=function(eps,episodeNumber){
+  if(!eps||!eps.length)return {isFinale:false,isPenultimate:false,dropCount:1};
+  var sorted=eps.slice().sort(function(a,b){return (a.episode_number||0)-(b.episode_number||0);});
+  var idx=sorted.findIndex(function(e){return e.episode_number===episodeNumber;}),cur=idx>=0?sorted[idx]:null;
+  var dropCount=cur&&cur.air_date?sorted.filter(function(e){return e.air_date===cur.air_date;}).length:1;
+  if(!cur)return {isFinale:false,isPenultimate:false,dropCount:dropCount};
+  var typed=sorted.some(function(e){return e.episode_type;}),fi=-1;
+  if(typed){for(var i=sorted.length-1;i>=0;i--){if(sorted[i].episode_type==='finale'){fi=i;break;}}}
+  else if(sorted.length>=3&&sorted[sorted.length-1].air_date)fi=sorted.length-1;
+  var whole=dropCount>1&&dropCount>=sorted.length;
+  return {isFinale:!whole&&fi>=0&&idx===fi,isPenultimate:!whole&&fi>0&&idx===fi-1&&!(cur.air_date&&cur.air_date===sorted[fi].air_date),dropCount:dropCount};};
+/* 2) VF : Netflix, Disney+, Prime Video et Apple TV+ sortent la VF le même jour partout → on garde la date de la VO
+      (avant, une date de rediffusion à la télé pouvait remplacer la vraie sortie). On ne cache plus jamais d'épisode
+      et on ne touche plus aux réglages des Attentes (épisode par épisode, étiquette de l'épisode…) : tout est remis. */
+var FRV14={g:{}};try{FRV14.g=JSON.parse(localStorage.getItem('cineFrvGlob')||'{}')||{};}catch(_){FRV14.g={};}
+var FRV14_GLOBAL=/^(netflix|disney\+|disney plus|apple tv\+?|prime video|amazon prime video|amazon)$/i;
+function frv14Glob(id){return FRV14.g[String(id)]===1;}
+function frv14Note(id,show){if(!show||!show.networks)return;var g=(show.networks||[]).some(function(n){return n&&n.id!==0&&FRV14_GLOBAL.test(String(n.name||'').trim());})?1:0;if(FRV14.g[String(id)]!==g){FRV14.g[String(id)]=g;try{localStorage.setItem('cineFrvGlob',JSON.stringify(FRV14.g));}catch(_){}}}
+(function(){var oE=frvfEnsure;frvfEnsure=function(id,show){id=String(id);if(show&&show.networks)frv14Note(id,show);
+    if(FRV14.g[id]===undefined&&!show){return FRV.of('https://api.themoviedb.org/3/tv/'+id+'?api_key='+TMDB+'&language=fr-FR').then(function(r){return r.ok?r.json():null;}).then(function(d){if(d)frv14Note(id,d);return frv14Glob(id)?false:oE(id,d&&d.seasons?d:null);}).catch(function(){return false;});}
+    if(frv14Glob(id))return Promise.resolve(false);return oE.apply(this,arguments);};
+  var oI=frvfInfo;frvfInfo=function(id,s){var I=oI.apply(this,arguments);if(!I)return I;if(I.src==='moi'||I.src==='admin')return I;if(frv14Glob(id))return null;return I;};})();
+frvfApply=function(id,j,sn){if(!j||typeof j!=='object')return j;var used=null;
+  if(sn!=null){var I=frvfInfo(id,sn);if(!I||I.none)return j;var eps=j.episodes||[],list=eps.map(function(e){return {n:e.episode_number,vo:e.air_date};});
+    var st=frvfStart(I),vo1=(eps[0]&&eps[0].air_date)||j.air_date||'';
+    if(st&&vo1&&I.src!=='moi'&&I.src!=='admin'&&(st<frvfAdd(vo1,-2)||st>frvfAdd(vo1,900)))return j;  /* date VF pas crédible : on garde la VO */
+    eps.forEach(function(e){var r=frvfEpDate(I,e.episode_number,e.air_date,list);if(r&&r.d&&!(e.air_date&&r.d<e.air_date&&!r.out&&I.src!=='moi'&&I.src!=='admin')){e.vo_air_date=e.air_date||'';e.air_date=r.d;e._vf=r.est?'~':1;}});
+    j.vo_air_date=j.air_date||'';if(st)j.air_date=st;j._vf={prov:I.prov||'',d:I.d||'',src:I.src};used=I;}
+  else{frv14Note(id,j);var vo={};(j.seasons||[]).forEach(function(s){vo[s.season_number]=s.air_date;var I2=frvfInfo(id,s.season_number);if(I2&&!I2.none){var st2=frvfStart(I2);if(st2&&!(s.air_date&&st2<frvfAdd(s.air_date,-2)&&I2.src!=='moi'&&I2.src!=='admin')){s.vo_air_date=s.air_date||'';s.air_date=st2;}used=used||I2;if(s.season_number>=((j.seasons||[]).slice(-1)[0]||{}).season_number)used=I2;}});
+    ['next_episode_to_air','last_episode_to_air'].forEach(function(k){var e=j[k];if(!e)return;var I3=frvfInfo(id,e.season_number);if(!I3||I3.none)return;var r=frvfEpDate(I3,e.episode_number,e.air_date,[{n:1,vo:vo[e.season_number]},{n:e.episode_number,vo:e.air_date}]);if(r&&r.d&&!(e.air_date&&r.d<e.air_date&&!r.out)){e.vo_air_date=e.air_date;e.air_date=r.d;e._vf=r.est?'~':1;}used=used||I3;});
+    if(used){var n0=(j.networks||[]).find(function(n){return n&&n.id!==0;});j.networks=[{id:0,name:frvfNet(used.prov||(n0&&n0.name)||'')}].concat(j.networks||[]);j._vf=1;}}
+  return j;};
+function frv14WishRestore(w){var o=w.vfOrig;if(o){w.releaseDate=o.releaseDate;w.weekly=o.weekly;w.epLabel=o.epLabel;w.releaseYearOnly=o.releaseYearOnly;if(o.networkName!==undefined)w.networkName=o.networkName;delete w.vfOrig;}
+  else if(w.vfVo!==undefined){if(w.vfVo)w.releaseDate=w.vfVo;if(/\(VF\)$/.test(w.networkName||''))w.networkName=String(w.networkName).replace(/\s*\(VF\)$/,'').replace(/^France$/,'');}
+  delete w.vfVo;delete w.vf;}
+frvfSync=function(id){id=String(id);var chE=false,chW=false,today=frvfToday();
+  items.forEach(function(it){if(it.tmdbType!=='tv'||String(it.tmdbId)!==id||!episodes[it.id])return;Object.keys(episodes[it.id]).forEach(function(s){var I=frvfInfo(id,s),L=episodes[it.id][s]||[];
+    var list=L.map(function(e,i){return {n:i+1,vo:e.vf?e.voDate:e.airDate};});
+    L.forEach(function(e,i){var vo=e.vf?(e.voDate||''):(e.airDate||'');var back=function(){if(e.vf){e.airDate=e.voDate||e.airDate;delete e.voDate;delete e.vf;chE=true;}};
+      if(!I||I.none)return back();var r=frvfEpDate(I,i+1,vo,list);if(!r||!r.d||(vo&&r.d<vo&&!r.out&&I.src!=='moi'&&I.src!=='admin'))return back();
+      var nf=r.est?'~':1;if(r.d!==e.airDate||e.vf!==nf){e.voDate=vo;e.airDate=r.d;e.vf=nf;chE=true;}});});});
+  wishlist.forEach(function(w){if(w.tmdbType!=='tv'||String(w.tmdbId)!==id||!w.season)return;var I=frvfInfo(id,w.season);
+    if(!I||I.none){if(w.vf||w.vfOrig||w.vfVo!==undefined){frv14WishRestore(w);chW=true;}return;}
+    var st=frvfStart(I);var nv={d:I.d||st||'',prov:I.prov||'',out:I.out||0,src:I.src,approx:!!I.approx};if(JSON.stringify(nv)!==JSON.stringify(w.vf||null)){w.vf=nv;chW=true;}
+    if(!w._dateManual&&st&&st>today&&w.releaseDate!==st){var base=w.vfOrig?w.vfOrig.releaseDate:w.releaseDate;if(base&&st<frvfAdd(base,-2)&&I.src!=='moi'&&I.src!=='admin')return;
+      if(!w.vfOrig)w.vfOrig={releaseDate:w.releaseDate||'',weekly:!!w.weekly,epLabel:w.epLabel||'',releaseYearOnly:!!w.releaseYearOnly,networkName:w.networkName};
+      w.releaseDate=st;w.releaseYearOnly=false;w.networkName=frvfNet(I.prov||String((w.vfOrig&&w.vfOrig.networkName)||w.networkName||'').replace(/\s*\(VF\)$/,''));delete w._pendDate;delete w._pendDay;chW=true;}
+    else if(w.vfOrig&&st&&st<=today){frv14WishRestore(w);w.vf=nv;chW=true;}});
+  if(chE){try{svE();}catch(_){}}if(chW){try{svW();}catch(_){}try{renderWishGrid();}catch(_){}}
+  if(chE)items.forEach(function(it){if(it.tmdbType==='tv'&&String(it.tmdbId)===id&&document.getElementById('ep-track-'+it.id))try{refreshEpTracker(it.id);}catch(_){}});
+  return chE||chW;};
+/* 3) Une seule fois : on enlève les fausses alertes « finale », on remet ce que la VF avait caché, et on relance la vérification des séries */
+(function(){var K='cineFix14';try{if(localStorage.getItem(K)==='1')return;}catch(_){return;}
+  try{var nb=0;statusNotifs=(statusNotifs||[]).filter(function(n){if(n&&(n.kind==='finale_saison'||n.kind==='finale_serie')){nb++;return false;}return true;});if(nb)svStatusNotifs();}catch(_){}
+  try{(items||[]).forEach(function(it){var n=it.nextEpisode;if(n&&(n.isSeasonFinale||n.isPenultimate||n.isSeriesFinale)){n.isSeasonFinale=false;n.isPenultimate=false;n.isSeriesFinale=false;}if(/\s\(VF\)$/.test(it.networkName||''))it.networkName=String(it.networkName).replace(/\s*\(VF\)$/,'').replace(/^France$/,'');});sv();}catch(_){}
+  try{(wishlist||[]).forEach(function(w){w.epIsFinale=false;w.epIsPenultimate=false;if(w.vfVo!==undefined||w.vfOrig)frv14WishRestore(w);});svW();}catch(_){}
+  try{var chg=false;Object.keys(episodes||{}).forEach(function(iid){var E=episodes[iid];Object.keys(E||{}).forEach(function(s){(E[s]||[]).forEach(function(e){if(e&&e.vf==='?'){e.airDate=e.voDate||e.airDate;delete e.voDate;delete e.vf;chg=true;}});});});if(chg)svE();}catch(_){}
+  try{localStorage.removeItem(WISH_SCAN_KEY);localStorage.removeItem(STATUS_SCAN_KEY);}catch(_){}
+  try{localStorage.setItem(K,'1');}catch(_){}})();
+/* ====== 🎬 RADAR BANDES-ANNONCES : les BA de tes séries (Attentes, en cours, à voir…) repérées à la minute près,
+   + des BA de séries qui pourraient te plaire. Sources : TMDB (heure exacte de mise en ligne) et les chaînes YouTube
+   officielles (Netflix, Disney+, Prime Video, Apple TV, HBO Max, Canal+, Crunchyroll… + tes chaînes) vérifiées toutes
+   les 3 minutes quand l'appli est ouverte. Alerte dans l'appli et sur ton téléphone (ntfy) dès qu'une BA tombe. ====== */
+var BA14={d:null,busy:{},timers:{},last:{tmdb:0,yt:0,sug:0}};
+function ba14Load(){if(BA14.d)return BA14.d;var d=null;try{d=JSON.parse(localStorage.getItem('cineBa14')||'null');}catch(_){}d=d&&typeof d==='object'?d:{};d.seen=d.seen||{};d.list=d.list||[];d.sug=d.sug||[];d.at=d.at||{};d.ch=d.ch||{};d.init=d.init||{};d.sugAt=d.sugAt||0;BA14.d=d;return d;}
+function ba14Save(){var d=ba14Load();var lim=Date.now()-60*864e5;d.list=d.list.filter(function(x){return Date.parse(x.pub||0)>lim;}).slice(0,80);var ks=Object.keys(d.seen);if(ks.length>3000)ks.sort(function(a,b){return d.seen[a]-d.seen[b];}).slice(0,ks.length-2500).forEach(function(k){delete d.seen[k];});try{localStorage.setItem('cineBa14',JSON.stringify(d));}catch(_){}}
+var BA14_OK=/bande[- ]?annonce|trailer|teaser|\bba\b|premi[eè]res? images|first look|official clip|extrait officiel|sneak peek/i;
+var BA14_NO=/r[ée]action|review|critique|explained|expliqu|recap|r[ée]sum[ée]|interview|behind|coulisses|making[- ]of|podcast|live|stream|fan[- ]?made|concept|ending|th[ée]orie|theory|easter|breakdown|analyse|top \d|#shorts/i;
+/* chaînes officielles (id connu, ou nom de la chaîne retrouvé une fois) */
+var BA14_CH=[{id:'UCroNr00O68n25IqSNapMK8w',n:'Netflix France'},{id:'UCWOA1ZGywLbqmigxE4Qlvuw',n:'Netflix'},{id:'UCBSs9x2KzSLhyyA9IKyt4YA',n:'Netflix Anime'},{id:'UC1Myj674wRVXB9I4c6Hm5zA',n:'Apple TV'},{id:'UCvC4D8onUfXzvjTOM-dBfEA',n:'Marvel Entertainment'},{id:'UCZGYJFUizSax-yElQaFDp5Q',n:'Star Wars'},{id:'UC6pGDc4bFGD1_36IKv3FnYg',n:'Crunchyroll'},
+  {h:'PrimeVideoFR',n:'Prime Video France'},{h:'DisneyPlusFR',n:'Disney+ France'},{h:'disneyfr',n:'Disney France'},{h:'HBOMaxFR',n:'HBO Max France'},{h:'Canalplus',n:'CANAL+'},{h:'CrunchyrollFR',n:'Crunchyroll FR'},{h:'ADNanime',n:'ADN'},{h:'ParamountPlusFrance',n:'Paramount+ France'},{h:'primevideo',n:'Prime Video'},{h:'disneyplus',n:'Disney+'},{h:'StreamOnMax',n:'HBO Max'},{h:'paramountplus',n:'Paramount+'},{h:'hulu',n:'Hulu'},{h:'marvelfr',n:'Marvel France'}];
+function ba14Norm(t){return String(t||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/&amp;/g,'&').replace(/[^a-z0-9]+/g,' ').trim();}
+/* les séries que tu suis : Attentes d'abord, puis en cours / à voir / en pause, puis les terminées qui continuent */
+function ba14Tracked(){var m={},out=[];function add(id,o,pr){id=String(id);if(!id||id==='undefined')return;if(!m[id]){m[id]={id:id,t:o.title||'',ot:o.originalTitle||'',poster:o.poster||'',pr:pr,seasons:{}};out.push(m[id]);}var e=m[id];e.pr=Math.min(e.pr,pr);if(o.season)e.seasons[o.season]=1;if(!e.ot&&o.originalTitle)e.ot=o.originalTitle;if(!e.poster&&o.poster)e.poster=o.poster;}
+  try{wishlist.forEach(function(w){if(w.tmdbType==='tv'&&w.tmdbId)add(w.tmdbId,w,0);});}catch(_){}
+  try{items.forEach(function(i){if(i.tmdbType!=='tv'||!i.tmdbId)return;var pr={en_cours:1,a_voir:1,en_pause:2,termine:3}[i.status];if(pr==null)return;if(pr===3&&/^(Ended|Canceled)$/.test(i.seriesStatus||''))return;add(i.tmdbId,i,pr);});}catch(_){}
+  return out.sort(function(a,b){return a.pr-b.pr;}).slice(0,80);}
+function ba14When(iso){var t=new Date(iso);if(isNaN(t))return '';var now=new Date(),hm=t.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}),d0=new Date(now.getFullYear(),now.getMonth(),now.getDate()).getTime(),dd=Math.floor((d0-new Date(t.getFullYear(),t.getMonth(),t.getDate()).getTime())/864e5);
+  return dd===0?'aujourd\'hui à '+hm:dd===1?'hier à '+hm:t.toLocaleDateString('fr-FR',{day:'numeric',month:'short'})+' à '+hm;}
+function ba14Ago(iso){var s=Math.max(0,(Date.now()-Date.parse(iso))/1000);if(s<60)return 'à l\'instant';if(s<3600)return 'il y a '+Math.floor(s/60)+' min';if(s<86400)return 'il y a '+Math.floor(s/3600)+' h '+String(Math.floor(s%3600/60)).padStart(2,'0');var j=Math.floor(s/86400);return 'il y a '+j+' jour'+(j>1?'s':'');}
+function ba14Kind(v){var t=(v.name||v.t||'')+' '+(v.type||'');return /teaser/i.test(t)?'Teaser':/clip|extrait|sneak/i.test(t)?'Extrait':/first look|premi[eè]res? images/i.test(t)?'Premières images':'Bande-annonce';}
+function ba14Season(t){var m=ba14Norm(t).match(/\b(?:saison|season|staffel|temporada)\s*(\d{1,2})\b|\bs(\d{1,2})\b/);return m?+(m[1]||m[2]):null;}
+/* --- nouvelle BA trouvée --- */
+function ba14Add(x,quiet){var d=ba14Load();if(!x||!x.k||d.seen[x.k])return false;d.seen[x.k]=Date.now();var age=Date.now()-Date.parse(x.pub||0);if(!(age<45*864e5))return false;
+  d.list=d.list.filter(function(y){return y.k!==x.k;});d.list.unshift(x);d.list.sort(function(a,b){return Date.parse(b.pub)-Date.parse(a.pub);});
+  if(!quiet&&age<3*864e5)ba14Notify(x);return true;}
+function ba14Notify(x){var lbl=x.kind+(x.s?' saison '+x.s:'')+(x.vf?' (VF)':'');
+  BA14.tq=BA14.tq||[];BA14.tq.push({t:x.t,lbl:lbl,pub:x.pub});clearTimeout(BA14.tqT);BA14.tqT=setTimeout(function(){var q=BA14.tq||[];BA14.tq=[];if(!q.length)return;try{if(q.length===1)toast('🎬 '+q[0].t+' : '+q[0].lbl.toLowerCase()+' en ligne — '+ba14Ago(q[0].pub));else{var n=q.map(function(z){return z.t;}).filter(function(v,i,a){return a.indexOf(v)===i;});toast('🎬 '+q.length+' nouvelles bandes-annonces : '+n.slice(0,3).join(', ')+(n.length>3?'…':'')+' — regarde le radar dans les Attentes');}}catch(_){}},1800);
+  try{statusNotifs=[{id:'ba14_'+x.k,itemId:null,title:x.t,poster:x.poster||'',kind:'ba14',at:Date.now(),tmdbId:x.id,tmdbType:'tv',season:x.s||null,key:x.k,pub:x.pub,lbl:lbl,src:x.ch||'TMDB'}].concat((statusNotifs||[]).filter(function(n){return n.id!=='ba14_'+x.k;})).slice(0,40);svStatusNotifs();renderStatusNotifs();}catch(_){}
+  try{if(typeof ntfyCfg!=='undefined'&&ntfyCfg.on&&ntfyCfg.topic&&ntfyCfg.ba!==false&&!(ntfySent['ba_'+x.k])){ntfySent['ba_'+x.k]=Date.now();svNtfy();fetch('https://ntfy.sh/'+encodeURIComponent(ntfyCfg.topic)+'?title='+encodeURIComponent('🎬 '+x.t+' — '+lbl)+'&tags=movie_camera&click='+encodeURIComponent('https://www.youtube.com/watch?v='+x.k),{method:'POST',body:'Mise en ligne '+ba14When(x.pub)+(x.ch?' sur '+x.ch:'')+'. Touche pour la regarder !'}).catch(function(){});}}catch(_){}}
+/* --- 1) TMDB : vidéos de chaque série suivie (et de la saison attendue) --- */
+function ba14PickTmdb(list){return (list||[]).filter(function(v){return v.site==='YouTube'&&v.key&&/Trailer|Teaser|Clip/.test(v.type||'')&&v.published_at;});}
+function ba14Tmdb(S){var urls=['https://api.themoviedb.org/3/tv/'+S.id+'/videos?api_key='+TMDB+'&include_video_language=fr,en,null'];Object.keys(S.seasons).slice(0,2).forEach(function(n){urls.push('https://api.themoviedb.org/3/tv/'+S.id+'/season/'+n+'/videos?api_key='+TMDB+'&include_video_language=fr,en,null');});
+  var d=ba14Load(),first=!d.init[S.id];
+  return Promise.all(urls.map(function(u,i){return FRV.of(u).then(function(r){return r.ok?r.json():null;}).catch(function(){return null;}).then(function(j){return {sn:i?+Object.keys(S.seasons)[i-1]:null,l:ba14PickTmdb(j&&j.results)};});})).then(function(rs){var n=0;
+    rs.forEach(function(r){r.l.forEach(function(v){var x={k:v.key,id:S.id,t:S.t,poster:S.poster,pub:v.published_at,kind:ba14Kind(v),vf:v.iso_639_1==='fr',s:r.sn||ba14Season(v.name),name:v.name||'',ch:'',src:'tmdb',mine:1};
+      if(first&&Date.now()-Date.parse(x.pub)>36e5*6){d.seen[x.k]=d.seen[x.k]||Date.now();if(Date.now()-Date.parse(x.pub)<14*864e5&&!d.list.some(function(y){return y.k===x.k;}))d.list.push(x);return;}
+      if(ba14Add(x))n++;});});
+    d.init[S.id]=1;d.at[S.id]=Date.now();return n;});}
+/* --- 2) YouTube : les chaînes officielles, toutes les 3 minutes (avec l'heure exacte de mise en ligne) --- */
+function ba14Feed(id){var u='https://www.youtube.com/feeds/videos.xml?channel_id='+id;return proxyText(u+(u.indexOf('?')>=0?'&':'?')+'_='+Math.floor(Date.now()/60000)).then(function(x){if(!x||x.indexOf('<entry')<0)return [];var doc;try{doc=new DOMParser().parseFromString(x,'text/xml');}catch(_){return [];}
+  var au=(doc.querySelector('author name')||{}).textContent||'';return [].slice.call(doc.getElementsByTagName('entry')).slice(0,15).map(function(e){var g=function(t){var n=e.getElementsByTagName(t)[0];return n?n.textContent:'';};return {k:g('yt:videoId')||(g('id').match(/([\w-]{11})$/)||[])[1],t:g('title'),pub:g('published'),ch:au};}).filter(function(v){return v.k&&v.pub;});});}
+function ba14ChannelIds(){var d=ba14Load(),L=[];BA14_CH.concat((typeof ytChannels==='function'?ytChannels():[]).map(function(c){return {id:c.id,h:c.h,n:c.n};})).forEach(function(c){var id=c.id||(c.h&&d.ch[c.h]);if(id&&id!=='x'&&!L.some(function(z){return z.id===id;}))L.push({id:id,n:c.n});else if(!id&&c.h&&d.ch[c.h]!=='x'&&typeof ytResolve==='function'&&!BA14.busy['h'+c.h]){BA14.busy['h'+c.h]=1;ytResolve('@'+c.h).then(function(r){d.ch[c.h]=r&&r.id?r.id:'x';ba14Save();}).catch(function(){d.ch[c.h]='x';ba14Save();});}});return L;}
+function ba14Match(title,T){var n=' '+ba14Norm(title)+' ';if(!BA14_OK.test(title)||BA14_NO.test(title))return null;
+  for(var i=0;i<T.length;i++){var S=T[i];var names=[S.t,S.ot].filter(Boolean);for(var j=0;j<names.length;j++){var nm=ba14Norm(names[j]);if(nm.length<3)continue;var p=n.indexOf(' '+nm+' ');if(p<0)continue;
+      var after=n.slice(p+nm.length+2,p+nm.length+14),short=nm.split(' ').length===1&&nm.length<6;if(short&&!(p<=1||/^(saison|season|s\d|bande|trailer|teaser|official|officiel)/.test(after)))continue;return S;}}return null;}
+function ba14Yt(){var T=ba14Tracked(),all=ba14ChannelIds(),d=ba14Load(),k=0,found=0;if(!T.length||!all.length)return Promise.resolve(0);var per=document.hidden?3:6,st=(d.rot||0)%all.length,chs=[];for(var q=0;q<Math.min(per,all.length);q++)chs.push(all[(st+q)%all.length]);d.rot=(st+chs.length)%all.length;
+  return new Promise(function(res){(function next(){var c=chs[k++];if(!c){res(found);return;}ba14Feed(c.id).then(function(l){var first=!d.init['ch'+c.id];l.forEach(function(v){var S=ba14Match(v.t,T);if(!S)return;var x={k:v.k,id:S.id,t:S.t,poster:S.poster,pub:v.pub,kind:ba14Kind({name:v.t}),vf:/\bvf\b|version fran/i.test(v.t),s:ba14Season(v.t),name:v.t,ch:v.ch||c.n,src:'yt',mine:1};
+        if(first&&Date.now()-Date.parse(x.pub)>36e5*6){d.seen[x.k]=d.seen[x.k]||Date.now();if(Date.now()-Date.parse(x.pub)<14*864e5&&!d.list.some(function(y){return y.k===x.k;}))d.list.push(x);return;}if(ba14Add(x))found++;});d.init['ch'+c.id]=1;}).catch(function(){}).then(function(){setTimeout(next,document.hidden?2500:700);});})();});}
+/* --- 2b) recherche YouTube pour les séries attendues (toutes les 3 h par série) : l'heure exacte vient de la page de la vidéo --- */
+function ba14YtParse(html){var out=[],re=/"videoRenderer":\{"videoId":"([\w-]{11})"[\s\S]{0,1500}?"title":\{"runs":\[\{"text":"((?:[^"\\]|\\.)*)"/g,m;while((m=re.exec(html))&&out.length<20){var t=m[2];try{t=JSON.parse('"'+t+'"');}catch(_){}out.push({k:m[1],t:t});}return out;}
+function ba14PubOf(k){return proxyText('https://www.youtube.com/watch?v='+k+'&hl=fr').then(function(h){if(!h)return null;var m=h.match(/"publishDate":"([^"]+)"/)||h.match(/"uploadDate":"([^"]+)"/)||h.match(/itemprop="(?:datePublished|uploadDate)" content="([^"]+)"/);var ch=(h.match(/"ownerChannelName":"((?:[^"\\]|\\.)*)"/)||[])[1]||'';try{ch=JSON.parse('"'+ch+'"');}catch(_){}if(!m)return null;var iso=m[1];if(/^\d{4}-\d{2}-\d{2}$/.test(iso))iso+='T12:00:00Z';return {pub:new Date(iso).toISOString(),ch:ch};}).catch(function(){return null;});}
+function ba14Search(S,sn){var q=(S.t||S.ot)+(sn?' saison '+sn:'')+' bande annonce';return proxyText('https://www.youtube.com/results?search_query='+encodeURIComponent(q)+'&sp=CAI%253D&hl=fr').then(function(h){if(!h)return [];return ba14YtParse(h).filter(function(v){return ba14Match(v.t,[S])&&(!sn||!ba14Season(v.t)||ba14Season(v.t)===sn);});}).catch(function(){return [];});}
+function ba14SearchTick(){if(BA14.busy.srch||document.hidden)return;var d=ba14Load(),now=Date.now();d.sat=d.sat||{};var T=ba14Tracked().filter(function(S){return S.pr===0&&now-(d.sat[S.id]||0)>3*36e5;}).slice(0,2);if(!T.length)return;BA14.busy.srch=1;var k=0,n=0;
+  (function next(){var S=T[k++];if(!S){BA14.busy.srch=0;ba14Save();if(n)ba14Render();return;}d.sat[S.id]=Date.now();var sn=+(Object.keys(S.seasons)[0]||0)||null;
+    ba14Search(S,sn).then(function(l){l=l.filter(function(v){return !d.seen[v.k];}).slice(0,2);return Promise.all(l.map(function(v){return ba14PubOf(v.k).then(function(p){if(!p)return;var x={k:v.k,id:S.id,t:S.t,poster:S.poster,pub:p.pub,kind:ba14Kind({name:v.t}),vf:/\bvf\b|version fran/i.test(v.t),s:ba14Season(v.t)||sn,name:v.t,ch:p.ch,src:'yts',mine:1};if(ba14Add(x))n++;});}));}).catch(function(){}).then(function(){setTimeout(next,4000);});})();}
+/* --- 2c) quand tu ouvres une BA qui n'existe pas encore sur TMDB : on cherche plus loin (radar, vidéos de la série, YouTube) --- */
+function ba14Deep(item){if(!item||!item.tmdbId)return Promise.resolve(null);var ck='deep'+item.tmdbType+item.tmdbId+(item.season||'');if(trailerCache[ck]!==undefined)return Promise.resolve(trailerCache[ck]);
+  var d=ba14Load(),sn=item.season?+item.season:null,id=String(item.tmdbId);
+  var hit=d.list.concat(d.sug||[]).filter(function(x){return String(x.id)===id&&(!sn||!x.s||x.s===sn);}).sort(function(a,b){return Date.parse(b.pub)-Date.parse(a.pub);})[0];
+  if(hit){trailerCache[ck]=hit.k;return Promise.resolve(hit.k);}
+  var p=item.tmdbType==='tv'&&sn?FRV.of('https://api.themoviedb.org/3/tv/'+id+'/videos?api_key='+TMDB+'&include_video_language=fr,en,null').then(function(r){return r.ok?r.json():null;}).then(function(j){var l=ba14PickTmdb(j&&j.results).filter(function(v){return /Trailer|Teaser/.test(v.type);});
+      var m=l.filter(function(v){return ba14Season(v.name)===sn;}).sort(function(a,b){return (b.iso_639_1==='fr')-(a.iso_639_1==='fr')||Date.parse(b.published_at)-Date.parse(a.published_at);})[0];return m?m.key:null;}).catch(function(){return null;}):Promise.resolve(null);
+  return p.then(function(k){if(k)return k;var S={id:id,t:item.title||'',ot:item.originalTitle||'',seasons:{}};return ba14Search(S,sn).then(function(l){return l[0]?l[0].k:null;});}).then(function(k){trailerCache[ck]=k||null;return k||null;});}
+(function(){if(typeof fetchTrailerKey!=='function')return;var oF=fetchTrailerKey;fetchTrailerKey=function(item){return oF.apply(this,arguments).then(function(k){return k||ba14Deep(item);}).catch(function(){return ba14Deep(item);});};})();
+/* --- 3) Pour toi : BA récentes de séries qui ressemblent à ce que tu aimes --- */
+function ba14Taste(){var g={},n=0;try{items.forEach(function(i){var r=parseFloat(i.rating||0),w=(r>=4.5?3:r>=4?2:r>=3?1:i.status==='termine'?.6:.3)+(i.fav?2:0);(i.genreIds||[]).forEach(function(x){g[x]=(g[x]||0)+w;n+=w;});});}catch(_){}return g;}
+function ba14Sug(){var d=ba14Load(),own={};try{own=getOwnedCatKeys();}catch(_){}var G=ba14Taste(),top=Object.keys(G).sort(function(a,b){return G[b]-G[a];}).slice(0,4),today=todayStr(),past=new Date(Date.now()-75*864e5).toISOString().slice(0,10);
+  var seeds=[];try{seeds=items.filter(function(i){return i.tmdbType==='tv'&&i.tmdbId&&(parseFloat(i.rating||0)>=4||i.fav);}).sort(function(a,b){return (parseFloat(b.rating||0)+(b.fav?1:0))-(parseFloat(a.rating||0)+(a.fav?1:0));}).slice(0,5);}catch(_){}
+  var U=['https://api.themoviedb.org/3/tv/on_the_air?api_key='+TMDB+'&language=fr-FR','https://api.themoviedb.org/3/discover/tv?api_key='+TMDB+'&language=fr-FR&sort_by=popularity.desc&first_air_date.gte='+past+'&vote_count.gte=0'+(top.length?'&with_genres='+top.slice(0,2).join('|'):''),'https://api.themoviedb.org/3/discover/tv?api_key='+TMDB+'&language=fr-FR&sort_by=popularity.desc&air_date.gte='+today+(top.length?'&with_genres='+top.join('|'):'')].concat(seeds.map(function(i){return 'https://api.themoviedb.org/3/tv/'+i.tmdbId+'/recommendations?api_key='+TMDB+'&language=fr-FR';}));
+  return Promise.all(U.map(function(u){return FRV.of(u).then(function(r){return r.ok?r.json():null;}).catch(function(){return null;});})).then(function(rs){var C={};
+    rs.forEach(function(j,ri){((j&&j.results)||[]).forEach(function(r,pos){if(!r||!r.id||own['tv_'+r.id]||!r.poster_path)return;var gs=(r.genre_ids||[]).reduce(function(s,x){return s+(G[x]||0);},0)/Math.max(1,(r.genre_ids||[]).length);var sc=gs+(ri>=3?4:0)+Math.max(0,3-pos*.15)+Math.min(3,(r.popularity||0)/40);if(!C[r.id]||C[r.id].sc<sc)C[r.id]={id:r.id,t:r.name||r.original_name,ot:r.original_name,poster:'https://image.tmdb.org/t/p/w342'+r.poster_path,bd:r.backdrop_path?'https://image.tmdb.org/t/p/w780'+r.backdrop_path:'',y:(r.first_air_date||'').slice(0,4),o:r.overview||'',sc:sc,g:r.genre_ids||[]};});});
+    var cand=Object.keys(C).map(function(k){return C[k];}).sort(function(a,b){return b.sc-a.sc;}).slice(0,28),out=[];
+    return Promise.all(cand.map(function(c,i){return new Promise(function(r){setTimeout(r,i*120);}).then(function(){return FRV.of('https://api.themoviedb.org/3/tv/'+c.id+'/videos?api_key='+TMDB+'&include_video_language=fr,en,null').then(function(r){return r.ok?r.json():null;}).catch(function(){return null;});}).then(function(j){var l=ba14PickTmdb(j&&j.results).filter(function(v){return /Trailer|Teaser/.test(v.type)&&Date.now()-Date.parse(v.published_at)<120*864e5;}).sort(function(a,b){return (b.iso_639_1==='fr')-(a.iso_639_1==='fr')||Date.parse(b.published_at)-Date.parse(a.published_at);});var v=l[0];if(v)out.push({k:v.key,id:String(c.id),t:c.t,ot:c.ot,poster:c.poster,bd:c.bd,y:c.y,o:c.o,pub:v.published_at,kind:ba14Kind(v),vf:v.iso_639_1==='fr',s:ba14Season(v.name),sc:c.sc,src:'tmdb'});});})).then(function(){
+      out.sort(function(a,b){var fa=Date.now()-Date.parse(a.pub)<14*864e5,fb=Date.now()-Date.parse(b.pub)<14*864e5;return (fb-fa)||(b.sc-a.sc);});d.sug=out.slice(0,14);d.sugAt=Date.now();ba14Save();return d.sug.length;});});}
+/* --- boucles : TMDB (Attentes toutes les 10 min, le reste toutes les heures), YouTube toutes les 3 min, « Pour toi » toutes les 6 h --- */
+function ba14Tick(){if(BA14.busy.tick)return;BA14.busy.tick=1;var d=ba14Load(),T=ba14Tracked(),now=Date.now();
+  var due=T.filter(function(S){var a=d.at[S.id]||0;return now-a>(S.pr===0?10:S.pr===1?30:90)*60000;}).slice(0,document.hidden?6:14),k=0,n=0;
+  (function next(){var S=due[k++];if(!S){BA14.busy.tick=0;BA14.last.tmdb=Date.now();if(n){ba14Save();ba14Render();}else ba14Save();return;}ba14Tmdb(S).then(function(x){n+=x||0;}).catch(function(){}).then(function(){setTimeout(next,document.hidden?3000:900);});})();}
+function ba14YtTick(){if(BA14.busy.yt)return;BA14.busy.yt=1;ba14Yt().then(function(n){BA14.last.yt=Date.now();ba14Save();if(n)ba14Render();}).catch(function(){}).then(function(){BA14.busy.yt=0;ba14Render(true);});}
+function ba14SugTick(force){var d=ba14Load();if(BA14.busy.sug||(!force&&Date.now()-d.sugAt<6*36e5))return;BA14.busy.sug=1;ba14Sug().then(function(){ba14Render();}).catch(function(){}).then(function(){BA14.busy.sug=0;});}
+function ba14Loop(){clearTimeout(BA14.timers.a);clearTimeout(BA14.timers.b);clearTimeout(BA14.timers.c);
+  (function a(){try{ba14Tick();}catch(_){}BA14.timers.a=setTimeout(a,document.hidden?6*60000:2*60000);})();
+  (function b(){try{ba14YtTick();}catch(_){}BA14.timers.b=setTimeout(b,document.hidden?8*60000:90000);})();
+  setTimeout(function(){ba14SugTick();},20000);
+  (function c(){try{ba14SearchTick();}catch(_){}BA14.timers.c=setTimeout(c,10*60000);})();}
+document.addEventListener('visibilitychange',function(){if(!document.hidden&&Date.now()-BA14.last.yt>90000){ba14YtTick();ba14Tick();}});
+setTimeout(ba14Loop,12000);
+/* --- affichage : 🎬 Radar bandes-annonces en haut des Attentes --- */
+function ba14Card(x,sug){var fresh=Date.now()-Date.parse(x.pub)<24*36e5,img='https://i.ytimg.com/vi/'+x.k+'/hqdefault.jpg';
+  return '<div class="ba14-c'+(fresh?' fresh':'')+'" data-ba14="'+x.k+'"><div class="ba14-th" style="background-image:url('+img+')"><span class="ba14-pl">▶</span>'+(fresh?'<i class="ba14-new">🆕</i>':'')+(x.vf?'<i class="ba14-vf">VF</i>':'')+'</div>'
+    +'<div class="ba14-tx"><b>'+esc(x.t)+'</b><small>'+esc(x.kind)+(x.s?' · saison '+x.s:'')+'</small><span class="ba14-tm" data-ba14t="'+esc(x.pub)+'">🕒 '+ba14When(x.pub)+' · <em>'+ba14Ago(x.pub)+'</em></span>'+(x.ch?'<span class="ba14-ch">'+esc(x.ch)+'</span>':'')
+    +(sug?'<button class="ba14-add" data-ba14add="'+esc(x.id)+'">＋ Attentes</button>':'')+'</div></div>';}
+function ba14Html(){var d=ba14Load(),mine=d.list.slice(0,24),sug=d.sug||[],st=BA14.last.yt?'vérifié '+ba14Ago(new Date(BA14.last.yt).toISOString()):'vérification…';
+  return '<div class="ba14-h"><b>🎬 Radar bandes-annonces</b><small id="ba14-st">'+st+' · en continu</small><button class="ba14-r" id="ba14-r" title="Vérifier maintenant">🔄</button></div>'
+    +'<div class="ba14-sub">🔥 Tes séries <small>(Attentes, en cours, à voir…)</small></div><div class="ba14-row">'+(mine.length?mine.map(function(x){return ba14Card(x,false);}).join(''):'<div class="ba14-empty">Pas encore de nouvelle BA pour tes séries ces dernières semaines. Je surveille TMDB et les chaînes YouTube officielles : dès qu\'une BA tombe, tu as une alerte (même sur ton téléphone si les notifs ntfy sont activées).</div>')+'</div>'
+    +'<div class="ba14-sub">✨ Pour toi <small>des séries qui ressemblent à ce que tu aimes</small></div><div class="ba14-row">'+(sug.length?sug.map(function(x){return ba14Card(x,true);}).join(''):'<div class="ba14-empty">⏳ Je cherche des bandes-annonces de séries pour toi…</div>')+'</div>';}
+function ba14Render(onlyTimes){var v=document.getElementById('view-attentes');if(!v)return;var box=document.getElementById('ba14');
+  if(!box){box=document.createElement('section');box.id='ba14';box.className='ba14';var bar=v.querySelector('.wish-sort-bar');if(bar)bar.parentNode.insertBefore(box,bar);else v.appendChild(box);onlyTimes=false;}
+  if(onlyTimes){var s=box.querySelector('#ba14-st');if(s&&BA14.last.yt)s.textContent='vérifié '+ba14Ago(new Date(BA14.last.yt).toISOString())+' · en continu';box.querySelectorAll('[data-ba14t]').forEach(function(e){var em=e.querySelector('em');if(em)em.textContent=ba14Ago(e.dataset.ba14t);});return;}
+  box.innerHTML=ba14Html();}
+setInterval(function(){if(document.getElementById('ba14')&&!document.hidden)ba14Render(true);},30000);
+(function(){var oR=renderWishGrid;renderWishGrid=function(){var r=oR.apply(this,arguments);try{if(!document.getElementById('ba14'))ba14Render();}catch(e){console.warn('ba14',e);}return r;};})();
+function ba14Play(x){if(!x)return;var ov=document.getElementById('trailer-overlay'),fr=document.getElementById('trailer-frame');if(!ov||!fr)return window.open('https://www.youtube.com/watch?v='+x.k,'_blank','noopener');
+  document.getElementById('trailer-caption').textContent=x.t+' — '+x.kind+(x.s?' saison '+x.s:'')+' · '+ba14When(x.pub);
+  fr.innerHTML=location.protocol==='file:'?'<div class="trailer-poster"><a class="trailer-play-btn" href="https://www.youtube.com/watch?v='+x.k+'" target="_blank" rel="noopener"><span>▶</span></a></div>':'<iframe src="https://www.youtube.com/embed/'+x.k+'?autoplay=1&rel=0&playsinline=1&hl=fr&cc_lang_pref=fr&origin='+encodeURIComponent(location.origin)+'" title="Bande-annonce" frameborder="0" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe>';ov.classList.add('show');}
+function ba14Find(k){var d=ba14Load();return d.list.find(function(x){return x.k===k;})||(d.sug||[]).find(function(x){return x.k===k;});}
+document.addEventListener('click',function(e){var t=e.target;if(!t.closest)return;
+  var r=t.closest('#ba14-r');if(r){e.preventDefault();r.textContent='⏳';var d=ba14Load();d.at={};ba14YtTick();ba14Tick();ba14SugTick(true);setTimeout(function(){r.textContent='🔄';},4000);return;}
+  var a=t.closest('[data-ba14add]');if(a){e.preventDefault();e.stopPropagation();var x=(ba14Load().sug||[]).find(function(z){return String(z.id)===a.dataset.ba14add;});if(!x)return;a.disabled=true;a.textContent='⏳';
+    FRV.of('https://api.themoviedb.org/3/tv/'+x.id+'?api_key='+TMDB+'&language=fr-FR').then(function(r2){return r2.ok?r2.json():null;}).then(function(dt){var ss=((dt&&dt.seasons)||[]).filter(function(s){return s.season_number>0;}),sn=x.s||(ss.length?ss[ss.length-1].season_number:1),so=ss.find(function(s){return s.season_number===sn;})||{};
+      pushWish({tmdbId:+x.id,tmdbType:'tv',title:x.t,year:x.y||'',releaseDate:so.air_date||(dt&&dt.first_air_date)||'',season:sn,poster:x.poster,weekly:false,epLabel:'',synopsis:x.o||(dt&&dt.overview)||'',networkName:(dt&&dt.networks&&dt.networks[0]&&dt.networks[0].name)||''});
+      var d2=ba14Load();d2.sug=d2.sug.filter(function(z){return String(z.id)!==String(x.id);});ba14Save();ba14Render();}).catch(function(){a.disabled=false;a.textContent='＋ Attentes';});return;}
+  var c=t.closest('[data-ba14]');if(c){e.preventDefault();ba14Play(ba14Find(c.dataset.ba14));}},true);
+/* alertes « Nouvelles fraîches » : la BA se lance direct, avec l'heure exacte */
+(function(){var oL=labelForStatusKind;labelForStatusKind=function(k){if(k==='ba14')return {tag:'🎬 Nouvelle BA',cls:'sn-trailer',msg:'nouvelle bande-annonce en ligne !'};return oL.apply(this,arguments);};
+  var oO=openStatusNotif;openStatusNotif=function(n){if(n&&n.kind==='ba14'){var x=ba14Find(n.key)||{k:n.key,t:n.title,kind:n.lbl||'Bande-annonce',pub:n.pub};ba14Play(x);return;}return oO.apply(this,arguments);};
+  var oS=renderStatusNotifs;renderStatusNotifs=function(){var r=oS.apply(this,arguments);try{(statusNotifs||[]).forEach(function(n){if(n.kind!=='ba14')return;var c=document.querySelector('[data-snopen="'+n.id+'"] .sn-info span');if(c)c.textContent=(n.lbl||'Bande-annonce')+' · mise en ligne '+ba14When(n.pub)+(n.src&&n.src!=='TMDB'?' sur '+n.src:'');});}catch(_){}return r;};})();
+(function(){var st=document.createElement('style');st.textContent=''
+ +'.ba14{margin:14px 0 18px;padding:14px;border-radius:18px;background:linear-gradient(135deg,rgba(229,9,20,.10),rgba(124,58,237,.10));border:1px solid var(--border)}'
+ +'.ba14-h{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.ba14-h b{font-family:Fredoka,sans-serif;font-size:1.15rem}.ba14-h small{opacity:.7;font-size:.75rem;flex:1}.ba14-r{border:0;background:var(--card-bg);border-radius:10px;padding:5px 9px;cursor:pointer;font-size:1rem}'
+ +'.ba14-sub{margin:12px 0 6px;font-weight:800;font-size:.9rem}.ba14-sub small{font-weight:600;opacity:.65}'
+ +'.ba14-row{display:flex;gap:12px;overflow-x:auto;scroll-snap-type:x proximity;padding-bottom:6px;-webkit-overflow-scrolling:touch}'
+ +'.ba14-c{flex:0 0 228px;scroll-snap-align:start;border-radius:14px;overflow:hidden;background:var(--card-bg);box-shadow:0 4px 14px rgba(0,0,0,.12);cursor:pointer;transition:transform .15s}.ba14-c:active{transform:scale(.97)}'
+ +'.ba14-c.fresh{box-shadow:0 0 0 2px #e50914,0 6px 18px rgba(229,9,20,.25)}'
+ +'.ba14-th{position:relative;aspect-ratio:16/9;background:#111 center/cover}.ba14-pl{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:44px;height:44px;border-radius:50%;background:rgba(229,9,20,.92);color:#fff;display:flex;align-items:center;justify-content:center;font-size:1.1rem;box-shadow:0 4px 14px rgba(0,0,0,.4)}'
+ +'.ba14-new,.ba14-vf{position:absolute;top:6px;font-style:normal;font-weight:900;font-size:.68rem;padding:2px 7px;border-radius:99px}.ba14-new{left:6px;background:#fff;color:#e50914}.ba14-vf{right:6px;background:#0055a4;color:#fff}'
+ +'.ba14-tx{padding:8px 10px 10px;display:flex;flex-direction:column;gap:2px}.ba14-tx b{font-size:.88rem;line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.ba14-tx small{font-weight:700;opacity:.75;font-size:.74rem}'
+ +'.ba14-tm{font-size:.72rem;font-weight:700;color:var(--raspberry)}.ba14-tm em{font-style:normal;opacity:.8}.ba14-ch{font-size:.66rem;opacity:.6}'
+ +'.ba14-add{margin-top:6px;border:0;border-radius:10px;padding:6px 8px;font-weight:800;background:var(--raspberry);color:#fff;cursor:pointer}'
+ +'.ba14-empty{font-size:.8rem;opacity:.75;padding:8px 4px;max-width:640px}';document.head.appendChild(st);})();
+/* ====== 🎮 v14 : Salle de jeux — les affiches de TES films reviennent en fond de chaque jeu (nettes, et toujours les mêmes
+   pour un jeu : un mur d'affiches sur les grandes cartes), l'image des héros sur Ciné Clash, et une interface plus fluide ====== */
+function g14Pool(){var L=[];try{L=items.filter(function(i){return i.poster&&/^https?:/.test(i.poster)&&!i.locked;});}catch(_){}
+  var sc=function(i){return (parseFloat(i.rating||0)||0)+(i.fav?2:0)+(i.status==='termine'?.5:0);};return L.sort(function(a,b){return sc(b)-sc(a);}).slice(0,120);}
+function g14Hi(u,w){return String(u||'').replace(/\/t\/p\/(w\d+|original)\//,'/t/p/'+(w||'w500')+'/');}
+/* chaque jeu garde ses affiches (choisies une fois parmi tes films les mieux notés, sans doublon entre les jeux) */
+function g14Pick(gid,n){var pool=g14Pool();if(!pool.length)return [];var st={};try{st=JSON.parse(localStorage.getItem('cineGamePosters')||'{}')||{};}catch(_){}
+  var have=(st[gid]||[]).map(function(id){return pool.find(function(i){return String(i.id)===String(id);});}).filter(Boolean);
+  if(have.length<Math.min(n,pool.length)){var h=0;for(var k=0;k<gid.length;k++)h=(h*31+gid.charCodeAt(k))>>>0;var used={};Object.keys(st).forEach(function(g){if(g!==gid)(st[g]||[]).forEach(function(id){used[id]=1;});});
+    for(var i=0;have.length<n&&i<pool.length*2;i++){var it=pool[(h+i*7)%pool.length];if(have.indexOf(it)<0&&(!used[it.id]||i>=pool.length))have.push(it);}
+    st[gid]=have.map(function(i){return i.id;});try{localStorage.setItem('cineGamePosters',JSON.stringify(st));}catch(_){}}
+  return have.slice(0,n);}
+function g14Wall(b){var id=b.dataset.game;if(!id||id==='clash')return;var P=g14Pick(id,5);if(!P.length)return;var w=b.offsetWidth||260,h=b.offsetHeight||250,n=Math.max(1,Math.min(P.length,Math.round(w/(h*.667)*.92)));
+  if(b._g14n===n&&b.querySelector('.g14-bg'))return;b._g14n=n;var bg=b.querySelector('.g14-bg');if(!bg){bg=document.createElement('span');bg.className='g14-bg';b.insertBefore(bg,b.firstChild);}
+  bg.innerHTML=P.slice(0,n).map(function(it){return '<img src="'+esc(g14Hi(it.poster,n>2?'w342':'w500'))+'" alt="" loading="lazy" decoding="async" onerror="this.style.visibility=\'hidden\'">';}).join('');b.classList.add('g14p');}
+(function(){var oR=renderGamesHub;renderGamesHub=function(){var r=oR.apply(this,arguments);try{
+  document.querySelectorAll('#games-hub .gh-card[data-game]').forEach(function(b){var id=b.dataset.game;
+    if(id==='clash'){if(!b.querySelector('.g14-key')){b.classList.add('g14-clash');b.insertAdjacentHTML('beforeend','<span class="g14-key"><img src="'+(typeof CC11_ART!=='undefined'?CC11_ART:'cc/art/cc13_key.webp')+'" alt="" decoding="async"></span>');}return;}
+    g14Wall(b);});
+  requestAnimationFrame(function(){document.querySelectorAll('#games-hub .gh-card[data-game]').forEach(g14Wall);});
+  }catch(e){console.warn('g14',e);}return r;};})();
+try{GAMES.forEach(function(g){if(g.id==='clash')g.d='Combats de cartes en 3D avec la Bande à Max : coffres, boutique, trophées';});}catch(_){}
+(function(){var t=0;window.addEventListener('resize',function(){clearTimeout(t);t=setTimeout(function(){try{document.querySelectorAll('#games-hub .gh-card[data-game]').forEach(g14Wall);}catch(_){}},250);});})();
+/* le petit monde 3D de Ciné Clash ne tourne plus quand il n'est pas à l'écran */
+var G14IO=null;try{G14IO=new IntersectionObserver(function(es){es.forEach(function(e){e.target._off=!e.isIntersecting;});},{rootMargin:'60px'});}catch(_){}
+(function(){var oR=ccRender;ccRender=function(){var r=oR.apply(this,arguments);try{var cv=document.querySelector('#cc-hub canvas.cc-hub3d');if(cv&&G14IO&&!cv._io){cv._io=1;G14IO.observe(cv);}}catch(_){}return r;};})();
+(function(){var st=document.createElement('style');st.textContent=''
+ /* effets lourds en moins : le mélange « multiply » coûte cher au défilement sur téléphone */
+ +'.gh-card.g3p::before{mix-blend-mode:normal!important;opacity:.35}.gh-card.g3p.g9bd::before{opacity:.18!important}'
+ +'#games-hub .gh-card{content-visibility:auto;contain-intrinsic-size:auto 250px}'
+ /* mur d'affiches en fond */
+ +'.gh-card.g14p::before{display:none!important}'
+ +'.gh-card.g3p>.g14-bg{position:absolute!important;inset:0;z-index:0!important;display:flex;pointer-events:none;background:#1b1330;overflow:hidden;border-radius:inherit}'
+ +'.g14-bg img{flex:1 1 0;min-width:0;height:100%;object-fit:cover;object-position:center 28%;display:block;transition:transform .5s}'
+ +'.g14-bg img+img{box-shadow:-3px 0 0 rgba(0,0,0,.55)}'
+ +'.g14-bg::before{content:"";position:absolute;inset:0;background:linear-gradient(160deg,var(--g1),var(--g2));opacity:.4;z-index:1}'
+ +'.g14-bg::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.25) 0%,rgba(0,0,0,0) 28%,rgba(0,0,0,.55) 62%,rgba(0,0,0,.92) 100%);z-index:2}'
+ +'@media(hover:hover){.gh-card.g14p:hover .g14-bg img{transform:scale(1.06)}}'
+ /* Ciné Clash : les héros sur l'île */
+ +'.gh-card.g3p>.g14-key{position:absolute!important;z-index:1;bottom:-6px;right:-6px;pointer-events:none}.g14-key img{width:240px;height:auto;filter:drop-shadow(0 10px 18px rgba(0,0,0,.5))}'
+ +'@media(min-width:760px){.g14-key img{width:330px}}@media(max-width:600px){.g14-key img{width:170px}}'
+ +'.gh-card.g14-clash>b,.gh-card.g14-clash>.gh-d,.gh-card.g14-clash>.g3-kick{max-width:58%}'
+ +'@media(hover:none){.gh-card:hover,.gh-card.g3p:hover{transform:none!important}.gh-card.g3p:active{transform:scale(.98)!important}}';
+ document.head.appendChild(st);})();
+/* ====== 🧸 v14 : persos en 3D rendus comme dans Blender (matière « figurine » avec reflets de studio + liseré de lumière)
+   au lieu du simple dessin animé plat — en combat (Ultra et Normal ; Éco garde l'ancien rendu, plus léger) et sur l'accueil ====== */
+function g14Rim(m){var U=GFX13.u;if(!U)return;m.onBeforeCompile=function(sh){sh.uniforms.g13Rim=U.g13Rim;sh.uniforms.g13RimC=U.g13RimC;sh.fragmentShader='uniform float g13Rim;\nuniform vec3 g13RimC;\n'+sh.fragmentShader.replace('gl_FragColor = vec4( outgoingLight, diffuseColor.a );','if(g13Rim>0.0){float g13r=1.0-clamp(dot(normalize(vViewPosition),normal),0.0,1.0);g13r=smoothstep(0.52,1.0,g13r)*g13Rim*0.85;outgoingLight+=g13RimC*g13r*(0.35+0.65*diffuseColor.rgb);}\ngl_FragColor = vec4( outgoingLight, diffuseColor.a );');};m.customProgramCacheKey=function(){return 'g14r';};}
+function g14Pbr(T,g,env,o){if(!g||!env||g.userData._pbr)return g;o=o||{};var mp=new Map();
+  function cv(m){if(!m||!m.isMeshToonMaterial)return m;if(mp.has(m))return mp.get(m);var n=new T.MeshStandardMaterial({map:m.map||null,color:m.color.clone(),emissive:m.emissive?m.emissive.clone():new T.Color(0,0,0),emissiveIntensity:m.emissiveIntensity==null?1:m.emissiveIntensity,transparent:m.transparent,opacity:m.opacity,side:m.side,roughness:o.rough||.5,metalness:0,envMap:env,envMapIntensity:o.env||.6});n.skinning=!!m.skinning;n.userData=m.userData||{};g14Rim(n);mp.set(m,n);return n;}
+  g.traverse(function(x){if(!x.isMesh||!x.material)return;x.material=Array.isArray(x.material)?x.material.map(cv):cv(x.material);});
+  var ud=g.userData||{};if(ud.mats)ud.mats=ud.mats.map(function(m){return mp.get(m)||m;});g.userData._pbr=1;return g;}
+function g14Env(T,R){if(R._g14env)return R._g14env;if(!T.PMREMGenerator||!T.RoomEnvironment)return null;try{var pg=new T.PMREMGenerator(R);R._g14env=pg.fromScene(new T.RoomEnvironment(),.04).texture;pg.dispose();}catch(e){R._g14env=null;}return R._g14env;}
+/* en combat : les tours tout de suite, et chaque perso au moment où il arrive dans l'arène */
+(function(){var oI=gfx13Init;gfx13Init=function(T,R,S,cam,sun,o){var G=oI.apply(this,arguments);try{var cf=window.G13CFG||{};if(G&&G.tier!=='eco'&&cf.pbr!==false){
+    var env=G.env||g14Env(T,R);if(!env)return G;G.envP=env;G.pbr=1;
+    (o.M.towers||[]).forEach(function(t){if(t.who)g14Pbr(T,t.who,env);});
+    G.unitHook=function(g){try{g14Pbr(T,g,env);}catch(_){}};}}catch(e){console.warn('g14 pbr',e);}return G;};})();
+/* accueil de Ciné Clash : les 3 persos de ton deck aussi */
+function g14HubPbr(T,R,b){try{if(gfx13Tier()==='eco')return;var env=g14Env(T,R);if(env)g14Pbr(T,b,env,{env:.7});}catch(_){}}
+/* fluidité en combat : plus de flou « verre dépoli » recalculé à chaque image sur la 3D (très lourd sur téléphone) */
+(function(){var st=document.createElement('style');st.textContent=''
+ +'.cc-match .cc3-pl,.cc-match .cc3-hud,.cc-match .cc-quit,.cc-match .cc3-mus,.cc-match .cc3-boss,.cc-match .cc3-timer,.cc-match .cc-end,body.cc7 .cc-arena{-webkit-backdrop-filter:none!important;backdrop-filter:none!important}'
+ +'.cc10 .cc3-hud{background:linear-gradient(180deg,rgba(18,22,42,.95),rgba(6,8,18,.99))!important}.cc10 .cc3-pl{background:linear-gradient(135deg,rgba(24,16,34,.94),rgba(78,14,32,.92))!important}'
+ +'.cc-match .cc-quit,.cc-match .cc3-mus{background:rgba(10,14,30,.82)!important}.cc-match .cc3-boss{background:rgba(10,8,24,.9)!important}';document.head.appendChild(st);})();
 /* ---- Jeux ---- */
 /* ====== 🕸️ 6 degrés : les règles expliquées avant de jouer ====== */
 (function(){var oD=gameDeg;gameDeg=function(){var body=gStage('🕸️ 6 degrés','<div class="deg-rules"><div class="dr-big">🕸️</div><h3>Le but : relier deux acteurs</h3>'
