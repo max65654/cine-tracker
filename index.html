@@ -21377,6 +21377,379 @@ function str15Type(o){return o&&(o.tmdbType==='tv'||o.type==='serie'||o.type==='
  +'.str15-c:hover{background:rgba(255,255,255,.38)}'
  +'.str15-ch{display:flex;flex-direction:column;gap:10px;margin:12px 0}.str15-ch button{display:flex;flex-direction:column;align-items:center;gap:2px;padding:12px 14px;font-size:1rem}.str15-ch small{font-size:.72rem;font-weight:600;opacity:.8}';
  document.head.appendChild(st);})();
+/* ====== 🟣 v16 : ton compte Stremio relié à Ciné Tracker.
+   Tu te connectes toi-même : le mot de passe part directement chez Stremio (api.strem.io) et n'est jamais gardé ; seule la clé de
+   session reste sur CET appareil (clé hors « cine… » → jamais envoyée dans le cloud). Ensuite, synchro dans les deux sens :
+   films vus, épisodes vus (au format « watched » de Stremio), bibliothèque Stremio ↔ collection + Attentes.
+   Rien n'est jamais « dé-vu » ni retiré tout seul : si tu décoches un épisode d'un côté, la synchro ne le recoche pas. ====== */
+var STR16={auth:null,lib:null,libAt:0,_lp:null,run:null,again:false,vid:{}};
+var STR16_API='https://api.strem.io/api/',STR16_LINK='https://link.stremio.com/api/v2/',STR16_META='https://v3-cinemeta.strem.io/meta/';
+var STR16_K=(function(){var p='';try{p=(window.CineProfiles&&window.CineProfiles.prefix)||'';}catch(_){}p=String(p).replace(/[^A-Za-z0-9]/g,'');return 'strAuth|'+(p||'main');})();
+try{STR16.auth=JSON.parse(localStorage.getItem(STR16_K)||'null');}catch(_){STR16.auth=null;}
+/* réglages + mémoire de ce qui est déjà synchronisé (rien de secret : ça peut suivre ton compte d'un appareil à l'autre) */
+var STR16C={auto:true,adds:true,first:0,last:0,k:{},m:{}};
+try{var _s16c=JSON.parse(localStorage.getItem('cineStremio16')||'null');if(_s16c&&typeof _s16c==='object'){for(var _s16k in _s16c)STR16C[_s16k]=_s16c[_s16k];}}catch(_){}
+STR16C.k=STR16C.k||{};STR16C.m=STR16C.m||{};
+function str16SvC(){try{localStorage.setItem('cineStremio16',JSON.stringify(STR16C));}catch(_){}}
+var STR16T={};try{STR16T=JSON.parse(localStorage.getItem('cineTt2Tmdb')||'{}')||{};}catch(_){STR16T={};}
+function str16SvT(){try{localStorage.setItem('cineTt2Tmdb',JSON.stringify(STR16T));}catch(_){}}
+function str16On(){return !!(STR16.auth&&STR16.auth.k);}
+function str16SetAuth(k,email){STR16.auth={k:String(k),e:email||'',t:Date.now()};STR16.lib=null;STR16.libAt=0;try{localStorage.setItem(STR16_K,JSON.stringify(STR16.auth));}catch(_){}str16Badge();}
+function str16Forget(){STR16.auth=null;STR16.lib=null;STR16.libAt=0;try{localStorage.removeItem(STR16_K);}catch(_){}str16Badge();}
+function str16KK(tt){return STR16C.k[tt]||(STR16C.k[tt]={});}
+/* ---------- appels à Stremio (POST sans en-tête spécial, comme les outils web connus : pas de requête « preflight ») ---------- */
+function str16Api(m,body){return fetch(STR16_API+m,{method:'POST',body:JSON.stringify(body)}).then(function(r){return r.json();},function(){throw new Error('net');})
+  .then(function(j){if(j&&j.error){var e=new Error(j.error.message||'Erreur Stremio');e.code=j.error.code;throw e;}if(!j||!('result' in j))throw new Error('Réponse inattendue de Stremio');return j.result;});}
+function str16Authed(m,body){if(!str16On())return Promise.reject(new Error('off'));body.authKey=STR16.auth.k;
+  return str16Api(m,body).catch(function(e){if(e&&e.message!=='net'&&/session|auth/i.test(e.message||'')){str16Forget();try{toast('🟣 Ta session Stremio a expiré : reconnecte-toi (bouton 🟣 Stremio)');}catch(_){}}throw e;});}
+function str16ErrFr(e){var m=String(e&&e.message||'');if(m==='net')return 'Impossible de joindre Stremio (connexion ?)';if(/pass/i.test(m))return 'Mot de passe incorrect';if(/user|not found|exist|email/i.test(m))return 'Aucun compte Stremio avec cet e-mail';return 'Stremio a refusé : '+m;}
+function str16Login(email,pass){return str16Api('login',{type:'Login',email:email,password:pass,facebook:false}).then(function(r){if(!r||!r.authKey)throw new Error('Réponse inattendue de Stremio');str16SetAuth(r.authKey,(r.user&&r.user.email)||email);return r;});}
+function str16UseKey(k){k=String(k||'').trim().replace(/^"|"$/g,'');if(k.length<4)return Promise.reject(new Error('Clé trop courte'));
+  return str16Api('getUser',{type:'GetUser',authKey:k}).then(function(u){str16SetAuth(k,(u&&u.email)||'');return u;});}
+function str16Logout(){var k=STR16.auth&&STR16.auth.k;str16Forget();if(k)str16Api('logout',{type:'Logout',authKey:k}).catch(function(){});}
+/* ---------- bibliothèque ---------- */
+function str16Lib(maxAge){if(!str16On())return Promise.reject(new Error('off'));if(STR16.lib&&Date.now()-STR16.libAt<(maxAge==null?60000:maxAge))return Promise.resolve(STR16.lib);
+  if(STR16._lp)return STR16._lp;
+  STR16._lp=str16Authed('datastoreGet',{collection:'libraryItem',ids:[],all:true}).then(function(L){var m={};(L||[]).forEach(function(x){if(x&&x._id)m[x._id]=x;});STR16.lib=m;STR16.libAt=Date.now();STR16._lp=null;str16Badge();return m;},function(e){STR16._lp=null;throw e;});
+  return STR16._lp;}
+function str16Put(list){list=(list||[]).filter(Boolean);if(!list.length)return Promise.resolve(0);var ch=[];for(var i=0;i<list.length;i+=40)ch.push(list.slice(i,i+40));
+  return ch.reduce(function(p,c){return p.then(function(){return str16Authed('datastorePut',{collection:'libraryItem',changes:c});}).then(function(){c.forEach(function(x){if(STR16.lib)STR16.lib[x._id]=x;});});},Promise.resolve()).then(function(){return list.length;});}
+function str16Now(){return new Date().toISOString();}
+function str16Blank(tt,type,name){var n=str16Now();return {_id:tt,name:name||tt,type:type,poster:'https://images.metahub.space/poster/medium/'+tt+'/img',posterShape:'poster',removed:false,temp:false,_ctime:n,_mtime:n,
+  state:{lastWatched:null,timeWatched:0,timeOffset:0,overallTimeWatched:0,timesWatched:0,flaggedWatched:0,duration:0,video_id:null,watched:null,noNotif:false},behaviorHints:{defaultVideoId:null,featuredVideoId:null,hasScheduledVideos:false}};}
+function str16Clone(x){var c=JSON.parse(JSON.stringify(x));c.state=c.state||{};c._mtime=str16Now();return c;}
+function str16Later(a,b){var ta=Date.parse(a||''),tb=Date.parse(b||'');if(isNaN(ta))return b||a||null;if(isNaN(tb))return a;return ta>=tb?a:b;}
+/* écriture sûre : on relit chaque titre chez Stremio juste avant (pour ne jamais écraser une progression toute fraîche),
+   puis on applique nos changements dessus. muts = {tt:{x,type,name,f:[fonction(item)]}} */
+function str16Flush(muts){var ids=Object.keys(muts||{});if(!ids.length)return Promise.resolve(0);
+  return str16Authed('datastoreGet',{collection:'libraryItem',ids:ids,all:false}).then(function(L){var fr={},out=[];(L||[]).forEach(function(x){if(x&&x._id)fr[x._id]=x;});
+    return ids.reduce(function(p,tt){return p.then(function(){var m=muts[tt],base=fr[tt]||m.x,c=base?str16Clone(base):str16Blank(tt,m.type,m.name);
+      return m.f.reduce(function(q,fn){return q.then(function(){return fn(c,!!base);});},Promise.resolve()).then(function(){out.push(c);});});},Promise.resolve()).then(function(){return str16Put(out);});});}
+function str16Mut(muts,tt,x,type,name,fn){var m=muts[tt]||(muts[tt]={x:x||null,type:type||(x&&x.type)||'movie',name:name||(x&&x.name)||tt,f:[]});if(!m.x&&x)m.x=x;m.f.push(fn);return m;}
+function str16MutFilm(wd){return function(c){if(str16FilmSeen(c))return;c.state.timesWatched=(c.state.timesWatched||0)+1;c.state.lastWatched=str16Later(c.state.lastWatched,wd||str16Now());c.state.timeOffset=0;};}
+/* ajoute des épisodes (« S:E ») au « watched » de Stremio — si son champ actuel est illisible, on n'y touche pas */
+function str16MutEps(tt,eps,onDone){return function(c){return str16Videos(tt).then(function(V){if(!V)return;return str16Dec(c.state.watched,V).then(function(D){if(!D)return;var n=0,lastRel=null;
+  V.forEach(function(v){if(v.s>0&&eps[v.s+':'+v.e]&&!D.set[v.id]){D.set[v.id]=1;n++;if(v.r&&(!lastRel||v.r>lastRel))lastRel=v.r;}});if(!n)return;
+  c.state.watched=str16Enc(D.set,V);if(lastRel)c.state.lastWatched=str16Later(c.state.lastWatched,new Date(Math.min(lastRel,Date.now())).toISOString());if(onDone)onDone(n,str16SE(D.set,V));});});};}
+function str16FilmSeen(x){var s=(x&&x.state)||{};return (s.timesWatched||0)>0||(s.flaggedWatched||0)>0;}
+function str16Day(iso){var t=Date.parse(iso||'');if(isNaN(t))return '';var d=new Date(t);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+function str16Pool(list,n,fn,prog){var i=0,done=0,out=new Array(list.length);return new Promise(function(res){if(!list.length)return res(out);
+  function nx(){if(i>=list.length)return;var k=i++;Promise.resolve().then(function(){return fn(list[k],k);}).catch(function(){return null;}).then(function(v){out[k]=v;done++;if(prog)try{prog(done,list.length);}catch(_){}if(done===list.length)res(out);else nx();});}
+  for(var j=0;j<Math.min(n,list.length);j++)nx();});}
+/* IMDb (Stremio) → TMDB (Ciné Tracker), gardé en mémoire */
+function str16Find(tt,st){var e=STR16T[tt];if(e&&(e[1]||Date.now()-(e[2]||0)<3*864e5))return Promise.resolve(e[1]?{t:e[0],id:e[1]}:null);
+  return fetch('https://api.themoviedb.org/3/find/'+tt+'?api_key='+TMDB+'&external_source=imdb_id&language=fr-FR').then(function(r){return r.ok?r.json():null;}).then(function(j){
+    if(!j)return null;var mv=j.movie_results||[],tv=j.tv_results||[],r=null,t='';
+    if(st==='series'){r=tv[0]||null;t='tv';if(!r&&mv[0]){r=mv[0];t='movie';}}else{r=mv[0]||null;t='movie';if(!r&&tv[0]){r=tv[0];t='tv';}}
+    if(!r){STR16T[tt]=[0,0,Date.now()];str16SvT();return null;}
+    STR16T[tt]=[t,r.id];str16SvT();try{if(typeof STR15!=='undefined'){STR15.c[t+'_'+r.id]={v:tt,t:Date.now()};localStorage.setItem('cineImdb',JSON.stringify(STR15.c));}}catch(_){}
+    return {t:t,id:r.id};}).catch(function(){return null;});}
+/* ---------- épisodes : liste de Stremio (Cinemeta) et champ « watched » (même encodage que Stremio) ---------- */
+function str16Videos(tt){var c=STR16.vid[tt];if(c&&Date.now()-c.t<6*36e5)return Promise.resolve(c.v);
+  return fetch(STR16_META+'series/'+tt+'.json').then(function(r){return r.ok?r.json():null;}).then(function(j){var vs=(j&&j.meta&&j.meta.videos)||null;if(!vs)return null;var seen={},L=[];
+    vs.forEach(function(v){if(!v||!v.id||seen[v.id])return;seen[v.id]=1;var si=(v.season!=null&&v.episode!=null&&!isNaN(+v.season)&&!isNaN(+v.episode));var rl=v.released?Date.parse(v.released):NaN;L.push({id:String(v.id),s:si?+v.season:null,e:si?+v.episode:null,r:isNaN(rl)?null:rl,i:L.length});});
+    var M=-Infinity;L.sort(function(a,b){var as=a.s==null?M:a.s,bs=b.s==null?M:b.s;if(as!==bs)return as<bs?-1:1;var ae=a.e==null?M:a.e,be=b.e==null?M:b.e;if(ae!==be)return ae<be?-1:1;var ar=a.r==null?M:a.r,br=b.r==null?M:b.r;if(ar!==br)return ar<br?-1:1;return a.i-b.i;});
+    STR16.vid[tt]={t:Date.now(),v:L};return L;}).catch(function(){return null;});}
+function str16B64d(s){var b=atob(s),u=new Uint8Array(b.length);for(var i=0;i<b.length;i++)u[i]=b.charCodeAt(i);return u;}
+function str16B64e(u){var s='';for(var i=0;i<u.length;i++)s+=String.fromCharCode(u[i]);return btoa(s);}
+function str16Inflate(u){if(typeof DecompressionStream==='undefined')return Promise.reject(new Error('nods'));try{var st=new Blob([u]).stream().pipeThrough(new DecompressionStream('deflate'));return new Response(st).arrayBuffer().then(function(b){return new Uint8Array(b);});}catch(e){return Promise.reject(e);}}
+/* zlib « stocké » (sans compression) : tout lecteur zlib, dont celui de Stremio, le lit */
+function str16Zlib(u){var o=[0x78,0x01],p=0;do{var n=Math.min(65535,u.length-p),fin=p+n>=u.length?1:0;o.push(fin,n&255,(n>>8)&255,(~n)&255,((~n)>>8)&255);for(var i=0;i<n;i++)o.push(u[p+i]);p+=n;}while(p<u.length);
+  var a=1,b=0;for(var j=0;j<u.length;j++){a=(a+u[j])%65521;b=(b+a)%65521;}o.push((b>>8)&255,b&255,(a>>8)&255,a&255);return new Uint8Array(o);}
+/* → {set:{videoId:1}} ou null si illisible / pas aligné (on ne réécrit alors jamais ce champ) */
+function str16Dec(field,V){if(!field)return Promise.resolve({set:{}});var parts=String(field).split(':');if(parts.length<3)return Promise.resolve(null);
+  var buf=parts.pop(),len=parseInt(parts.pop(),10),anc=parts.join(':');if(isNaN(len))return Promise.resolve(null);
+  return str16Inflate(str16B64d(buf)).then(function(vals){var ids=V.map(function(v){return v.id;}),ai=ids.indexOf(anc),set={},any=false;for(var q=0;q<vals.length;q++)if(vals[q]){any=true;break;}
+    if(!any)return {set:{}};if(ai<0)return null;var off=len-ai-1;
+    for(var i=0;i<ids.length;i++){var j=i+off;if(j>=0&&j<ids.length&&(j>>3)<vals.length&&((vals[j>>3]>>(j&7))&1))set[ids[i]]=1;}
+    return set[anc]?{set:set}:null;}).catch(function(){return null;});}
+function str16Enc(set,V){var ids=V.map(function(v){return v.id;}),n=ids.length,u=new Uint8Array(Math.ceil(n/8)),last=-1;
+  for(var i=0;i<n;i++)if(set[ids[i]]){u[i>>3]|=1<<(i&7);last=i;}
+  var li=last<0?0:last;return (n?ids[li]:'undefined')+':'+(li+1)+':'+str16B64e(str16Zlib(u));}
+function str16SE(set,V){var o={};V.forEach(function(v){if(set[v.id]&&v.s>0&&v.e>0)o[v.s+':'+v.e]=1;});return o;}
+function str16TSeen(it){var o={},m=episodes[it.id]||{};Object.keys(m).forEach(function(s){if(s==='0'||!Array.isArray(m[s]))return;m[s].forEach(function(e,i){if(e&&e.seen)o[s+':'+(i+1)]=1;});});return o;}
+function str16Pack(o){var by={};Object.keys(o).forEach(function(k){var p=k.split(':');if(p.length===2)(by[p[0]]=by[p[0]]||[]).push(+p[1]);});
+  return Object.keys(by).sort(function(a,b){return a-b;}).map(function(s){var L=by[s].sort(function(a,b){return a-b;}),r=[],a=L[0],b=L[0];for(var i=1;i<=L.length;i++){if(L[i]===b+1){b=L[i];continue;}if(L[i]===b)continue;r.push(a===b?String(a):a+'-'+b);a=b=L[i];}return s+':'+r.join('.');}).join(',');}
+function str16Unpack(s){var o={};String(s||'').split(',').forEach(function(g){if(!g)return;var p=g.split(':');(p[1]||'').split('.').forEach(function(r){if(!r)return;var q=r.split('-'),a=+q[0],b=q[1]?+q[1]:a;for(var e=a;e<=b&&e-a<3000;e++)o[p[0]+':'+e]=1;});});return o;}
+function str16Minus(a,b,c){var o={};Object.keys(a).forEach(function(k){if(!b[k]&&!(c&&c[k]))o[k]=1;});return o;}
+function str16Union(){var o={};for(var i=0;i<arguments.length;i++){var x=arguments[i];if(x)Object.keys(x).forEach(function(k){o[k]=1;});}return o;}
+function str16Cnt(o){return Object.keys(o).length;}
+function str16EpLabel(o){var n=str16Cnt(o);return str16Pack(o).split(',').map(function(g){var p=g.split(':');return 'S'+p[0]+' · ép. '+p[1].replace(/\./g,', ').replace(/-/g,'→');}).join(' / ')+' ('+n+' ép.)';}
+/* ---------- côté Ciné Tracker ---------- */
+function str16TType(i){return (i.tmdbType==='tv'||(!i.tmdbType&&(i.type==='serie'||i.type==='anime_serie')))?'tv':'movie';}
+function str16Index(){var C={},W={};(items||[]).forEach(function(i){if(i&&i.tmdbId&&!i.locked){var k=str16TType(i)+'_'+i.tmdbId;if(!C[k])C[k]=i;}});
+  (wishlist||[]).forEach(function(w){if(w&&w.tmdbId){var k=(w.tmdbType==='tv'?'tv':'movie')+'_'+w.tmdbId;if(!W[k])W[k]=w;}});return {C:C,W:W};}
+var STR16_OUTST={en_cours:1,a_voir:1,en_pause:1};
+/* ---------- le plan : ce qui doit passer d'un côté à l'autre ---------- */
+function str16Plan(o){o=o||{};var prog=o.prog||function(){};
+  var P={inFilm:[],inProg:[],inEps:[],inAdd:[],outAdd:[],outFilm:[],outEps:[],pairs:[],nolink:0};
+  return str16Lib(o.full?0:60000).then(function(lib){var K=STR16C.k,X=str16Index();
+    var S=Object.keys(lib).map(function(id){return lib[id];}).filter(function(x){if(!x||!/^tt\d+$/.test(x._id)||(x.type!=='movie'&&x.type!=='series'))return false;var s=x.state||{};
+      return !x.removed||(s.timesWatched>0||s.flaggedWatched>0||!!s.watched);});
+    prog('Je retrouve tes titres Stremio',0,S.length);
+    return str16Pool(S,5,function(x){return str16Find(x._id,x.type).then(function(m){x._m=m;});},function(d,n){prog('Je retrouve tes titres Stremio',d,n);}).then(function(){
+      var byKey={};S.forEach(function(x){if(x._m)byKey[x._m.t+'_'+x._m.id]=x;});
+      /* ce que Ciné Tracker pourrait envoyer dans ta bibliothèque Stremio */
+      var cand=[],ck={};
+      (items||[]).forEach(function(i){if(!i||i.locked||!i.tmdbId||!STR16_OUTST[i.status])return;var k=str16TType(i)+'_'+i.tmdbId;if(ck[k])return;ck[k]=1;cand.push({it:i,t:str16TType(i),id:i.tmdbId,k:k,src:i.status});});
+      (wishlist||[]).forEach(function(w){if(!w||!w.tmdbId)return;var t=w.tmdbType==='tv'?'tv':'movie',k=t+'_'+w.tmdbId;if(ck[k])return;ck[k]=1;cand.push({w:w,it:X.C[k]||null,t:t,id:w.tmdbId,k:k,src:'attentes'});});
+      cand=cand.filter(function(c){var x=byKey[c.k];return !(x&&!x.removed);});
+      prog('Je prépare tes titres pour Stremio',0,cand.length);
+      return str16Pool(cand,6,function(c){return str15Imdb(c.t,c.id).then(function(tt){c.tt=tt;});},function(d,n){prog('Je prépare tes titres pour Stremio',d,n);}).then(function(){
+        cand.forEach(function(c){if(!c.tt){P.nolink++;return;}var x=lib[c.tt];if(x&&!x.removed)return;if(str16KK(c.tt).o)return;
+          var nm=(c.it&&c.it.title)||(c.w&&c.w.title)||'';P.outAdd.push({tt:c.tt,type:c.t==='tv'?'series':'movie',name:nm,it:c.it,w:c.w,x:x||null,src:c.src,poster:(c.it&&c.it.poster)||(c.w&&c.w.poster)||''});});
+        /* films */
+        S.forEach(function(x){var m=x._m;if(!m)return;var key=m.t+'_'+m.id,it=X.C[key],kk=K[x._id]||{},s=x.state||{};
+          if(x.type==='movie'||m.t==='movie'){var seen=str16FilmSeen(x);
+            if(it){if(seen&&!(kk.f&1)&&it.status!=='termine')P.inFilm.push({x:x,it:it});
+              else if(!seen&&(s.timeOffset||0)>0&&it.status==='a_voir'&&!kk.p)P.inProg.push({x:x,it:it});
+              if(!seen&&it.status==='termine'&&!(kk.f&1))P.outFilm.push({x:x,it:it});}
+            else if(!X.W[key]&&!kk.a)P.inAdd.push({x:x,m:m,st:seen?'termine':((s.timeOffset||0)>0?'en_cours':'a_voir')});
+            return;}
+          if(it)P.pairs.push({x:x,it:it,tt:x._id});
+          else if(!X.W[key]&&!kk.a)P.inAdd.push({x:x,m:m,st:(s.watched||(s.timesWatched||0)>0||(s.timeOffset||0)>0)?'en_cours':'a_voir'});});
+        /* séries présentes des deux côtés : épisode par épisode */
+        var todo=o.noEps?[]:P.pairs.filter(function(p){var mm=STR16C.m[p.tt],n=str16Cnt(str16TSeen(p.it));p.n=n;return o.full||!mm||mm.x!==p.x._mtime||mm.n!==n;});
+        prog('Je compare tes épisodes',0,todo.length);
+        return str16Pool(todo,4,function(p){return str16Videos(p.tt).then(function(V){p.V=V;var w=(p.x.state||{}).watched;if(!V)return null;return str16Dec(w,V);}).then(function(D){
+          var T=str16TSeen(p.it),Kn=str16Unpack((K[p.tt]||{}).e),s=p.x.state||{},Sset=null,approx=false;
+          if(D){Sset=str16SE(D.set,p.V);p.D=D;}
+          else{/* pas lisible : on se fie à « où tu en es » (saison en cours seulement), sans jamais réécrire côté Stremio */
+            var mv=String(s.video_id||'').match(/:(\d+):(\d+)$/);Sset={};if(mv){var sn=+mv[1],up=+mv[2]-((s.flaggedWatched||0)>0?0:1);for(var e=1;e<=up;e++)Sset[sn+':'+e]=1;approx=true;}}
+          p.S=Sset;p.T=T;var nS=str16Minus(Sset,T,Kn);if(str16Cnt(nS))P.inEps.push({x:p.x,it:p.it,tt:p.tt,eps:nS,approx:approx,p:p});
+          if(D){var nT=str16Minus(T,Sset,Kn);if(str16Cnt(nT)&&p.V)P.outEps.push({x:p.x,it:p.it,tt:p.tt,eps:nT,p:p});}
+          p.done=1;});},function(d,n){prog('Je compare tes épisodes',d,n);}).then(function(){return P;});});});});}
+/* ---------- appliquer ---------- */
+function str16LoadSeasons(it,eps){var need={};Object.keys(eps).forEach(function(k){var s=+k.split(':')[0],e=+k.split(':')[1],L=(episodes[it.id]||{})[s];if(!L||L.length<e)need[s]=1;});
+  return Object.keys(need).reduce(function(pr,s){return pr.then(function(){return it.tmdbId?loadSeasonEps(it.id,it.tmdbId,+s).catch(function(){}):null;});},Promise.resolve());}
+function str16MarkEps(it,eps,day){var n=0;Object.keys(eps).forEach(function(k){var s=k.split(':')[0],i=+k.split(':')[1]-1,L=(episodes[it.id]||{})[s];if(L&&L[i]&&!L[i].seen){L[i].seen=true;L[i].seenDate=L[i].seenDate||day||todayStr();n++;}});if(n)it.lastEpDate=new Date().toISOString();return n;}
+function str16Tmdb(t,id){return fetch('https://api.themoviedb.org/3/'+t+'/'+id+'?api_key='+TMDB+'&language=fr-FR').then(function(r){return r.ok?r.json():null;}).catch(function(){return null;});}
+function str16NewItem(x,m,st,d){d=d||{};var tv=m.t==='tv',date=d.release_date||d.first_air_date||'';
+  var it={id:Date.now()+Math.floor(Math.random()*99999),title:d.title||d.name||x.name||'',originalTitle:'',year:date.slice(0,4),type:tv?'serie':'film',status:st,rating:0,fav:false,tags:['🟣 Stremio'],review:'',personalNotes:'',quote:'',
+    poster:d.poster_path?'https://image.tmdb.org/t/p/w500'+d.poster_path:(x.poster||''),director:'',cast:'',watchedDate:st==='termine'?(str16Day((x.state||{}).lastWatched)||todayStr()):'',addedAt:Date.now(),synopsis:d.overview||'',seriesStatus:d.status||'',nbSeasons:d.number_of_seasons||0,
+    tmdbId:m.id,tmdbType:m.t,progress:null,lastEpDate:null,runtime:d.runtime||0,epRuntime:(d.episode_run_time&&d.episode_run_time[0])||0,tmdbRating:d.vote_average||0,rewatchCount:0,genreIds:(d.genres||[]).map(function(g){return g.id;}),networkName:(d.networks&&d.networks[0]&&d.networks[0].name)||''};
+  var ot=d.original_title||d.original_name||'';if(ot&&ot!==it.title)it.originalTitle=ot;return it;}
+/* sel : {inFilm:[bool…], …} — ce qui n'est pas coché est retenu comme « vu et refusé » pour ne plus être reproposé */
+function str16Apply(P,sel,prog){prog=prog||function(){};var R={inFilm:0,inProg:0,inEps:0,inAdd:0,outAdd:0,outFilm:0,outEps:0},muts={},chT=false,chE=false;
+  function on(g,i){return !sel||!sel[g]||sel[g][i]!==false;}
+  function addK(kk,o){kk.e=str16Pack(str16Union(str16Unpack(kk.e),o));}
+  P.inFilm.forEach(function(a,i){var kk=str16KK(a.x._id);kk.f=1;if(!on('inFilm',i))return;a.it.status='termine';if(!a.it.watchedDate)a.it.watchedDate=str16Day(a.x.state.lastWatched)||todayStr();delete a.it.autoPaused;R.inFilm++;chT=true;});
+  P.inProg.forEach(function(a,i){str16KK(a.x._id).p=1;if(!on('inProg',i))return;a.it.status='en_cours';R.inProg++;chT=true;});
+  P.outFilm.forEach(function(a,i){str16KK(a.x._id).f=1;if(!on('outFilm',i))return;
+    var wd=a.it.watchedDate&&/^\d{4}-\d{2}-\d{2}/.test(a.it.watchedDate)?new Date(a.it.watchedDate.slice(0,10)+'T21:00:00').toISOString():str16Now();str16Mut(muts,a.x._id,a.x,'movie',a.x.name,str16MutFilm(wd));R.outFilm++;});
+  /* épisodes vus ici → cochés sur Stremio (on repart du « watched » de Stremio relu juste avant, on ajoute, on n'enlève rien) */
+  P.outEps.forEach(function(a,i){var kk=str16KK(a.tt);addK(kk,a.eps);if(!on('outEps',i))return;str16Mut(muts,a.tt,a.x,'series',a.x.name,str16MutEps(a.tt,a.eps,function(n){R.outEps+=n;}));});
+  /* titres de ta collection / tes Attentes → ta bibliothèque Stremio (avec les épisodes / le film déjà vus ici) */
+  P.outAdd.forEach(function(a,i){var kk=str16KK(a.tt);kk.o=1;kk.a=1;if(!on('outAdd',i))return;R.outAdd++;
+    str16Mut(muts,a.tt,a.x,a.type,a.name,function(c){c.removed=false;c.temp=false;});
+    if(a.type==='movie'){if(a.it&&a.it.status==='termine'){kk.f=1;str16Mut(muts,a.tt,a.x,a.type,a.name,str16MutFilm(str16Now()));}return;}
+    var T=a.it?str16TSeen(a.it):{};if(str16Cnt(T)){addK(kk,T);str16Mut(muts,a.tt,a.x,a.type,a.name,str16MutEps(a.tt,T,function(n){R.outEps+=n;}));}});
+  var chain=Promise.resolve();
+  /* épisodes vus sur Stremio → cochés ici */
+  P.inEps.forEach(function(a,i){var kk=str16KK(a.tt),okk=on('inEps',i);chain=chain.then(function(){addK(kk,a.eps);if(!okk)return;
+    return str16LoadSeasons(a.it,a.eps).then(function(){var n=str16MarkEps(a.it,a.eps,str16Day((a.x.state||{}).lastWatched));R.inEps+=n;if(n){chE=true;chT=true;}});});});
+  /* nouveaux titres de ta bibliothèque Stremio (ou vus dessus) → ta collection */
+  P.inAdd.forEach(function(a,i){var kk=str16KK(a.x._id);kk.a=1;kk.o=1;if(a.m.t==='movie'&&str16FilmSeen(a.x))kk.f=1;if(!on('inAdd',i))return;var st=(sel&&sel.inAddSt&&sel.inAddSt[i])||a.st;
+    chain=chain.then(function(){prog('J\'ajoute à ta collection',R.inAdd,P.inAdd.length);return str16Tmdb(a.m.t,a.m.id).then(function(d){
+      if(str16Index().C[a.m.t+'_'+a.m.id])return;var it=str16NewItem(a.x,a.m,st,d);items.unshift(it);R.inAdd++;chT=true;
+      var w=(a.x.state||{}).watched;if(a.m.t!=='tv'||!w)return;
+      return str16Videos(a.x._id).then(function(V){if(!V)return null;return str16Dec(w,V).then(function(D){if(!D)return;var eps=str16SE(D.set,V);if(!str16Cnt(eps))return;addK(kk,eps);
+        return str16LoadSeasons(it,eps).then(function(){var n=str16MarkEps(it,eps,str16Day((a.x.state||{}).lastWatched));if(n){chE=true;R.inEps+=n;}});});});});});});
+  return chain.then(function(){
+    if(chE){try{svE();}catch(_){}}
+    if(chT){try{sv();}catch(_){}try{renderAll();}catch(_){}}
+    prog('J\'envoie sur Stremio',0,Object.keys(muts).length);return str16Flush(muts);
+  }).then(function(){
+    /* mémoire : tout ce qui est vu d'un côté ou de l'autre devient « connu » (un épisode que tu décoches ensuite ne revient pas),
+       tout ce qui est dans ta bibliothèque Stremio ou ta collection aussi (si tu l'enlèves d'un côté, il ne revient pas de l'autre) */
+    if(P.memEps!==false)P.pairs.forEach(function(p){if(!p.done)return;var kk=str16KK(p.tt),T=str16TSeen(p.it);addK(kk,str16Union(p.D?p.S:null,T));var x=(STR16.lib&&STR16.lib[p.tt])||p.x;STR16C.m[p.tt]={x:x._mtime,n:str16Cnt(T)};});
+    var X=str16Index();Object.keys(STR16.lib||{}).forEach(function(tt){var x=STR16.lib[tt];if(!x||!/^tt\d+$/.test(tt))return;
+      if(P.memFilm!==false&&x.type==='movie'&&str16FilmSeen(x))str16KK(tt).f=1;
+      if(P.memAdd!==false){if(!x.removed)str16KK(tt).o=1;var e=STR16T[tt];if(e&&e[1]&&X.C[e[0]+'_'+e[1]])str16KK(tt).a=1;}});
+    STR16C.last=Date.now();STR16C.first=1;str16SvC();str16Badge();return R;});}
+function str16Sum(R){var a=[];if(R.inEps)a.push(R.inEps+' épisode'+(R.inEps>1?'s':'')+' coché'+(R.inEps>1?'s':'')+' ici');if(R.inFilm)a.push(R.inFilm+' film'+(R.inFilm>1?'s':'')+' passé'+(R.inFilm>1?'s':'')+' en Vu');if(R.inProg)a.push(R.inProg+' en cours');if(R.inAdd)a.push(R.inAdd+' titre'+(R.inAdd>1?'s':'')+' ajouté'+(R.inAdd>1?'s':'')+' à ta collection');
+  if(R.outEps)a.push(R.outEps+' épisode'+(R.outEps>1?'s':'')+' coché'+(R.outEps>1?'s':'')+' sur Stremio');if(R.outFilm)a.push(R.outFilm+' film'+(R.outFilm>1?'s':'')+' marqué'+(R.outFilm>1?'s':'')+' vu'+(R.outFilm>1?'s':'')+' sur Stremio');if(R.outAdd)a.push(R.outAdd+' titre'+(R.outAdd>1?'s':'')+' ajouté'+(R.outAdd>1?'s':'')+' à ta bibliothèque Stremio');return a.join(' · ');}
+/* ---------- synchro automatique (après la 1re synchro que tu as validée) ---------- */
+function str16Auto(){if(!str16On()||!STR16C.first||(!STR16C.auto&&!STR16C.adds))return;if(STR16.run||STR16.lock){STR16.again=true;return;}
+  STR16.run=str16Plan({noEps:!STR16C.auto}).then(function(P){if(STR16.lock)return null;var sel={};
+    if(!STR16C.auto){['inFilm','inProg','inEps','outFilm','outEps'].forEach(function(g){sel[g]=P[g].map(function(){return false;});});P.memEps=false;P.memFilm=false;}
+    else sel.inEps=P.inEps.map(function(a){return !a.approx;});
+    if(!STR16C.adds){sel.inAdd=P.inAdd.map(function(){return false;});sel.outAdd=P.outAdd.map(function(){return false;});P.memAdd=false;}
+    /* ce qu'on n'applique pas en auto reste proposé dans « Synchroniser maintenant » : on le retire du plan au lieu de le « refuser » */
+    ['inFilm','inProg','inEps','outFilm','outEps','inAdd','outAdd'].forEach(function(g){if(!sel[g])return;var keep=[],ks=[];P[g].forEach(function(a,i){if(sel[g][i]!==false){keep.push(a);ks.push(true);}});P[g]=keep;sel[g]=ks;});
+    return str16Apply(P,sel).then(function(R){var s=str16Sum(R);if(s)try{toast('🟣 Stremio : '+s);}catch(_){}});
+  }).catch(function(e){if(e&&e.message!=='off')console.warn('str16 auto',e);}).then(function(){STR16.run=null;if(STR16.again){STR16.again=false;setTimeout(str16Auto,4000);}});}
+(function(){var t=0;function soon(ms){clearTimeout(t);t=setTimeout(function(){if(!document.hidden)str16Auto();},ms);}
+  setTimeout(function(){soon(100);},9000);setInterval(function(){if(!document.hidden&&Date.now()-(STR16C.last||0)>14*60000)str16Auto();},60000);
+  document.addEventListener('visibilitychange',function(){if(!document.hidden&&Date.now()-(STR16C.last||0)>8*60000)soon(1500);});
+  /* quand tu coches un épisode / passes un film en Vu ici, Stremio suit (petit délai pour grouper) */
+  function after(){if(str16On()&&STR16C.first&&!STR16.run&&!STR16.lock)soon(Math.max(20000,45000-(Date.now()-(STR16C.last||0))));}
+  try{var oE=svE;svE=function(){var r=oE.apply(this,arguments);after();return r;};}catch(_){}
+  try{var oS=sv;sv=function(){var r=oS.apply(this,arguments);after();return r;};}catch(_){}})();
+/* ---------- interface ---------- */
+function str16Ago(t){var m=Math.round((Date.now()-t)/60000);if(m<1)return 'à l\'instant';if(m<60)return 'il y a '+m+' min';var h=Math.round(m/60);if(h<24)return 'il y a '+h+' h';return new Date(t).toLocaleDateString('fr-FR',{day:'numeric',month:'short'});}
+function str16Dur(ms){var m=Math.round((ms||0)/60000);return m>=60?Math.floor(m/60)+' h '+String(m%60).padStart(2,'0'):m+' min';}
+function str16Badge(){var b=document.getElementById('str16-open-btn');if(b)b.innerHTML='🟣 Stremio'+(str16On()?' <span class="str16-ok">✓</span>':'');}
+function str16Poster(u){u=String(u||'');return /^https?:\/\//.test(u)?u:'';}
+function str16LoginHtml(){return '<div class="soc-t">Relie ton compte : ce que tu regardes sur Stremio se coche tout seul ici, et ce que tu ajoutes ici arrive dans ta bibliothèque Stremio.</div>'
+  +'<form id="str16-f" class="str16-form" autocomplete="on"><input type="email" id="str16-em" placeholder="E-mail de ton compte Stremio" autocomplete="username" required><input type="password" id="str16-pw" placeholder="Mot de passe Stremio" autocomplete="current-password" required><button class="soc-btn" type="submit" id="str16-go">🔗 Relier mon compte</button><div class="str16-err" id="str16-err"></div></form>'
+  +'<div class="str16-safe">🔒 Ton mot de passe part directement chez Stremio, il n\'est jamais enregistré. L\'appli garde seulement la clé de session, sur cet appareil (jamais dans le cloud). Tu peux te déconnecter quand tu veux.</div>'
+  +'<details class="str16-alt"><summary>Ton compte Stremio passe par Facebook, Google ou Apple ?</summary>'
+  +'<button class="soc-btn2 str16-w" id="str16-code" type="button">📲 Me connecter avec un code Stremio</button><div id="str16-codebox"></div>'
+  +'<div class="soc-t str16-l">Ou, sur un ordi : connecte-toi sur <b>web.stremio.com</b>, ouvre la console (F12) et tape<br><code>JSON.parse(localStorage.getItem("profile")).auth.key</code><br>puis colle le résultat ici :</div>'
+  +'<div class="str16-kr"><input id="str16-key" placeholder="Clé de session Stremio" autocomplete="off" spellcheck="false"><button class="soc-btn2" id="str16-kgo" type="button">OK</button></div></details>';}
+function str16Open(view){var o=socOverlay('<div class="str16"><div class="soc-h">🟣 Stremio</div><div id="str16-b"></div><div class="soc-row"><button class="soc-btn2" id="str16-x">Fermer</button></div></div>');
+  o.querySelector('.soc-box').classList.add('str16-box');o.querySelector('#str16-x').onclick=function(){if(o._poll)clearInterval(o._poll);o.remove();};str16Draw(o,view);return o;}
+function str16Draw(o,view){var B=o.querySelector('#str16-b');if(!B)return;if(o._poll){clearInterval(o._poll);o._poll=0;}
+  if(!str16On()){B.innerHTML=str16LoginHtml();str16BindLogin(o,B);return;}
+  B.innerHTML='<div class="str16-acc">✅ Relié à <b>'+esc(STR16.auth.e||'ton compte Stremio')+'</b> <button class="soc-btn2 str16-sm" id="str16-out" type="button">Se déconnecter</button></div>'
+    +'<div id="str16-st" class="soc-t">⏳ Je regarde ta bibliothèque Stremio…</div><div id="str16-cw"></div>'
+    +'<div id="str16-plan"></div>'
+    +'<div class="str16-opts"><label><input type="checkbox" id="str16-auto"'+(STR16C.auto?' checked':'')+'><span>🔁 Synchro auto des <b>films et épisodes vus</b>, dans les deux sens</span></label>'
+    +'<label><input type="checkbox" id="str16-adds"'+(STR16C.adds?' checked':'')+'><span>➕ Synchro auto des <b>ajouts</b> (bibliothèque Stremio ↔ ta collection et tes Attentes)</span></label></div>'
+    +'<div class="str16-foot">'+(STR16C.last?'Dernière synchro '+str16Ago(STR16C.last)+' · ':'')+'<a href="#" id="str16-reset">Tout revérifier depuis le début</a></div>';
+  B.querySelector('#str16-out').onclick=function(){if(!confirm('Déconnecter ton compte Stremio de Ciné Tracker sur cet appareil ?'))return;str16Logout();toast('🟣 Compte Stremio déconnecté');str16Draw(o);};
+  B.querySelector('#str16-auto').onchange=function(){STR16C.auto=this.checked;str16SvC();};
+  B.querySelector('#str16-adds').onchange=function(){STR16C.adds=this.checked;str16SvC();};
+  B.querySelector('#str16-reset').onclick=function(e){e.preventDefault();if(!confirm('Tout revérifier : je reproposerai tout ce qui diffère entre Stremio et Ciné Tracker (rien n\'est effacé). On y va ?'))return;STR16C.k={};STR16C.m={};str16SvC();str16Preview(o,true);};
+  str16Lib(30000).then(function(lib){var st=B.querySelector('#str16-st');if(!st)return;var L=Object.keys(lib).map(function(k){return lib[k];});
+    var inLib=L.filter(function(x){return !x.removed&&(x.type==='movie'||x.type==='series');}),cw=L.filter(function(x){var s=x.state||{};return x.type!=='other'&&(!x.removed||x.temp)&&(s.timeOffset||0)>0;}).sort(function(a,b){return String((b.state||{}).lastWatched||'').localeCompare(String((a.state||{}).lastWatched||''));});
+    st.innerHTML='📚 Bibliothèque Stremio : <b>'+inLib.length+'</b> titre'+(inLib.length>1?'s':'')+' ('+inLib.filter(function(x){return x.type==='series';}).length+' séries)'+(cw.length?' · ▶️ <b>'+cw.length+'</b> en cours':'');
+    var C=B.querySelector('#str16-cw');if(C&&cw.length){C.innerHTML='<div class="str16-cwh">▶️ Tu en es là sur Stremio</div><div class="str16-cwl">'+cw.slice(0,12).map(function(x,i){var s=x.state||{},pc=s.duration?Math.min(100,Math.round(s.timeOffset/s.duration*100)):0,mv=String(s.video_id||'').match(/:(\d+):(\d+)$/);
+      return '<button class="str16-cwi" type="button" data-cw="'+i+'"><span class="str16-cwp">'+(str16Poster(x.poster)?'<img src="'+esc(x.poster)+'" alt="" loading="lazy">':'🎬')+'<i style="width:'+pc+'%"></i></span><b>'+esc(x.name||'')+'</b><small>'+(mv?'S'+mv[1]+' · ép. '+mv[2]+' · ':'')+str16Dur(s.timeOffset)+(s.duration?' / '+str16Dur(s.duration):'')+'</small></button>';}).join('')+'</div>';
+      C.querySelectorAll('[data-cw]').forEach(function(b){b.onclick=function(){var x=cw[+b.dataset.cw],s=x.state||{},p='detail/'+x.type+'/'+encodeURIComponent(x._id)+((s.video_id&&(s.timeOffset||0)>0)?'/'+encodeURIComponent(s.video_id):'');var U={app:'stremio:///'+p,web:'https://web.stremio.com/#/'+p,ok:1};if(STR15.m)str15Go(U,STR15.m);else str15Choose(U,null);};});}
+  }).catch(function(e){var st=B.querySelector('#str16-st');if(st)st.textContent='⚠️ '+(e&&e.message==='off'?'Session terminée, reconnecte-toi':str16ErrFr(e));if(!str16On())str16Draw(o);});
+  str16Preview(o,view==='full');}
+function str16BindLogin(o,B){var f=B.querySelector('#str16-f'),err=B.querySelector('#str16-err');
+  f.addEventListener('submit',function(e){e.preventDefault();var em=B.querySelector('#str16-em').value.trim(),pw=B.querySelector('#str16-pw'),btn=B.querySelector('#str16-go');if(!em||!pw.value)return;
+    btn.disabled=true;btn.textContent='⏳ Connexion…';err.textContent='';var pass=pw.value;
+    str16Login(em,pass).then(function(){pw.value='';pass='';toast('🟣 Compte Stremio relié !');str16Draw(o,'first');},function(e2){pw.value='';pass='';btn.disabled=false;btn.textContent='🔗 Relier mon compte';err.textContent='⚠️ '+str16ErrFr(e2);});});
+  B.querySelector('#str16-kgo').onclick=function(){var k=B.querySelector('#str16-key'),btn=this;btn.disabled=true;str16UseKey(k.value).then(function(){k.value='';toast('🟣 Compte Stremio relié !');str16Draw(o,'first');},function(e2){btn.disabled=false;toast('⚠️ Clé refusée par Stremio ('+str16ErrFr(e2)+')');});};
+  B.querySelector('#str16-code').onclick=function(){var box=B.querySelector('#str16-codebox'),btn=this;btn.disabled=true;box.innerHTML='<div class="soc-t">⏳ Je demande un code à Stremio…</div>';
+    fetch(STR16_LINK+'create?type=Create').then(function(r){return r.json();}).then(function(j){var c=j&&j.result;if(!c||!c.code)throw new Error('x');
+      var link=c.link&&/^https:\/\//.test(c.link)?c.link:'https://link.stremio.com/?code='+encodeURIComponent(c.code);
+      box.innerHTML='<div class="str16-code">'+esc(c.code)+'</div>'+(c.qrcode&&/^(data:image\/|https:\/\/)/.test(c.qrcode)?'<img class="str16-qr" src="'+esc(c.qrcode)+'" alt="QR code">':'')
+        +'<div class="soc-t">Ouvre <a href="'+esc(link)+'" target="_blank" rel="noopener">'+esc(link.replace(/^https:\/\//,''))+'</a> (ou scanne le QR avec ton téléphone), connecte-toi à Stremio et valide : je capte le reste tout seul.</div><div class="soc-t" id="str16-wait">⏳ J\'attends ta validation…</div>';
+      var t0=Date.now();o._poll=setInterval(function(){if(!document.body.contains(o)||Date.now()-t0>6*60000){clearInterval(o._poll);o._poll=0;var w=B.querySelector('#str16-wait');if(w)w.textContent='⌛ Code expiré, redemande-en un.';btn.disabled=false;return;}
+        fetch(STR16_LINK+'read?type=Read&code='+encodeURIComponent(c.code)).then(function(r){return r.json();}).then(function(d){var k=d&&d.result&&d.result.authKey;if(!k||!o._poll)return;clearInterval(o._poll);o._poll=0;
+          str16UseKey(k).then(function(){toast('🟣 Compte Stremio relié !');str16Draw(o,'first');},function(){str16SetAuth(k,'');str16Draw(o,'first');});}).catch(function(){});},3000);
+    }).catch(function(){btn.disabled=false;box.innerHTML='<div class="soc-t">😕 Ce mode ne passe pas sur ce navigateur. Utilise l\'e-mail + mot de passe, ou la clé ci-dessous.</div>';});};}
+var STR16_G=[['inEps','📺 Épisodes vus sur Stremio → cochés ici'],['inFilm','✅ Films vus sur Stremio → passés en Vu ici'],['inProg','▶️ Commencés sur Stremio → En cours ici'],['inAdd','📥 Dans ta bibliothèque Stremio → ajoutés à ta collection'],
+  ['outEps','📺 Épisodes vus ici → cochés sur Stremio'],['outFilm','✅ Films vus ici → marqués vus sur Stremio'],['outAdd','📤 Ta collection et tes Attentes → ta bibliothèque Stremio']];
+var STR16_SRC={en_cours:'▶️ En cours',a_voir:'📌 À voir',en_pause:'⏸️ En pause',attentes:'⏳ Attentes'};
+function str16Row(g,a){var x=a.x||{},it=a.it||{},img=str16Poster(it.poster)||str16Poster(a.poster)||str16Poster(x.poster),t='',d='';
+  if(g==='inEps'){t=it.title;d=str16EpLabel(a.eps)+(a.approx?' · ≈ d\'après « où tu en es »':'');}
+  else if(g==='outEps'){t=it.title;d=str16EpLabel(a.eps);}
+  else if(g==='inFilm'){t=it.title;var dd=str16Day((x.state||{}).lastWatched);d='vu sur Stremio'+(dd?' le '+new Date(dd+'T12:00').toLocaleDateString('fr-FR',{day:'numeric',month:'short',year:'numeric'}):'');}
+  else if(g==='inProg'){t=it.title;d=str16Dur((x.state||{}).timeOffset)+' regardées';}
+  else if(g==='outFilm'){t=it.title;d='vu ici'+(it.watchedDate?' le '+it.watchedDate.split('-').reverse().join('/'):'');}
+  else if(g==='inAdd'){t=x.name;d=(x.type==='series'?'📺 Série':'🎬 Film')+(x.removed?' · vu sur Stremio (hors bibliothèque)':'');}
+  else if(g==='outAdd'){t=a.name;d=(a.type==='series'?'📺 Série':'🎬 Film')+' · '+(STR16_SRC[a.src]||'')+(a.x&&a.x.removed&&!a.x.temp?' · retiré de Stremio avant':'');}
+  return {img:img,t:t||'',d:d};}
+function str16Preview(o,full){var box=o.querySelector('#str16-plan');if(!box)return;
+  if(!STR16C.first&&!full)full=true;
+  box.innerHTML='<div class="str16-sync"><button class="soc-btn" id="str16-sync" type="button">🔄 '+(STR16C.first?'Synchroniser maintenant':'Lancer la 1re synchro')+'</button></div>';
+  var go=function(){box.innerHTML='<div class="str16-prog"><div class="soc-t" id="str16-pl">⏳ Je compare Stremio et Ciné Tracker…</div><div class="str16-bar"><i id="str16-pb"></i></div></div>';
+    var pl=box.querySelector('#str16-pl'),pb=box.querySelector('#str16-pb');
+    STR16.lock=true;(STR16.run||Promise.resolve()).then(function(){return str16Plan({full:true,prog:function(l,d,n){if(pl)pl.textContent='⏳ '+l+'… '+(n?d+' / '+n:'');if(pb)pb.style.width=(n?Math.round(d/n*100):0)+'%';}});})
+      .then(function(P){STR16.lock=false;str16DrawPlan(o,box,P);},function(e){STR16.lock=false;box.innerHTML='<div class="soc-t">⚠️ '+(e&&e.message==='off'?'Session terminée, reconnecte-toi':str16ErrFr(e))+'</div>';if(!str16On())str16Draw(o);});};
+  box.querySelector('#str16-sync').onclick=go;if(full&&!STR16C.first)go();}
+function str16DrawPlan(o,box,P){var tot=0;STR16_G.forEach(function(g){tot+=P[g[0]].length;});
+  if(!tot){str16Apply(P,{}).catch(function(){});
+    box.innerHTML='<div class="str16-done">✨ Tout est déjà synchronisé entre Stremio et Ciné Tracker !'+(P.nolink?'<small>'+P.nolink+' titre(s) sans fiche IMDb ne peuvent pas aller sur Stremio.</small>':'')+'</div><div class="str16-sync"><button class="soc-btn2" id="str16-again" type="button">🔄 Revérifier</button></div>';
+    box.querySelector('#str16-again').onclick=function(){str16Preview(o,true);box.querySelector('#str16-sync').click();};return;}
+  var h='<div class="soc-t str16-intro">'+(STR16C.first?'Voilà ce qui a changé.':'1re synchro : voilà ce que je propose.')+' Décoche ce que tu ne veux pas (je ne te le reproposerai plus), puis valide.</div>';
+  STR16_G.forEach(function(g){var L=P[g[0]];if(!L.length)return;
+    h+='<div class="str16-g"><label class="str16-gh"><input type="checkbox" data-gall="'+g[0]+'" checked> '+g[1]+' <span>'+L.length+'</span></label><div class="str16-rows">'+L.map(function(a,i){var r=str16Row(g[0],a);
+      return '<label class="str16-r"><input type="checkbox" data-g="'+g[0]+'" data-i="'+i+'" checked><span class="str16-ri">'+(r.img?'<img src="'+esc(r.img)+'" alt="" loading="lazy">':'🎬')+'</span><span class="str16-rt"><b>'+esc(r.t)+'</b><small>'+esc(r.d)+'</small></span>'
+        +(g[0]==='inAdd'?'<select data-st="'+i+'"><option value="termine"'+(a.st==='termine'?' selected':'')+'>✅ Vu</option><option value="en_cours"'+(a.st==='en_cours'?' selected':'')+'>▶️ En cours</option><option value="a_voir"'+(a.st==='a_voir'?' selected':'')+'>📌 À voir</option></select>':'')+'</label>';}).join('')+'</div></div>';});
+  if(P.nolink)h+='<div class="soc-t str16-l">ℹ️ '+P.nolink+' titre(s) sans fiche IMDb ne peuvent pas aller sur Stremio.</div>';
+  h+='<div class="str16-sync"><button class="soc-btn" id="str16-ok" type="button">✅ Valider</button></div>';box.innerHTML=h;
+  box.querySelectorAll('[data-gall]').forEach(function(c){c.onchange=function(){box.querySelectorAll('[data-g="'+c.dataset.gall+'"]').forEach(function(x){x.checked=c.checked;});};});
+  box.querySelectorAll('select[data-st]').forEach(function(s){s.addEventListener('click',function(e){e.stopPropagation();});});
+  box.querySelector('#str16-ok').onclick=function(){var sel={inAddSt:{}};STR16_G.forEach(function(g){sel[g[0]]=P[g[0]].map(function(_,i){var c=box.querySelector('[data-g="'+g[0]+'"][data-i="'+i+'"]');return !!(c&&c.checked);});});
+    box.querySelectorAll('select[data-st]').forEach(function(s){sel.inAddSt[+s.dataset.st]=s.value;});
+    box.innerHTML='<div class="str16-prog"><div class="soc-t" id="str16-pl">⏳ C\'est parti…</div><div class="str16-bar"><i id="str16-pb" style="width:30%"></i></div></div>';var pl=box.querySelector('#str16-pl'),pb=box.querySelector('#str16-pb');
+    STR16.lock=true;str16Apply(P,sel,function(l,d,n){if(pl)pl.textContent='⏳ '+l+'… '+(n?d+' / '+n:'');if(pb)pb.style.width=(n?Math.round(d/n*100):60)+'%';}).then(function(R){var s=str16Sum(R);
+      box.innerHTML='<div class="str16-done">✅ Synchro faite !<small>'+esc(s||'Rien à changer.')+'</small></div>'+((STR16C.auto||STR16C.adds)?'<div class="soc-t str16-l">À partir de maintenant, ça se fait tout seul (à l\'ouverture de l\'appli, puis toutes les 15 min, et dès que tu coches quelque chose ici).</div>':'');
+      STR16.lock=false;if(s)try{toast('🟣 Stremio : '+s);}catch(_){}var st=o.querySelector('.str16-foot');if(st)st.innerHTML='Dernière synchro à l\'instant · <a href="#" id="str16-reset2">Tout revérifier depuis le début</a>';
+      var r2=o.querySelector('#str16-reset2');if(r2)r2.onclick=function(e){e.preventDefault();STR16C.k={};STR16C.m={};str16SvC();str16Preview(o,true);};},
+      function(e){STR16.lock=false;box.innerHTML='<div class="soc-t">⚠️ '+str16ErrFr(e)+' — rien n\'a été perdu, tu peux relancer.</div>';});};}
+/* ---------- bouton « Stremio » des fiches : ouvrir + gérer ta bibliothèque Stremio ---------- */
+/* liens « stremio:/// » (3 barres : le format officiel de Stremio) */
+str15Urls=function(type,tt,title){var st=type==='tv'?'series':'movie';if(tt){var p='detail/'+st+'/'+tt+(st==='movie'?'/'+tt:'');return {app:'stremio:///'+p,web:'https://web.stremio.com/#/'+p,ok:1};}
+  var q=encodeURIComponent(title||'');return {app:'stremio:///search?search='+q,web:'https://web.stremio.com/#/search?search='+q,ok:0};};
+function str16BtnLbl(b){var c=b&&b._s16;if(!c)return;var x=c.tt&&STR16.lib&&STR16.lib[c.tt],l=b.querySelector('.str15-l');if(!l)return;
+  l.textContent=(c.U&&c.U.ok?'🟣 ':c.U?'🔎 ':'⏳ ')+'Stremio'+(x&&!x.removed?' ✓':'');b.title=c.U&&!c.U.ok?'Chercher dans Stremio':(x&&!x.removed?'Dans ta bibliothèque Stremio — ouvrir':'Ouvrir la page dans Stremio');}
+str15Inject=function(after,type,id,title){if(!after||!after.parentNode||after.parentNode.querySelector('.str15-b'))return;type=type==='tv'?'tv':'movie';
+  var b=document.createElement('button');b.type='button';b.className=(after.className||'')+' str15-b';b.innerHTML='<span class="str15-l">⏳ Stremio</span><span class="str15-c" title="Ouvrir avec… / ta bibliothèque Stremio">▾</span>';b.title='Ouvrir la page dans Stremio';
+  after.insertAdjacentElement('afterend',b);var c={type:type,id:id,title:title,tt:'',U:null};b._s16=c;
+  str15Imdb(type,id).then(function(tt){c.tt=tt;c.U=str15Urls(type,tt,title);str16BtnLbl(b);if(tt&&str16On())str16Lib(300000).then(function(){str16BtnLbl(b);}).catch(function(){});});
+  b.addEventListener('click',function(e){e.preventDefault();e.stopPropagation();if(!c.U){try{toast('⏳ Une seconde, je cherche sa page Stremio…');}catch(_){}return;}
+    if(e.target.closest('.str15-c')||!STR15.m)return str15Choose(c.U,c);str15Go(c.U,STR15.m);});};
+str15Choose=function(U,c){var old=document.getElementById('str15-ov');if(old)old.remove();var o=document.createElement('div');o.id='str15-ov';o.className='soc-ov';
+  o.innerHTML='<div class="soc-box"><div class="soc-h">🟣 Stremio</div>'+(c&&c.title?'<div class="str16-tt">'+esc(c.title)+'</div>':'')
+    +'<div class="soc-t">Ouvrir avec :</div><div class="str15-ch"><button class="soc-btn'+(STR15.m==='web'?'2':'')+'" data-m="app">📱 L\'appli Stremio<small>téléphone, tablette ou ordi où Stremio est installé</small></button><button class="soc-btn'+(STR15.m==='web'?'':'2')+'" data-m="web">🌐 Stremio Web<small>dans le navigateur (web.stremio.com)</small></button></div>'
+    +(U&&!U.ok?'<div class="soc-t" style="font-size:.78rem;opacity:.8">Je n\'ai pas trouvé sa page exacte : Stremio va le chercher par son titre.</div>':'')
+    +(c&&c.tt?'<div class="str16-lib" id="str16-lib">'+(str16On()?'<div class="soc-t">⏳ Je regarde ta bibliothèque Stremio…</div>':'<button class="soc-btn2 str16-w" id="str16-link" type="button">🔗 Relier mon compte Stremio<small>synchro de ta bibliothèque, de tes films et épisodes vus</small></button>')+'</div>':'')
+    +'<div class="soc-row"><button class="soc-btn2" id="str15-x" type="button">Fermer</button></div></div>';
+  document.body.appendChild(o);o.addEventListener('click',function(e){if(e.target===o)o.remove();});o.querySelector('#str15-x').onclick=function(){o.remove();};
+  o.querySelectorAll('[data-m]').forEach(function(b){b.onclick=function(){STR15.m=b.dataset.m;try{localStorage.setItem('cineStremioMode',STR15.m);}catch(_){}o.remove();str15Go(U,STR15.m);};});
+  var lk=o.querySelector('#str16-link');if(lk)lk.onclick=function(){o.remove();str16Open();};
+  if(c&&c.tt&&str16On())str16Card(o,c);};
+function str16Card(o,c){var box=o.querySelector('#str16-lib');if(!box)return;
+  str16Lib(120000).then(function(lib){var x=lib[c.tt],inLib=!!(x&&!x.removed),s=(x&&x.state)||{},mv=String(s.video_id||'').match(/:(\d+):(\d+)$/),h='';
+    h+='<div class="str16-cl">'+(inLib?'✓ Dans ta bibliothèque Stremio':'Pas dans ta bibliothèque Stremio')+'</div><div class="str16-cb">'+(inLib?'<button class="soc-btn2" data-a="rm" type="button">➖ Retirer de ma bibliothèque</button>':'<button class="soc-btn" data-a="add" type="button">➕ Ajouter à ma bibliothèque Stremio</button>');
+    if(c.type==='movie')h+=str16FilmSeen(x)?'<span class="str16-pill">✅ Vu sur Stremio</span>':'<button class="soc-btn2" data-a="seen" type="button">✅ Marquer vu sur Stremio</button>';h+='</div>';
+    if((s.timeOffset||0)>0)h+='<div class="str16-cl">▶️ En cours sur Stremio : '+(mv?'S'+mv[1]+' · ép. '+mv[2]+' · ':'')+str16Dur(s.timeOffset)+(s.duration?' / '+str16Dur(s.duration):'')+' <button class="soc-btn2 str16-sm" data-a="play" type="button">Reprendre</button></div>';
+    box.innerHTML=h;
+    box.querySelectorAll('[data-a]').forEach(function(b){b.onclick=function(){var a=b.dataset.a;
+      if(a==='play'){var p='detail/'+x.type+'/'+encodeURIComponent(x._id)+(s.video_id?'/'+encodeURIComponent(s.video_id):'');var U2={app:'stremio:///'+p,web:'https://web.stremio.com/#/'+p,ok:1};o.remove();str15Go(U2,STR15.m||'app');return;}
+      b.disabled=true;var kk=str16KK(c.tt),st=c.type==='tv'?'series':'movie',it=null;try{it=str16Index().C[c.type+'_'+c.id]||null;}catch(_){}
+      var pr,mu={};
+      if(a==='rm'){kk.o=1;str16Mut(mu,c.tt,x,st,c.title,function(r){r.removed=true;});pr=str16Flush(mu).then(function(){toast('➖ Retiré de ta bibliothèque Stremio');});}
+      else if(a==='seen'){kk.f=1;str16Mut(mu,c.tt,x,st,c.title,function(m,ex){if(!ex){m.removed=true;m.temp=true;}});str16Mut(mu,c.tt,x,st,c.title,str16MutFilm(str16Now()));pr=str16Flush(mu).then(function(){toast('✅ Marqué vu sur Stremio');});}
+      else{kk.o=1;kk.a=1;var T=it&&c.type==='tv'?str16TSeen(it):{},nE=0;str16Mut(mu,c.tt,x,st,c.title,function(n){n.removed=false;n.temp=false;});
+        if(str16Cnt(T)){kk.e=str16Pack(str16Union(str16Unpack(kk.e),T));str16Mut(mu,c.tt,x,st,c.title,str16MutEps(c.tt,T,function(n){nE=n;}));}
+        if(c.type==='movie'&&it&&it.status==='termine'){kk.f=1;str16Mut(mu,c.tt,x,st,c.title,str16MutFilm(str16Now()));}
+        pr=str16Flush(mu).then(function(){toast('➕ Ajouté à ta bibliothèque Stremio'+(nE?' (avec tes '+nE+' épisodes vus)':''));});}
+      pr.then(function(){str16SvC();document.querySelectorAll('.str15-b').forEach(str16BtnLbl);str16Card(o,c);},function(e){b.disabled=false;toast('⚠️ '+str16ErrFr(e));});};});
+  },function(e){box.innerHTML='<div class="soc-t">⚠️ '+(e&&e.message==='off'?'Session terminée, reconnecte-toi':str16ErrFr(e))+'</div>';});}
+/* ---------- points d'entrée : barre du haut + profil ---------- */
+(function(){function put(){var a=document.getElementById('iv-open-btn');if(!a||document.getElementById('str16-open-btn'))return;var b=document.createElement('button');b.id='str16-open-btn';b.type='button';b.title='Relier ton compte Stremio et synchroniser';
+    b.onclick=function(){str16Open();};a.insertAdjacentElement('afterend',b);str16Badge();}
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',put);else put();
+  try{var oC=connectPanelHtml;connectPanelHtml=function(){return oC.apply(this,arguments)+'<details class="cn-box"><summary>🟣 Mon compte Stremio '+(str16On()?'<span class="cn-on">relié</span>':'')+'</summary><div class="cn-hint" style="margin:6px 0 8px">Ce que tu regardes sur Stremio se coche ici, et ce que tu ajoutes ici arrive dans ta bibliothèque Stremio.</div><div class="cn-row"><button class="cn-btn big" id="cn-str16" type="button">🟣 '+(str16On()?'Gérer la synchro Stremio':'Relier mon compte Stremio')+'</button></div></details>';};
+    var oB=bindConnectPanel;bindConnectPanel=function(el){var r=oB.apply(this,arguments);try{var b=el.querySelector('#cn-str16');if(b)b.onclick=function(){var pv=document.getElementById('profile-ov');if(pv)pv.classList.remove('show');str16Open();};}catch(_){}return r;};}catch(_){}})();
+(function(){var st=document.createElement('style');st.textContent=''
+ +'#str16-open-btn{background:linear-gradient(135deg,#8a5cf6,#5b2be0)!important;color:#fff!important;border-color:transparent!important}.str16-ok{font-weight:900}'
+ +'.soc-box.str16-box{width:min(620px,100%);text-align:left}.str16-box .soc-h,.str16-box .soc-row{text-align:center}.str16-box .soc-t{margin:6px 0}'
+ +'.str16-form{display:flex;flex-direction:column;gap:8px;margin:12px 0}.str16-form input,.str16-kr input{padding:11px 12px;border-radius:12px;border:1px solid var(--border);background:var(--input-bg);color:var(--ink);font:inherit;font-size:16px}'
+ +'.str16-form .soc-btn{margin:4px 0 0;background:linear-gradient(135deg,#8a5cf6,#5b2be0)}.str16-err{color:#ff6b81;font-weight:700;font-size:.86rem;min-height:1em}'
+ +'.str16-safe{font-size:.78rem;color:var(--muted);background:var(--input-bg);border-radius:12px;padding:8px 10px;line-height:1.35}'
+ +'.str16-alt{margin-top:10px;font-size:.86rem}.str16-alt summary{cursor:pointer;font-weight:700}.str16-w{display:flex;flex-direction:column;align-items:center;gap:2px;width:100%;margin:10px 0 4px;padding:10px}.str16-w small{font-size:.72rem;opacity:.8}'
+ +'.str16-l{font-size:.78rem!important;text-align:left}.str16-l code{font-size:.72rem;word-break:break-all;background:rgba(0,0,0,.25);padding:1px 4px;border-radius:5px}'
+ +'.str16-kr{display:flex;gap:6px;margin-top:6px}.str16-kr input{flex:1;min-width:0}'
+ +'.str16-code{font:900 2rem/1.1 Fredoka,sans-serif;letter-spacing:.18em;text-align:center;margin:10px 0 4px;color:#b69cff}.str16-qr{display:block;width:150px;height:150px;margin:6px auto;border-radius:10px;background:#fff;padding:6px;image-rendering:pixelated}'
+ +'.str16-acc{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:.92rem;margin-bottom:4px}.str16-acc b{word-break:break-all}.str16-sm{padding:4px 10px!important;font-size:.78rem!important;margin-left:auto}'
+ +'.str16-cwh{font-weight:800;margin:10px 0 6px}.str16-cwl{display:flex;gap:10px;overflow-x:auto;padding-bottom:6px;scroll-snap-type:x mandatory}'
+ +'.str16-cwi{flex:0 0 108px;scroll-snap-align:start;background:none;border:none;color:inherit;text-align:left;padding:0;cursor:pointer;font:inherit}.str16-cwi b{display:block;font-size:.76rem;line-height:1.2;margin-top:4px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}.str16-cwi small{font-size:.68rem;color:var(--muted)}'
+ +'.str16-cwp{position:relative;display:flex;align-items:center;justify-content:center;width:108px;height:160px;border-radius:10px;overflow:hidden;background:#1b1330;font-size:2rem}.str16-cwp img{width:100%;height:100%;object-fit:cover}.str16-cwp i{position:absolute;left:0;bottom:0;height:4px;background:#8a5cf6;box-shadow:0 0 6px #8a5cf6}'
+ +'.str16-sync{text-align:center;margin:12px 0 6px}.str16-sync .soc-btn{background:linear-gradient(135deg,#8a5cf6,#5b2be0)}'
+ +'.str16-prog{margin:12px 0}.str16-bar{height:6px;border-radius:6px;background:var(--input-bg);overflow:hidden}.str16-bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,#8a5cf6,#c4a8ff);transition:width .3s}'
+ +'.str16-done{text-align:center;font-weight:800;margin:14px 0 6px;font-size:1.02rem}.str16-done small{display:block;font-weight:500;color:var(--muted);font-size:.84rem;margin-top:6px}'
+ +'.str16-g{margin:10px 0;border:1px solid var(--border);border-radius:14px;overflow:hidden}.str16-gh{display:flex;align-items:center;gap:8px;padding:9px 10px;font-weight:800;font-size:.88rem;background:var(--input-bg);cursor:pointer}.str16-gh span{margin-left:auto;background:#8a5cf6;color:#fff;border-radius:10px;padding:1px 8px;font-size:.76rem}'
+ +'.str16-gh,.str16-r{color:var(--ink)!important;margin:0}.str16-rows{max-height:260px;overflow-y:auto}.str16-r{display:flex;align-items:center;gap:9px;padding:7px 10px;border-top:1px solid var(--border);cursor:pointer}.str16-r input,.str16-gh input{width:18px;height:18px;flex:0 0 18px;accent-color:#8a5cf6}'
+ +'.str16-ri{flex:0 0 34px;height:50px;border-radius:6px;overflow:hidden;background:#1b1330;display:flex;align-items:center;justify-content:center}.str16-ri img{width:100%;height:100%;object-fit:cover}'
+ +'.str16-rt{flex:1;min-width:0}.str16-rt b{display:block;font-size:.86rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.str16-rt small{display:block;font-size:.74rem;color:var(--muted);line-height:1.25}'
+ +'.str16-r select{flex:0 0 auto;max-width:110px;padding:5px;border-radius:8px;border:1px solid var(--border);background:var(--input-bg);color:var(--ink);font:inherit;font-size:.78rem}'
+ +'.str16-opts{display:flex;flex-direction:column;gap:8px;margin:14px 0 8px;font-size:.84rem;text-align:left}.str16-opts label{display:flex!important;gap:9px;align-items:flex-start;cursor:pointer;color:var(--ink);margin:0;font-weight:500}.str16-opts label span{flex:1;min-width:0;line-height:1.35}.str16-opts input{accent-color:#8a5cf6;margin:2px 0 0;width:18px!important;height:18px;flex:0 0 18px;padding:0}'
+ +'.str16-foot{font-size:.74rem;color:var(--muted);text-align:center}.str16-foot a{color:inherit}.str16-intro{text-align:left}'
+ +'.str16-tt{text-align:center;font-weight:800;margin:-4px 0 6px}.str16-lib{margin-top:12px;padding-top:10px;border-top:1px solid var(--border)}.str16-cl{font-size:.86rem;font-weight:700;margin:4px 0;text-align:center}'
+ +'.str16-cb{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin:6px 0}.str16-cb .soc-btn{margin:0;background:linear-gradient(135deg,#8a5cf6,#5b2be0);font-size:.9rem;padding:10px 14px}.str16-cb .soc-btn2{padding:9px 12px}'
+ +'.str16-pill{display:inline-flex;align-items:center;padding:8px 12px;border-radius:12px;background:rgba(138,92,246,.18);font-weight:700;font-size:.84rem}'
+ +'.str15-ch{display:flex;flex-direction:column;gap:10px;margin:8px 0 4px}.str15-ch button{display:flex;flex-direction:column;align-items:center;gap:2px;padding:12px 14px;font-size:1rem;margin:0}.str15-ch small{font-size:.72rem;font-weight:600;opacity:.8}.str15-ch .soc-btn{background:linear-gradient(135deg,#8a5cf6,#5b2be0)}';
+ document.head.appendChild(st);})();
 /* ---- Jeux ---- */
 /* ====== 🕸️ 6 degrés : les règles expliquées avant de jouer ====== */
 (function(){var oD=gameDeg;gameDeg=function(){var body=gStage('🕸️ 6 degrés','<div class="deg-rules"><div class="dr-big">🕸️</div><h3>Le but : relier deux acteurs</h3>'
