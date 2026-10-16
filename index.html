@@ -21339,6 +21339,44 @@ function g14HubPbr(T,R,b){try{if(gfx13Tier()==='eco')return;var env=g14Env(T,R);
 (function(){if(typeof frvfLine!=='function')return;var oL=frvfLine;frvfLine=function(id,s,voDate){var I=frvfInfo(id,s);if(!I||I.none)return '';return oL(id,s,'');};})();
 (function(){if(typeof buildEpTracker!=='function')return;var oB=buildEpTracker;buildEpTracker=function(item){var h=oB.apply(this,arguments);try{if(typeof h==='string')h=h.replace(/<div class="ssn-info-field vf12"><label>[^<]*<\/label><div class="vf12-row"><span><\/span><button[^>]*>[^<]*<\/button><\/div><\/div>/g,'');}catch(_){}return h;};})();
 (function(){if(typeof renderWishGrid!=='function')return;var oR=renderWishGrid;renderWishGrid=function(){var r=oR.apply(this,arguments);try{document.querySelectorAll('#wish-grid .vf12-badge').forEach(function(b){if(/🇺🇸|pas encore de date/i.test(b.textContent))b.remove();});}catch(_){}return r;};})();
+/* ====== 🟣 STREMIO : bouton « Stremio » sur les fiches (collection, Attentes, catalogue, Pour toi) qui ouvre la page
+   du film ou de la série dans Stremio — l'appli (stremio://) ou le site web.stremio.com, au choix (le choix est retenu) ====== */
+var STR15={c:{},m:null};try{STR15.c=JSON.parse(localStorage.getItem('cineImdb')||'{}')||{};}catch(_){STR15.c={};}
+try{STR15.m=localStorage.getItem('cineStremioMode')||null;}catch(_){}
+/* identifiant IMDb (c'est celui qu'utilise Stremio), pris sur TMDB et gardé en mémoire */
+function str15Imdb(type,id){type=type==='tv'?'tv':'movie';if(!id)return Promise.resolve('');var k=type+'_'+id,e=STR15.c[k];
+  if(e&&(e.v||Date.now()-e.t<3*864e5))return Promise.resolve(e.v||'');
+  var u='https://api.themoviedb.org/3/'+type+'/'+id+'/external_ids?api_key='+TMDB;
+  return fetch(u).then(function(r){return r.ok?r.json():null;}).then(function(j){var v=j&&j.imdb_id&&/^tt\d+$/.test(j.imdb_id)?j.imdb_id:'';STR15.c[k]={v:v,t:Date.now()};try{localStorage.setItem('cineImdb',JSON.stringify(STR15.c));}catch(_){}return v;}).catch(function(){return '';});}
+function str15Urls(type,tt,title){var st=type==='tv'?'series':'movie';if(tt){var p='detail/'+st+'/'+tt+(st==='movie'?'/'+tt:'');return {app:'stremio://'+p,web:'https://web.stremio.com/#/'+p,ok:1};}
+  var q=encodeURIComponent(title||'');return {app:'stremio://search?search='+q,web:'https://web.stremio.com/#/search?search='+q,ok:0};}
+function str15Go(U,m){if(!U)return;if(m==='app'){try{location.href=U.app;}catch(_){}setTimeout(function(){if(!document.hidden)try{toast('🟣 Si Stremio ne s\'ouvre pas, touche ▾ et choisis « Stremio Web »');}catch(_){}},2200);}
+  else{var w=null;try{w=window.open(U.web,'_blank','noopener');}catch(_){}if(!w)try{location.href=U.web;}catch(_){}}}
+function str15Choose(U){var old=document.getElementById('str15-ov');if(old)old.remove();var o=document.createElement('div');o.id='str15-ov';o.className='soc-ov';
+  o.innerHTML='<div class="soc-box"><div class="soc-h">🟣 Ouvrir dans Stremio</div><div class="soc-t">Tu l\'ouvres avec quoi ? Je retiens ton choix (tu pourras le changer avec la petite flèche ▾ du bouton).</div>'
+    +'<div class="str15-ch"><button class="soc-btn" data-m="app">📱 L\'appli Stremio<small>téléphone, tablette ou ordi où Stremio est installé</small></button><button class="soc-btn2" data-m="web">🌐 Stremio Web<small>dans le navigateur (web.stremio.com)</small></button></div>'
+    +(U&&!U.ok?'<div class="soc-t" style="font-size:.78rem;opacity:.8">Je n\'ai pas trouvé sa page exacte : Stremio va le chercher par son titre.</div>':'')+'<div class="soc-row"><button class="soc-btn2" id="str15-x">Annuler</button></div></div>';
+  document.body.appendChild(o);o.addEventListener('click',function(e){if(e.target===o)o.remove();});o.querySelector('#str15-x').onclick=function(){o.remove();};
+  o.querySelectorAll('[data-m]').forEach(function(b){b.onclick=function(){STR15.m=b.dataset.m;try{localStorage.setItem('cineStremioMode',STR15.m);}catch(_){}o.remove();str15Go(U,STR15.m);};});}
+/* le bouton, posé juste après « Bande-annonce » */
+function str15Inject(after,type,id,title){if(!after||!after.parentNode||after.parentNode.querySelector('.str15-b'))return;type=type==='tv'?'tv':'movie';
+  var b=document.createElement('button');b.type='button';b.className=(after.className||'')+' str15-b';b.innerHTML='<span class="str15-l">⏳ Stremio</span><span class="str15-c" title="Appli ou site ?">▾</span>';b.title='Ouvrir la page dans Stremio';
+  after.insertAdjacentElement('afterend',b);var U=null;
+  str15Imdb(type,id).then(function(tt){U=str15Urls(type,tt,title);b.querySelector('.str15-l').textContent=(U.ok?'🟣 ':'🔎 ')+'Stremio';if(!U.ok)b.title='Chercher dans Stremio';});
+  b.addEventListener('click',function(e){e.preventDefault();e.stopPropagation();if(!U){try{toast('⏳ Une seconde, je cherche sa page Stremio…');}catch(_){}return;}
+    if(e.target.closest('.str15-c')||!STR15.m)return str15Choose(U);str15Go(U,STR15.m);});}
+function str15Type(o){return o&&(o.tmdbType==='tv'||o.type==='serie'||o.type==='anime_serie')?'tv':'movie';}
+/* fiches : collection, Attentes, catalogue, aperçu « Pour toi » */
+(function(){if(typeof openModal==='function'){var oM=openModal;openModal=function(id){var r=oM.apply(this,arguments);try{var it=items.find(function(i){return i.id===id;});if(it){var a=document.getElementById('m-trailer')||document.getElementById('m-ost');if(a)str15Inject(a,str15Type(it),it.tmdbId,it.originalTitle||it.title);}}catch(e){console.warn('str15',e);}return r;};}
+  if(typeof openWishModal==='function'){var oW=openWishModal;openWishModal=function(id){var r=oW.apply(this,arguments);try{var w=wishlist.find(function(x){return x.id===id;});var a=document.getElementById('wm-trailer');if(w&&a)str15Inject(a,str15Type(w),w.tmdbId,w.originalTitle||w.title);}catch(e){console.warn('str15',e);}return r;};}
+  if(typeof openCatModal==='function'){var oC=openCatModal;openCatModal=function(key){var r=oC.apply(this,arguments);try{var c=findCatItem(key);var a=document.getElementById('cm-trailer');if(c&&a)str15Inject(a,c.media_type==='tv'?'tv':'movie',c.id,c.original_title||c.original_name||c.title||c.name);}catch(e){console.warn('str15',e);}return r;};}
+  if(typeof fyPreview==='function'){var oF=fyPreview;fyPreview=function(k){var r=oF.apply(this,arguments);try{var x=_fyIndex[k],a=document.querySelector('#soc-ov #fy-tr');if(x&&a)str15Inject(a,String(k).split('_')[0]==='tv'?'tv':'movie',x.id,x.original_title||x.original_name||x.title||x.name);}catch(e){console.warn('str15',e);}return r;};}})();
+(function(){var st=document.createElement('style');st.textContent=''
+ +'.str15-b{background:linear-gradient(135deg,#8a5cf6,#5b2be0)!important;color:#fff!important;border-color:transparent!important;display:inline-flex!important;align-items:center;justify-content:center;gap:8px;position:relative}'
+ +'.str15-c{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;margin:-4px -4px -4px 2px;border-radius:50%;background:rgba(255,255,255,.22);font-size:.8rem;line-height:1}'
+ +'.str15-c:hover{background:rgba(255,255,255,.38)}'
+ +'.str15-ch{display:flex;flex-direction:column;gap:10px;margin:12px 0}.str15-ch button{display:flex;flex-direction:column;align-items:center;gap:2px;padding:12px 14px;font-size:1rem}.str15-ch small{font-size:.72rem;font-weight:600;opacity:.8}';
+ document.head.appendChild(st);})();
 /* ---- Jeux ---- */
 /* ====== 🕸️ 6 degrés : les règles expliquées avant de jouer ====== */
 (function(){var oD=gameDeg;gameDeg=function(){var body=gStage('🕸️ 6 degrés','<div class="deg-rules"><div class="dr-big">🕸️</div><h3>Le but : relier deux acteurs</h3>'
