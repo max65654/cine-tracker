@@ -21790,6 +21790,241 @@ str15Choose=function(U,c){var old=document.getElementById('str15-ov');if(old)old
  +'.str17-b .str15-c{flex:0 0 28px;width:28px;height:28px;margin:-4px -2px -4px 2px;border-radius:50%;background:rgba(255,255,255,.22);display:inline-flex;align-items:center;justify-content:center;font-size:.85rem}'
  +'@media(max-width:600px){#modal-content .str17-row .str17-b{width:100%;justify-content:space-between}.bm-meta .str17-row{justify-content:center}}'
  +'.str15-ch .soc-btn{background:linear-gradient(135deg,#8a5cf6,#5b2be0)}';document.head.appendChild(st);})();
+/* ====== 🎬 v18 (1/3) : « Tes sagas » dans Pour toi — flèches ‹ ›, glisser à la souris, et « Tout voir » avec recherche ====== */
+function s18Sagas(){try{buildAutoSagas();}catch(_){}return sagas.filter(function(s){return (s.films||[]).length;}).map(function(sg){
+  var f=(sg.films||[]).map(function(x){return items.find(function(i){return i.id===x.id;});}).filter(Boolean),seen=f.filter(function(i){return i.status==='termine';}).length;
+  return {sg:sg,n:f.length,seen:seen,img:(f[0]&&(f[0].banner||f[0].poster))||''};}).filter(function(x){return x.n;});}
+function s18Tile(x){return '<button class="fys" data-s18s="'+x.sg.id+'"><div class="fys-bg" style="background-image:url('+esc(x.img)+')"'+(x.sg.collId?' data-s18c="'+x.sg.collId+'"':'')+'></div><div class="fys-n">'+esc(x.sg.name)+'</div><div class="fys-p"><i style="width:'+(x.n?Math.round(x.seen/x.n*100):0)+'%"></i><span>'+x.seen+' / '+x.n+' vus</span></div></button>';}
+function s18Back(root){root.querySelectorAll('[data-s18c]').forEach(function(b){var cid=b.dataset.s18c;if(typeof _collCache==='undefined')return;var p=_collCache[cid]||(_collCache[cid]=fetch('https://api.themoviedb.org/3/collection/'+cid+'?api_key='+TMDB+'&language=fr-FR').then(function(r){return r.json();}).catch(function(){return null;}));
+  p.then(function(c){if(c&&c.backdrop_path)b.style.backgroundImage='url(https://image.tmdb.org/t/p/w780'+c.backdrop_path+')';});});}
+function s18Enh(el){var box=el&&el.querySelector('#fy-sagas');if(!box||box._s18)return;box._s18=1;var row=box.querySelector('.fys-row'),rh=box.querySelector('.fy-rh');if(!row)return;
+  var wrap=document.createElement('div');wrap.className='fy-wrap s18-wrap at-start';row.parentNode.insertBefore(wrap,row);
+  wrap.innerHTML='<button class="fy-ar l s18-ar" data-s18="-1" aria-label="Sagas précédentes">‹</button><button class="fy-ar r s18-ar" data-s18="1" aria-label="Sagas suivantes">›</button>';wrap.insertBefore(row,wrap.children[1]);
+  if(rh&&!rh.querySelector('.s18-all')){var a=document.createElement('button');a.className='s18-all';a.type='button';a.textContent='Tout voir ›';a.onclick=function(){s18All();};rh.appendChild(a);}
+  function upd(){var max=row.scrollWidth-row.clientWidth-2;wrap.classList.toggle('at-start',row.scrollLeft<=2);wrap.classList.toggle('at-end',row.scrollLeft>=max);}
+  wrap.querySelectorAll('[data-s18]').forEach(function(b){b.onclick=function(e){e.stopPropagation();row.scrollBy({left:(+b.dataset.s18)*row.clientWidth*0.9,behavior:'smooth'});};});
+  row.addEventListener('scroll',upd,{passive:true});setTimeout(upd,60);
+  /* glisser avec la souris (sur téléphone le doigt marche déjà) */
+  var sx=0,sl=0,moved=false;function mv(e){var dx=e.clientX-sx;if(Math.abs(dx)>6)moved=true;row.scrollLeft=sl-dx;}
+  function up(){document.removeEventListener('mousemove',mv);document.removeEventListener('mouseup',up);row.classList.remove('s18-drag');}
+  row.addEventListener('mousedown',function(e){if(e.button!==0)return;sx=e.clientX;sl=row.scrollLeft;moved=false;row.classList.add('s18-drag');document.addEventListener('mousemove',mv);document.addEventListener('mouseup',up);e.preventDefault();});
+  row.addEventListener('click',function(e){if(moved){e.stopPropagation();e.preventDefault();moved=false;}},true);}
+(function(){var oT=fySagaTiles;fySagaTiles=function(el){var r=oT.apply(this,arguments);try{s18Enh(el);}catch(e){console.warn('s18',e);}return r;};})();
+function s18All(){var old=document.getElementById('s18-ov');if(old)old.remove();var L=s18Sagas(),st={q:'',f:'all',s:'size'};
+  var o=document.createElement('div');o.id='s18-ov';o.className='s18-ov';
+  o.innerHTML='<div class="s18-box"><button class="s18-x" type="button" aria-label="Fermer">✕</button><div class="s18-h">🎬 Toutes tes sagas <small>'+L.length+'</small></div>'
+    +'<div class="s18-tools"><input id="s18-q" type="search" placeholder="🔎 Chercher une saga…" autocomplete="off"><div class="s18-chips">'
+    +[['all','Toutes'],['todo','À finir'],['new','Pas commencées'],['done','Finies']].map(function(c,i){return '<button type="button" class="s18-chip'+(i?'':' on')+'" data-f="'+c[0]+'">'+c[1]+'</button>';}).join('')
+    +'<select id="s18-s"><option value="size">Les plus grandes</option><option value="prog">Les plus avancées</option><option value="name">De A à Z</option></select></div></div><div class="s18-grid" id="s18-g"></div></div>';
+  document.body.appendChild(o);var g=o.querySelector('#s18-g');
+  function close(){o.remove();}o.querySelector('.s18-x').onclick=close;o.addEventListener('click',function(e){if(e.target===o)close();});
+  function draw(){var q=st.q.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');var R=L.filter(function(x){var nm=String(x.sg.name).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');if(q&&nm.indexOf(q)<0)return false;
+      if(st.f==='todo')return x.seen>0&&x.seen<x.n;if(st.f==='new')return x.seen===0;if(st.f==='done')return x.seen>=x.n;return true;});
+    R.sort(function(a,b){if(st.s==='name')return String(a.sg.name).localeCompare(String(b.sg.name),'fr');if(st.s==='prog')return (b.seen/b.n)-(a.seen/a.n)||b.n-a.n;return b.n-a.n;});
+    g.innerHTML=R.length?R.map(s18Tile).join(''):'<div class="s18-empty">Aucune saga ne correspond.</div>';s18Back(g);
+    g.querySelectorAll('[data-s18s]').forEach(function(b){b.onclick=function(){openSagaModal(+b.dataset.s18s);};});}
+  o.querySelector('#s18-q').addEventListener('input',function(){st.q=this.value.trim();draw();});
+  o.querySelectorAll('[data-f]').forEach(function(b){b.onclick=function(){st.f=b.dataset.f;o.querySelectorAll('[data-f]').forEach(function(x){x.classList.toggle('on',x===b);});draw();};});
+  o.querySelector('#s18-s').onchange=function(){st.s=this.value;draw();};draw();}
+
+/* ====== 🏆 v18 (2/3) : Attentes — « Ce que j'attends le plus », ton top 10 classé (n°1 en premier) ====== */
+function att18Top(){return (wishlist||[]).filter(function(w){return w&&w.top>0;}).sort(function(a,b){return a.top-b.top;});}
+function att18Renum(){att18Top().forEach(function(w,i){w.top=i+1;});}
+function att18Toggle(id){var w=wishlist.find(function(x){return x.id===id;});if(!w)return;
+  if(w.top){delete w.top;att18Renum();toast('🏆 « '+w.title+' » sort de ton top');}
+  else{var L=att18Top();if(L.length>=10){toast('🏆 Ton top est plein (10) : enlèves-en un avant');return;}w.top=L.length+1;if((w.hype||0)<5)w.hype=5;toast('🏆 « '+w.title+' » : n°'+w.top+' de ce que tu attends le plus');}
+  svW();try{renderWishGrid();}catch(_){}}
+function att18Move(id,d){var L=att18Top(),i=L.findIndex(function(w){return w.id===id;}),j=i+d;if(i<0||j<0||j>=L.length)return;var t=L[i].top;L[i].top=L[j].top;L[j].top=t;svW();try{renderWishGrid();}catch(_){}}
+function att18Draw(){var v=document.getElementById('view-attentes');if(!v)return;var box=document.getElementById('att18');
+  if(!box){box=document.createElement('div');box.id='att18';box.className='att18';var t=v.querySelector('.section-title');if(t)t.insertAdjacentElement('afterend',box);else v.insertBefore(box,v.firstChild);}
+  var L=att18Top();
+  box.innerHTML='<div class="att18-h">🏆 Ce que j\'attends le plus'+(L.length?' <small>'+L.length+' / 10</small>':'')+'</div>'
+    +(L.length?'<div class="att18-row">'+L.map(function(w,i){var cd={html:'',cls:''};try{cd=fmtCountdown(w)||cd;}catch(_){}var out=cd.targetMs!=null&&cd.targetMs-Date.now()<=0;
+      return '<div class="att18-c'+(i===0?' first':'')+'" data-a18="'+w.id+'"><span class="att18-n">'+(i+1)+'</span>'+(w.poster?'<img src="'+esc(w.poster)+'" alt="" loading="lazy">':'<span class="att18-np">'+(w.tmdbType==='tv'?'📺':'🎬')+'</span>')
+        +'<div class="att18-i"><b>'+esc(w.title)+'</b><small>'+(w.season?'Saison '+w.season+' · ':'')+(w.year||'')+'</small>'
+        +(w.releaseDate||w.releaseYearOnly?(out?'<span class="wish-release soon">🎉 Déjà sorti</span>':'<span class="wish-release wish-countdown '+(cd.cls||'')+'" data-wcid="'+w.id+'">'+(cd.html||'')+'</span>'):'<span class="att18-nd">📅 Date pas encore connue</span>')
+        +'<div class="att18-btns"><button type="button" data-u18="'+w.id+'" title="Monter"'+(i===0?' disabled':'')+'>▲</button><button type="button" data-d18="'+w.id+'" title="Descendre"'+(i===L.length-1?' disabled':'')+'>▼</button><button type="button" data-x18="'+w.id+'" title="Retirer du top">✕</button></div></div></div>';}).join('')+'</div>'
+      :'<div class="att18-empty">Touche <b>🏆</b> sur une de tes attentes (ou dans sa fiche) pour la mettre ici. Tu les classes ensuite de n°1 à n°10 avec ▲ ▼.</div>');
+  box.querySelectorAll('[data-a18]').forEach(function(c){c.onclick=function(e){if(e.target.closest('button'))return;openWishModal(+c.dataset.a18);};});
+  box.querySelectorAll('[data-u18]').forEach(function(b){b.onclick=function(e){e.stopPropagation();att18Move(+b.dataset.u18,-1);};});
+  box.querySelectorAll('[data-d18]').forEach(function(b){b.onclick=function(e){e.stopPropagation();att18Move(+b.dataset.d18,1);};});
+  box.querySelectorAll('[data-x18]').forEach(function(b){b.onclick=function(e){e.stopPropagation();att18Toggle(+b.dataset.x18);};});
+  /* 🏆 sur chaque carte de la grille */
+  document.querySelectorAll('#wish-grid .wish-card[data-wid]').forEach(function(c){var id=+c.dataset.wid,w=wishlist.find(function(x){return x.id===id;});if(!w)return;
+    c.classList.toggle('att18-on',!!w.top);var a=c.querySelector('.wish-actions');if(!a||a.querySelector('.att18-b'))return;
+    var b=document.createElement('button');b.type='button';b.className='att18-b'+(w.top?' on':'');b.textContent=w.top?'🏆 n°'+w.top:'🏆';b.title=w.top?'Retirer de ce que j\'attends le plus':'Je l\'attends le plus';
+    b.onclick=function(e){e.stopPropagation();att18Toggle(id);};a.insertBefore(b,a.firstChild);});}
+(function(){var oR=renderWishGrid;renderWishGrid=function(){var r=oR.apply(this,arguments);try{att18Draw();}catch(e){console.warn('att18',e);}return r;};})();
+(function(){var oW=openWishModal;openWishModal=function(id){var r=oW.apply(this,arguments);try{var w=wishlist.find(function(x){return x.id===id;}),del=document.getElementById('wm-del');if(w&&del&&!document.getElementById('wm-top18')){
+  var b=document.createElement('button');b.id='wm-top18';b.type='button';b.className='att18-mb'+(w.top?' on':'');
+  var lbl=function(){b.textContent=w.top?'🏆 N°'+w.top+' de mes plus attendus':'🏆 Je l\'attends le plus';b.classList.toggle('on',!!w.top);};lbl();
+  b.onclick=function(){att18Toggle(id);lbl();};del.parentNode.insertBefore(b,del);}}catch(e){console.warn('att18',e);}return r;};})();
+
+/* ====== 🌏 v18 (3/3) : page « Inédits » — films et séries qui collent à tes goûts mais jamais sortis en France,
+   ou sortis seulement en VOSTFR (aucune VF trouvée). Sorties / plateformes FR : TMDB · VF : doublage cherché sur Wikipédia. ====== */
+var IN18={prof:null,busy:false,data:null,seen:{},f:'all',t:'all'};
+var IN18_SC=(function(){var p='';try{p=(window.CineProfiles&&window.CineProfiles.prefix)||'';}catch(_){}p=String(p).replace(/[^A-Za-z0-9]/g,'');return p||'main';})();
+var IN18C={};try{IN18C=JSON.parse(localStorage.getItem('inedCheck')||'{}')||{};}catch(_){IN18C={};}
+function in18SvC(){try{var ks=Object.keys(IN18C);if(ks.length>400){ks.sort(function(a,b){return (IN18C[a].t||0)-(IN18C[b].t||0);}).slice(0,ks.length-300).forEach(function(k){delete IN18C[k];});}
+  var out={};Object.keys(IN18C).forEach(function(k){var o=IN18C[k];if(!o)return;out[k]=o.ok===0?{t:o.t,d:1,k:k,ok:0}:o;});localStorage.setItem('inedCheck',JSON.stringify(out));}catch(_){}}
+try{IN18.data=JSON.parse(localStorage.getItem('inedList|'+IN18_SC)||'null');}catch(_){IN18.data=null;}
+function in18SvL(){try{localStorage.setItem('inedList|'+IN18_SC,JSON.stringify(IN18.data));}catch(_){}}
+var IN18_T2M={10759:[28,12],10765:[14,878],10768:[10752]},IN18_M2T={28:10759,12:10759,14:10765,878:10765,10752:10768,27:9648,53:80};
+var IN18_TVOK={16:1,35:1,80:1,18:1,10751:1,9648:1,37:1,10759:1,10765:1,10768:1};
+var IN18_GN={28:'Action',12:'Aventure',16:'Animation',35:'Comédie',80:'Crime',18:'Drame',10751:'Familial',14:'Fantastique',36:'Histoire',27:'Horreur',10402:'Musique',9648:'Mystère',10749:'Romance',878:'Science-fiction',53:'Thriller',10752:'Guerre',37:'Western'};
+var IN18_PAYS={KR:'Corée du Sud',JP:'Japon',CN:'Chine',HK:'Hong Kong',TW:'Taïwan',TH:'Thaïlande',IN:'Inde',ES:'Espagne',IT:'Italie',DE:'Allemagne',GB:'Royaume-Uni',US:'États-Unis',CA:'Canada',AU:'Australie',SE:'Suède',DK:'Danemark',NO:'Norvège',FI:'Finlande',TR:'Turquie',MX:'Mexique',AR:'Argentine',BR:'Brésil',PT:'Portugal',PL:'Pologne',NL:'Pays-Bas',BE:'Belgique',IE:'Irlande',NZ:'Nouvelle-Zélande',ID:'Indonésie',PH:'Philippines',RU:'Russie',IL:'Israël',CO:'Colombie',CL:'Chili',IS:'Islande',AT:'Autriche',CH:'Suisse',CZ:'Tchéquie',HU:'Hongrie',GR:'Grèce'};
+function in18Flag(cc){cc=String(cc||'').toUpperCase();if(!/^[A-Z]{2}$/.test(cc))return '🌍';return String.fromCodePoint(127397+cc.charCodeAt(0),127397+cc.charCodeAt(1));}
+function in18Norm(ids){var o=[];(ids||[]).forEach(function(g){(IN18_T2M[g]||[g]).forEach(function(x){if(o.indexOf(x)<0)o.push(x);});});return o;}
+function in18ForTv(ids){var o=[];(ids||[]).forEach(function(g){var x=IN18_TVOK[g]?g:IN18_M2T[g];if(x&&o.indexOf(x)<0)o.push(x);});return o;}
+function in18Rand(seed){var s=(seed>>>0)||1;return function(){s=(s*1664525+1013904223)>>>0;return s/4294967296;};}
+function in18Profile(){if(IN18.prof)return IN18.prof;
+  IN18.prof=Promise.resolve().then(function(){var src=getTasteSources();return src.length>=2?buildTasteProfile(src):null;}).catch(function(){return null;}).then(function(p){
+    p=p||{genreFreq:{},castFreq:{},dirFreq:{},topGenreIds:[]};var gf={};Object.keys(p.genreFreq||{}).forEach(function(g){in18Norm([+g]).forEach(function(x){gf[x]=(gf[x]||0)+p.genreFreq[g];});});
+    if(!Object.keys(gf).length)(items||[]).forEach(function(i){if(i.status==='termine'||i.fav)in18Norm(i.genreIds||[]).forEach(function(x){gf[x]=(gf[x]||0)+(i.fav?2:1)+(parseFloat(i.rating||0)>=4?1:0);});});
+    delete gf[99];delete gf[10770];var top=Object.keys(gf).map(Number).sort(function(a,b){return gf[b]-gf[a];});if(!top.length)top=[27,53,878,28];
+    return {gf:gf,top:top.slice(0,6),cast:p.castFreq||{},dir:p.dirFreq||{},raw:p.genreFreq||{}};});
+  return IN18.prof;}
+function in18J(u){return fetch(u).then(function(r){return r.ok?r.json():null;}).catch(function(){return null;});}
+function in18Pool(P,seed){var R=in18Rand(seed),today=todayStr(),owned=getOwnedCatKeys(),top=P.top.length?P.top:[27,53],reqs=[],D='https://api.themoviedb.org/3/discover/';
+  function pick(arr,n){var a=arr.slice(),o=[];while(a.length&&o.length<n)o.push(a.splice(Math.floor(R()*a.length),1)[0]);return o;}
+  var LM=['ko','ja','es','it','de','zh','th','sv','da','tr','hi','no','pt','cn','en','en','pl','id','nl','fi'],LT=['ko','ja','es','en','de','it','zh','tr','da','sv','th','cn','no','pt'];
+  pick(LM,7).forEach(function(l){var g=pick(top.slice(0,4),2).join('|');reqs.push(in18J(D+'movie?api_key='+TMDB+'&language=fr-FR&include_adult=false&with_original_language='+l+'&with_genres='+g+'&without_genres=99,10402,10770&vote_count.gte=25&vote_average.gte=6.2&sort_by='+(R()<.6?'popularity.desc':'vote_average.desc')+'&page='+(1+Math.floor(R()*2))+'&primary_release_date.lte='+today).then(function(d){return {mt:'movie',l:(d&&d.results)||[]};}));});
+  var tvTop=in18ForTv(top.slice(0,5));
+  pick(LT,5).forEach(function(l){var g=pick(tvTop.length?tvTop:[18,9648],2).join('|');reqs.push(in18J(D+'tv?api_key='+TMDB+'&language=fr-FR&include_adult=false&with_original_language='+l+'&with_genres='+g+'&without_genres=99,10763,10764,10767,10766&vote_count.gte=15&vote_average.gte=6.4&sort_by='+(R()<.6?'popularity.desc':'vote_average.desc')+'&page='+(1+Math.floor(R()*2))+'&first_air_date.lte='+today).then(function(d){return {mt:'tv',l:(d&&d.results)||[]};}));});
+  /* « parce que tu as aimé… » : les recommandations de tes coups de cœur */
+  var seeds=[];try{seeds=pick(getTasteSources().slice(0,12),4);}catch(_){}
+  seeds.forEach(function(s){reqs.push(in18J('https://api.themoviedb.org/3/'+s.tmdbType+'/'+s.tmdbId+'/recommendations?api_key='+TMDB+'&language=fr-FR').then(function(d){return {mt:s.tmdbType,l:(d&&d.results)||[]};}));});
+  return Promise.all(reqs).then(function(res){var C={},out=[];res.forEach(function(x){(x.l||[]).forEach(function(r){var mt=r.media_type||x.mt;if(mt!=='movie'&&mt!=='tv')return;var k=mt+'_'+r.id;
+      if(C[k]||owned[k]||IN18.seen[k])return;if(!r.poster_path||r.original_language==='fr')return;var d=r.release_date||r.first_air_date||'';if(!d||d>today)return;
+      var gs=in18Norm(r.genre_ids||[]),mx=0;Object.keys(P.gf).forEach(function(g){if(P.gf[g]>mx)mx=P.gf[g];});var gsc=gs.length&&mx?gs.reduce(function(s,g){return s+((P.gf[g]||0)/mx);},0)/gs.length:0;
+      var c=IN18C[k];if(c&&c.ok===0&&Date.now()-c.t<14*864e5)return;
+      C[k]=1;out.push({k:k,mt:mt,id:r.id,pre:gsc*0.7+((r.vote_average||0)/10)*0.3+R()*0.08});});});
+    return out.sort(function(a,b){return b.pre-a.pre;}).slice(0,44);});}
+/* TMDB : sortie / plateformes en France, titre français, IMDb (pour Stremio), Wikidata (pour la VF) */
+var IN18_VFPLAT=/^(netflix|disney plus|disney\+|apple tv\+?|apple tv plus)$/i;
+function in18Check(mt,id){var k=mt+'_'+id,c=IN18C[k];if(c&&c.d&&Date.now()-c.t<14*864e5)return Promise.resolve(c);
+  return in18J('https://api.themoviedb.org/3/'+mt+'/'+id+'?api_key='+TMDB+'&language=fr-FR&append_to_response='+(mt==='movie'?'release_dates,':'')+'watch/providers,translations,external_ids,credits').then(function(d){if(!d||!d.id)return null;
+    var rel=false;if(mt==='movie'){var fr=((d.release_dates||{}).results||[]).filter(function(x){return x.iso_3166_1==='FR';})[0];if(fr)rel=(fr.release_dates||[]).some(function(x){return x.type>=2;});}
+    var wp=((d['watch/providers']||{}).results||{}).FR||null,prov=[];if(wp)['flatrate','free','ads','rent','buy'].forEach(function(t){(wp[t]||[]).forEach(function(p){if(p&&p.provider_name&&prov.indexOf(p.provider_name)<0)prov.push(p.provider_name);});});
+    var flat=((wp&&wp.flatrate)||[]).map(function(p){return p.provider_name;});
+    var frNet=mt==='tv'&&(d.networks||[]).some(function(n){return n&&n.origin_country==='FR';});
+    var tr=((d.translations||{}).translations||[]).filter(function(x){return x.iso_639_1==='fr';})[0],trd=(tr&&tr.data)||{};
+    var ex=d.external_ids||{},cr=d.credits||{};
+    var o={t:Date.now(),d:1,k:k,mt:mt,id:id,rel:!!(rel||prov.length||frNet),prov:prov.slice(0,3),dub:flat.some(function(n){return IN18_VFPLAT.test(n);})||frNet,
+      wd:ex.wikidata_id||'',imdb:ex.imdb_id||'',ti:d.title||d.name||'',orig:d.original_title||d.original_name||'',frt:trd.title||trd.name||'',lang:d.original_language||'',
+      cc:(d.origin_country&&d.origin_country[0])||(((d.production_countries||[])[0]||{}).iso_3166_1)||'',date:d.release_date||d.first_air_date||'',vote:d.vote_average||0,votes:d.vote_count||0,
+      g:(d.genres||[]).map(function(x){return x.id;}),gn:(d.genres||[]).map(function(x){return x.name;}),cast:(cr.cast||[]).slice(0,5).map(function(x){return x.id;}),
+      dir:(cr.crew||[]).filter(function(x){return x.job==='Director';}).slice(0,3).map(function(x){return x.id;}),p:d.poster_path||'',b:d.backdrop_path||'',ov:d.overview||trd.overview||'',ns:d.number_of_seasons||0};
+    if(o.imdb)try{if(typeof STR15!=='undefined')STR15.c[k]={v:o.imdb,t:Date.now()};}catch(_){}
+    IN18C[k]=o;return o;});}
+/* VF : on cherche le doublage français dans l'article Wikipédia en français (trouvé via Wikidata) */
+var IN18_VFRX=/voix fran[cç]aises?|version fran[cç]aise|\(\s*V\.?F\.?\s*[:)]|\bV\.?F\.?\s*:|\bVFQ\b|doublage fran[cç]ais|doubl[ée]e? en fran[cç]ais|soci[ée]t[ée] de doublage|studio de doublage|direction artistique\s*:|adaptation des dialogues/i;
+function in18Wiki(list){var need=list.filter(function(o){return o&&o.vf===undefined;});if(!need.length)return Promise.resolve();
+  var withWd=need.filter(function(o){return /^Q\d+$/.test(o.wd);}),ch=[];need.forEach(function(o){if(!/^Q\d+$/.test(o.wd)){o.vf=false;o.fw='';}});
+  for(var i=0;i<withWd.length;i+=40)ch.push(withWd.slice(i,i+40));
+  return ch.reduce(function(p,c){return p.then(function(){return in18J('https://www.wikidata.org/w/api.php?action=wbgetentities&props=sitelinks&sitefilter=frwiki&format=json&origin=*&ids='+c.map(function(o){return o.wd;}).join('|')).then(function(j){if(!j||!j.entities)return;var E=j.entities;
+      c.forEach(function(o){var e=E[o.wd],sl=e&&e.sitelinks&&e.sitelinks.frwiki;o.fw=(sl&&sl.title)||'';if(!o.fw)o.vf=false;});});});},Promise.resolve()).then(function(){
+    var wl=need.filter(function(o){return o.fw&&o.vf===undefined;}),c2=[];for(var j=0;j<wl.length;j+=8)c2.push(wl.slice(j,j+8));
+    return c2.reduce(function(p,c){return p.then(function(){return in18J('https://fr.wikipedia.org/w/api.php?action=query&prop=revisions&rvprop=content&rvslots=main&format=json&formatversion=2&redirects=1&origin=*&titles='+c.map(function(o){return encodeURIComponent(o.fw);}).join('|')).then(function(j){
+        var q=(j&&j.query)||{},map={};(q.normalized||[]).concat(q.redirects||[]).forEach(function(r){map[r.from]=r.to;});var pages={};(q.pages||[]).forEach(function(pg){var rv=pg.revisions&&pg.revisions[0],txt=rv&&((rv.slots&&rv.slots.main&&rv.slots.main.content)||rv.content)||'';pages[pg.title]=txt;});
+        c.forEach(function(o){var t=o.fw,n=0;while(map[t]&&n++<4)t=map[t];var txt=pages[t];if(txt===undefined){o.vf=undefined;return;}o.vf=IN18_VFRX.test(txt);o.wk=1;});});});},Promise.resolve());})
+  .then(function(){need.forEach(function(o){if(o.vf!==undefined)IN18C[o.k]=o;});in18SvC();});}
+function in18Classify(o){if(!o)return null;if(o.vf||o.dub)return null;return o.rel?'B':'A';}
+function in18Score(o,P){var mx=0;Object.keys(P.gf).forEach(function(g){if(P.gf[g]>mx)mx=P.gf[g];});var gs=in18Norm(o.g);
+  var gsc=gs.length&&mx?gs.reduce(function(s,g){return s+((P.gf[g]||0)/mx);},0)/gs.length:0;
+  var mc=Math.max.apply(null,Object.values(P.cast).concat([1])),csc=o.cast.length?o.cast.reduce(function(s,c){return s+((P.cast[c]||0)/mc);},0)/o.cast.length:0,dsc=o.dir.some(function(x){return P.dir[x];})?1:0;
+  var vsc=Math.max(0,Math.min(1,(o.vote-5.5)/3)),y=parseInt(String(o.date).slice(0,4))||0,rec=y>=new Date().getFullYear()-4?1:y>=2005?.6:.3;
+  var s=Math.round((gsc*0.58+csc*0.12+dsc*0.08+vsc*0.15+rec*0.07)*100);try{s+=favActorBonus(o.cast)||0;}catch(_){}try{s-=notForMePenalty({genreIds:o.g,cast:o.cast},P.raw)||0;}catch(_){}
+  return Math.max(5,Math.min(99,s));}
+function in18Why(o,P){var L=in18Norm(o.g).filter(function(g){return P.gf[g];}).sort(function(a,b){return P.gf[b]-P.gf[a];}).slice(0,2).map(function(g){return IN18_GN[g]||'';}).filter(Boolean);return L.length?'Tu aimes : '+L.join(', '):'Bien noté, dans ton style';}
+function in18Run(more,prog){if(IN18.busy)return Promise.resolve(IN18.data);IN18.busy=true;prog=prog||function(){};var seed=(Date.now()/36e5|0)+(more?Math.floor(Math.random()*1e6):0);
+  if(IN18.data&&IN18.data.list)IN18.data.list.forEach(function(x){IN18.seen[x.k]=1;});
+  return in18Profile().then(function(P){prog('Je cherche des titres qui collent à tes goûts',0,0);return in18Pool(P,seed).then(function(C){var done=0;prog('Je vérifie leur sortie en France',0,C.length);
+      return str16Pool(C,4,function(c){return in18Check(c.mt,c.id).then(function(o){done++;prog('Je vérifie leur sortie en France',done,C.length);return o;});}).then(function(L){L=L.filter(Boolean);
+        var keep=L.filter(function(o){return !o.dub;});prog('Je cherche une VF sur Wikipédia',0,0);
+        return in18Wiki(keep).then(function(){var out=[];L.forEach(function(o){if(o.dub){o.ok=0;IN18C[o.k]=o;return;}if(o.vf===undefined)return;var cat=in18Classify(o);o.ok=cat?1:0;IN18C[o.k]=o;if(!cat)return;
+            out.push({k:o.k,mt:o.mt,id:o.id,cat:cat,sc:in18Score(o,P),why:in18Why(o,P)});});in18SvC();
+          var prev=more&&IN18.data&&IN18.data.list?IN18.data.list:[],seenK={},list=[],own=getOwnedCatKeys();out.concat(prev).forEach(function(x){if(seenK[x.k]||own[x.k]||!IN18C[x.k]||IN18C[x.k].ok===0)return;seenK[x.k]=1;list.push(x);});
+          list.sort(function(a,b){return b.sc-a.sc;});IN18.data={t:Date.now(),list:list.slice(0,80)};in18SvL();return IN18.data;});});});})
+  .then(function(d){IN18.busy=false;return d;},function(e){IN18.busy=false;throw e;});}
+function in18Card(x){var o=IN18C[x.k];if(!o)return '';var title=o.frt&&o.frt!==o.orig?o.frt:o.ti,sub=(o.orig&&o.orig!==title)?o.orig:'';
+  return '<div class="in18-c" data-k="'+x.k+'" tabindex="0"><div class="in18-p" style="background-image:url(https://image.tmdb.org/t/p/w342'+esc(o.p)+')">'
+    +'<span class="in18-bd '+(x.cat==='A'?'a':'b')+'">'+(x.cat==='A'?'🚫 Jamais sorti en France':'💬 VOSTFR · sans VF')+'</span>'+(x.sc>=45?'<span class="in18-m" title="Ça colle à tes goûts">❤️ '+x.sc+'%</span>':'')+'</div>'
+    +'<div class="in18-i"><b>'+esc(title)+'</b>'+(sub?'<em>'+esc(sub)+'</em>':'')
+    +'<small>'+in18Flag(o.cc)+' '+esc(IN18_PAYS[o.cc]||o.cc||'')+' · '+esc(String(o.date).slice(0,4))+' · '+(o.mt==='tv'?'📺 Série'+(o.ns?' ('+o.ns+' saison'+(o.ns>1?'s':'')+')':''):'🎬 Film')+' · ⭐ '+(o.vote||0).toFixed(1)+'</small>'
+    +'<div class="in18-why">❤️ '+esc(x.why)+'</div>'
+    +(x.cat==='B'?'<div class="in18-where">📍 '+(o.prov.length?esc(o.prov.join(', ')):'Sorti en France')+' · '+(o.wk?'pas de VF sur Wikipédia':'aucune VF connue')+'</div>':'<div class="in18-where">📍 Introuvable en France — ton Stremio est là pour ça 😉</div>')
+    +'<div class="in18-a"><button type="button" data-a="add" title="Ajouter à mes À voir">➕<span class="in18-tx"> À voir</span></button><button type="button" data-a="tr" title="Bande-annonce">▶</button><button type="button" data-a="st" class="in18-st" title="Ouvrir dans l\'appli Stremio">🟣<span class="in18-tx"> Stremio</span></button><button type="button" data-a="no" title="Pas pour moi">👎</button></div></div></div>';}
+function in18Fy(o){var k=o.k;_fyIndex[k]={media_type:o.mt,id:o.id,title:o.mt==='movie'?(o.frt||o.ti):undefined,name:o.mt==='tv'?(o.frt||o.ti):undefined,original_title:o.orig,original_name:o.orig,overview:o.ov,poster_path:o.p,backdrop_path:o.b||o.p,release_date:o.mt==='movie'?o.date:undefined,first_air_date:o.mt==='tv'?o.date:undefined,vote_average:o.vote};return k;}
+function in18Add(o){if(socOwnedKey(o.k))return toast('Déjà dans ta collection');items.unshift({id:Date.now()+Math.floor(Math.random()*9999),title:o.frt||o.ti,originalTitle:o.orig&&o.orig!==(o.frt||o.ti)?o.orig:'',year:String(o.date).slice(0,4),type:o.mt==='tv'?'serie':'film',status:'a_voir',rating:0,fav:false,tags:['🌏 Inédit'],review:'',personalNotes:'',quote:'',
+  poster:o.p?'https://image.tmdb.org/t/p/w500'+o.p:'',director:'',cast:'',watchedDate:'',addedAt:Date.now(),synopsis:o.ov||'',seriesStatus:'',nbSeasons:o.ns||0,tmdbId:o.id,tmdbType:o.mt,progress:null,lastEpDate:null,runtime:0,epRuntime:0,tmdbRating:o.vote||0,rewatchCount:0,genreIds:o.g});
+  sv();try{renderAll();}catch(_){}toast('➕ « '+(o.frt||o.ti)+' » ajouté à À voir');}
+function renderInedits(v){if(!v.querySelector('.in18')){v.innerHTML='<div class="in18"><div class="section-title"><h2>🌏 Inédits &amp; VOSTFR</h2><div class="deco"></div></div>'
+    +'<p class="in18-sub">Des films et séries qui collent à tes goûts mais <b>jamais sortis en France</b>, ou sortis seulement <b>en VOSTFR (sans VF)</b>. Parfait pour ton Stremio 😉</p>'
+    +'<div class="in18-bar"><div class="in18-chips">'+[['all','Tout'],['A','🚫 Jamais sortis en France'],['B','💬 VOSTFR sans VF']].map(function(c){return '<button type="button" class="in18-ch'+(IN18.f===c[0]?' on':'')+'" data-f="'+c[0]+'">'+c[1]+'</button>';}).join('')+'</div>'
+    +'<div class="in18-chips">'+[['all','Films et séries'],['movie','🎬 Films'],['tv','📺 Séries']].map(function(c){return '<button type="button" class="in18-ch'+(IN18.t===c[0]?' on':'')+'" data-t="'+c[0]+'">'+c[1]+'</button>';}).join('')
+    +'<button type="button" class="in18-more" id="in18-more">🔄 D\'autres idées</button></div></div><div id="in18-prog"></div><div class="in18-grid" id="in18-grid"></div>'
+    +'<div class="in18-note">ℹ️ Sorties et plateformes en France : TMDB. VF : je cherche une trace de doublage français sur Wikipédia ; s\'il n\'y en a pas, le titre est ici. Il peut m\'arriver de me tromper — un 👎 et il disparaît.</div></div>';
+    v.querySelectorAll('[data-f]').forEach(function(b){b.onclick=function(){IN18.f=b.dataset.f;v.querySelectorAll('[data-f]').forEach(function(x){x.classList.toggle('on',x===b);});in18Draw(v);};});
+    v.querySelectorAll('[data-t]').forEach(function(b){b.onclick=function(){IN18.t=b.dataset.t;v.querySelectorAll('[data-t]').forEach(function(x){x.classList.toggle('on',x===b);});in18Draw(v);};});
+    v.querySelector('#in18-more').onclick=function(){in18Go(v,true);};}
+  var fresh=IN18.data&&IN18.data.list&&Date.now()-IN18.data.t<12*36e5;in18Draw(v);if(!fresh)in18Go(v,false);}
+function in18Go(v,more){var pr=v.querySelector('#in18-prog'),btn=v.querySelector('#in18-more');if(IN18.busy)return;if(btn)btn.disabled=true;
+  if(pr)pr.innerHTML='<div class="in18-pg"><span id="in18-pl">⏳ Je cherche…</span><div class="str16-bar"><i id="in18-pb"></i></div></div>';
+  in18Run(more,function(l,d,n){var a=v.querySelector('#in18-pl'),b=v.querySelector('#in18-pb');if(a)a.textContent='⏳ '+l+'…'+(n?' '+d+' / '+n:'');if(b)b.style.width=(n?Math.round(d/n*100):15)+'%';})
+    .then(function(){if(pr)pr.innerHTML='';if(btn)btn.disabled=false;in18Draw(v);var g=v.querySelector('#in18-grid');if(more&&g)g.scrollIntoView({behavior:'smooth',block:'start'});},
+      function(){if(pr)pr.innerHTML='<div class="news-empty">😕 Je n\'ai pas pu chercher (connexion ?). Réessaie avec 🔄.</div>';if(btn)btn.disabled=false;});}
+function in18Draw(v){var g=v.querySelector('#in18-grid');if(!g)return;var owned=getOwnedCatKeys(),L=((IN18.data&&IN18.data.list)||[]).filter(function(x){return IN18C[x.k]&&!owned[x.k]&&(IN18.f==='all'||x.cat===IN18.f)&&(IN18.t==='all'||x.mt===IN18.t);});
+  if(!L.length){g.innerHTML=IN18.busy||!IN18.data?'':'<div class="news-empty">Rien pour l\'instant ici — touche <b>🔄 D\'autres idées</b>.</div>';return;}
+  g.innerHTML=L.map(in18Card).join('');
+  g.querySelectorAll('.in18-c').forEach(function(c){var o=IN18C[c.dataset.k];if(!o)return;
+    c.addEventListener('click',function(e){var b=e.target.closest('[data-a]');if(!b){fyPreview(in18Fy(o));return;}e.stopPropagation();var a=b.dataset.a;
+      if(a==='add'){in18Add(o);c.classList.add('in18-gone');setTimeout(function(){in18Draw(v);},350);}
+      else if(a==='tr'){try{openTrailer({tmdbId:o.id,tmdbType:o.mt,title:o.frt||o.ti});}catch(_){}}
+      else if(a==='st'){var U=str15Urls(o.mt,o.imdb||'',o.orig||o.ti);if(o.imdb)str17App(U);else str15Imdb(o.mt,o.id).then(function(tt){str17App(str15Urls(o.mt,tt,o.orig||o.ti));});}
+      else if(a==='no'){if(!notForMe.some(function(n){return n.key===o.k;})){notForMe.push({key:o.k,title:o.frt||o.ti,g:o.g||[],c:(o.cast||[]).slice(0,3)});svNfm();}
+        c.classList.add('in18-gone');setTimeout(function(){in18Draw(v);},350);toast('👎 Masqué — je t\'en proposerai moins de ce genre');}});});}
+cinePage('inedits','🌏 Inédits','attentes',renderInedits);
+(function(){var st=document.createElement('style');st.textContent=''
+ /* sagas */
+ +'.s18-wrap .fys-row{scroll-snap-type:x proximity}.s18-wrap .fy-ar{top:50%;bottom:auto;transform:translateY(-62%);width:48px;height:48px;border-radius:50%;font-size:2rem;line-height:1;padding:0 0 4px;display:flex!important;align-items:center;justify-content:center;opacity:1!important;background:rgba(20,12,40,.85)!important;border:2px solid rgba(255,255,255,.35);box-shadow:0 6px 18px rgba(0,0,0,.45);transition:opacity .2s,transform .15s}'
+ +'.s18-wrap .fy-ar.l{left:-8px}.s18-wrap .fy-ar.r{right:-8px}.s18-wrap .fy-ar:hover{transform:translateY(-62%) scale(1.08)}.s18-wrap.at-start .fy-ar.l,.s18-wrap.at-end .fy-ar.r{opacity:0!important;pointer-events:none}'
+ +'@media(hover:none){.s18-wrap .fy-ar{display:none!important}}.fys-row.s18-drag{cursor:grabbing;scroll-snap-type:none!important;user-select:none}.fys-row.s18-drag .fys{pointer-events:none}'
+ +'.fy-sagas .fy-rh{display:flex;align-items:center;gap:8px}.s18-all{margin-left:auto;border:none;border-radius:99px;padding:6px 14px;background:rgba(255,255,255,.1);color:inherit;font:700 .84rem Fredoka,Inter,sans-serif;cursor:pointer}.s18-all:hover{background:rgba(255,255,255,.2)}'
+ +'.s18-ov{position:fixed;inset:0;z-index:10030;background:rgba(10,6,20,.78);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;padding:14px}'
+ +'.s18-box{position:relative;width:min(1100px,100%);max-height:92vh;overflow:auto;background:#1b1330;color:#fff;border-radius:22px;padding:20px;box-shadow:0 20px 60px #000a}.s18-x{position:absolute;right:12px;top:12px;width:36px;height:36px;border-radius:50%;border:none;background:rgba(255,255,255,.12);color:#fff;font-size:1.1rem;cursor:pointer}'
+ +'.s18-h{font:800 1.4rem Fredoka,sans-serif;margin-bottom:12px}.s18-h small{opacity:.6;font-size:.9rem}.s18-tools{display:flex;flex-direction:column;gap:10px;margin-bottom:14px}.s18-tools input{padding:11px 14px;border-radius:12px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.08);color:#fff;font:inherit;font-size:16px}'
+ +'.s18-chips{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.s18-chip{border:1px solid rgba(255,255,255,.25);background:none;color:#fff;border-radius:99px;padding:6px 12px;cursor:pointer;font:inherit;font-size:.84rem}.s18-chip.on{background:#ff4d6d;border-color:#ff4d6d}'
+ +'.s18-chips select{margin-left:auto;padding:6px 10px;border-radius:10px;background:rgba(255,255,255,.08);color:#fff;border:1px solid rgba(255,255,255,.25);font:inherit;font-size:.84rem}.s18-chips select option{color:#000}'
+ +'.s18-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px}.s18-grid .fys{width:100%}.s18-empty{opacity:.7;padding:20px;text-align:center;grid-column:1/-1}'
+ +'@media(max-width:600px){.s18-ov{padding:0;align-items:flex-end}.s18-box{border-radius:22px 22px 0 0;max-height:94vh;padding:16px}.s18-grid{grid-template-columns:1fr 1fr;gap:10px}.s18-grid .fys-n{font-size:.9rem}}'
+ /* attentes */
+ +'.att18{margin:0 0 20px;padding:16px;border-radius:20px;background:linear-gradient(135deg,rgba(255,210,63,.16),rgba(255,77,109,.12));border:2px solid rgba(255,210,63,.45)}.att18-h{font:800 1.15rem Fredoka,sans-serif;margin-bottom:10px;color:var(--ink)}.att18-h small{font-size:.8rem;opacity:.65}'
+ +'.att18-row{display:flex;gap:12px;overflow-x:auto;padding:4px 2px 8px;scroll-snap-type:x proximity}.att18-c{position:relative;flex:0 0 250px;display:flex;gap:10px;align-items:stretch;background:var(--card-bg);border-radius:16px;padding:10px 10px 10px 34px;cursor:pointer;box-shadow:0 6px 16px rgba(0,0,0,.18);scroll-snap-align:start;color:var(--ink)}'
+ +'.att18-c.first{flex-basis:290px;border:2px solid #ffd23f;box-shadow:0 0 0 3px rgba(255,210,63,.25),0 8px 22px rgba(0,0,0,.22)}'
+ +'.att18-n{position:absolute;left:6px;top:8px;font:900 1.6rem/1 Fredoka,sans-serif;color:#ff4d6d;text-shadow:0 2px 0 rgba(0,0,0,.15)}.att18-c.first .att18-n{color:#e0a800}.att18-c.first .att18-n::after{content:"👑";position:absolute;left:-2px;top:26px;font-size:1rem}'
+ +'.att18-c img,.att18-np{flex:0 0 72px;width:72px;height:106px;object-fit:cover;border-radius:10px;background:#1b1330;display:flex;align-items:center;justify-content:center;font-size:1.6rem}'
+ +'.att18-i{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px}.att18-i b{font-size:.92rem;line-height:1.2;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}.att18-i small{font-size:.74rem;color:var(--muted)}.att18-i .wish-release{font-size:.74rem;align-self:flex-start}.att18-nd{font-size:.74rem;color:var(--muted)}'
+ +'.att18-btns{margin-top:auto;display:flex;gap:5px}.att18-btns button{flex:1;border:1px solid var(--border);background:var(--input-bg);color:var(--ink);border-radius:8px;padding:4px 0;cursor:pointer;font-size:.8rem}.att18-btns button:disabled{opacity:.35;cursor:default}'
+ +'.att18-empty{font-size:.88rem;color:var(--muted)}.att18-b{border:1px solid rgba(255,210,63,.6)!important;background:rgba(255,210,63,.12)!important}.att18-b.on{background:linear-gradient(135deg,#ffd23f,#ff9f1c)!important;color:#3a2600!important;font-weight:800}'
+ +'.wish-card.att18-on{box-shadow:0 0 0 3px #ffd23f,0 10px 26px rgba(255,159,28,.3)!important}.att18-mb{border:2px solid #ffd23f;background:rgba(255,210,63,.14);color:var(--ink);border-radius:12px;padding:10px 14px;font-weight:800;cursor:pointer;font-family:inherit}.att18-mb.on{background:linear-gradient(135deg,#ffd23f,#ff9f1c);color:#3a2600}'
+ /* inédits */
+ +'.in18-sub{color:var(--muted);margin:-6px 0 14px;font-size:.92rem}.in18-bar{display:flex;flex-direction:column;gap:8px;margin-bottom:14px}.in18-chips{display:flex;gap:8px;flex-wrap:wrap;align-items:center}'
+ +'.in18-ch{border:1px solid var(--border);background:var(--card-bg);color:var(--ink);border-radius:99px;padding:7px 13px;cursor:pointer;font:600 .84rem inherit;font-family:inherit}.in18-ch.on{background:linear-gradient(135deg,var(--raspberry),#ff8c42);color:#fff;border-color:transparent}'
+ +'.in18-more{margin-left:auto;border:none;border-radius:99px;padding:8px 16px;background:linear-gradient(135deg,#8a5cf6,#5b2be0);color:#fff;font-weight:800;cursor:pointer;font-family:inherit}.in18-more:disabled{opacity:.5}'
+ +'.in18-pg{margin:6px 0 14px;font-size:.86rem;color:var(--muted)}.in18-pg .str16-bar{margin-top:6px}'
+ +'.in18-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:16px}.in18-c{background:var(--card-bg);border-radius:18px;overflow:hidden;cursor:pointer;box-shadow:0 8px 22px rgba(0,0,0,.14);display:flex;flex-direction:column;transition:transform .2s,opacity .3s}.in18-c:hover{transform:translateY(-3px)}.in18-c.in18-gone{opacity:0;transform:scale(.9)}'
+ +'.in18-p{position:relative;aspect-ratio:2/3;background:#1b1330 center/cover}.in18-bd{position:absolute;left:8px;top:8px;right:52px;font-size:.7rem;font-weight:800;padding:4px 8px;border-radius:8px;color:#fff;box-shadow:0 2px 8px rgba(0,0,0,.35);width:max-content;max-width:calc(100% - 60px)}.in18-bd.a{background:#e63946}.in18-bd.b{background:#5b2be0}'
+ +'.in18-m{position:absolute;right:8px;top:8px;background:rgba(0,0,0,.72);color:#7dffb0;font:800 .78rem Fredoka,sans-serif;padding:4px 7px;border-radius:8px}'
+ +'.in18-i{padding:10px 12px 12px;display:flex;flex-direction:column;gap:3px;flex:1;color:var(--ink)}.in18-i b{font-size:.98rem;line-height:1.2}.in18-i em{font-size:.76rem;color:var(--muted)}.in18-i small{font-size:.74rem;color:var(--muted);line-height:1.3}'
+ +'.in18-why{font-size:.76rem;font-weight:700;color:var(--raspberry);margin-top:2px}.in18-where{font-size:.72rem;color:var(--muted);line-height:1.3}'
+ +'.in18-a{display:flex;gap:5px;margin-top:auto;padding-top:8px}.in18-a button{flex:0 0 auto;border:1px solid var(--border);background:var(--input-bg);color:var(--ink);border-radius:10px;padding:7px 9px;cursor:pointer;font-size:.8rem;font-weight:700;font-family:inherit}.in18-a button[data-a="add"]{flex:1}.in18-a .in18-st{background:linear-gradient(135deg,#8a5cf6,#5b2be0);color:#fff;border-color:transparent}'
+ +'.in18-note{font-size:.76rem;color:var(--muted);margin:18px 0 6px}'
+ +'@media(max-width:600px){.in18-grid{grid-template-columns:1fr 1fr;gap:10px}.in18-a{gap:4px}.in18-a button{flex:1!important;padding:8px 0;font-size:.9rem}.in18-tx{display:none}.in18-bd{font-size:.62rem;padding:3px 6px;right:auto}.in18-m{top:auto;bottom:8px}.in18-more{margin-left:0}.in18-i{padding:8px 9px 10px}.in18-i b{font-size:.88rem}}';
+ document.head.appendChild(st);})();
+(function(){function add(){var sh=document.getElementById('m-sheet');if(!sh||!sh.classList.contains('open'))return;var l=sh.querySelector('.ms-list');if(!l||l.querySelector('#ms-str16'))return;
+  var b=document.createElement('button');b.className='ms-li';b.id='ms-str16';b.type='button';b.textContent='🟣 Mon compte Stremio';b.onclick=function(){sh.classList.remove('open');str16Open();};l.insertBefore(b,l.firstChild);}
+  function watch(){var sh=document.getElementById('m-sheet');if(!sh)return setTimeout(watch,1500);new MutationObserver(add).observe(sh,{attributes:true,attributeFilter:['class']});}watch();})();
 /* ---- Jeux ---- */
 /* ====== 🕸️ 6 degrés : les règles expliquées avant de jouer ====== */
 (function(){var oD=gameDeg;gameDeg=function(){var body=gStage('🕸️ 6 degrés','<div class="deg-rules"><div class="dr-big">🕸️</div><h3>Le but : relier deux acteurs</h3>'
