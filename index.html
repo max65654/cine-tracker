@@ -21617,7 +21617,7 @@ function str16Draw(o,view){var B=o.querySelector('#str16-b');if(!B)return;if(o._
     st.innerHTML='📚 Bibliothèque Stremio : <b>'+inLib.length+'</b> titre'+(inLib.length>1?'s':'')+' ('+inLib.filter(function(x){return x.type==='series';}).length+' séries)'+(cw.length?' · ▶️ <b>'+cw.length+'</b> en cours':'');
     var C=B.querySelector('#str16-cw');if(C&&cw.length){C.innerHTML='<div class="str16-cwh">▶️ Tu en es là sur Stremio</div><div class="str16-cwl">'+cw.slice(0,12).map(function(x,i){var s=x.state||{},pc=s.duration?Math.min(100,Math.round(s.timeOffset/s.duration*100)):0,mv=String(s.video_id||'').match(/:(\d+):(\d+)$/);
       return '<button class="str16-cwi" type="button" data-cw="'+i+'"><span class="str16-cwp">'+(str16Poster(x.poster)?'<img src="'+esc(x.poster)+'" alt="" loading="lazy">':'🎬')+'<i style="width:'+pc+'%"></i></span><b>'+esc(x.name||'')+'</b><small>'+(mv?'S'+mv[1]+' · ép. '+mv[2]+' · ':'')+str16Dur(s.timeOffset)+(s.duration?' / '+str16Dur(s.duration):'')+'</small></button>';}).join('')+'</div>';
-      C.querySelectorAll('[data-cw]').forEach(function(b){b.onclick=function(){var x=cw[+b.dataset.cw],s=x.state||{},p='detail/'+x.type+'/'+encodeURIComponent(x._id)+((s.video_id&&(s.timeOffset||0)>0)?'/'+encodeURIComponent(s.video_id):'');var U={app:'stremio:///'+p,web:'https://web.stremio.com/#/'+p,ok:1};if(STR15.m)str15Go(U,STR15.m);else str15Choose(U,null);};});}
+      C.querySelectorAll('[data-cw]').forEach(function(b){b.onclick=function(){var x=cw[+b.dataset.cw],s=x.state||{},p='detail/'+x.type+'/'+encodeURIComponent(x._id)+((s.video_id&&(s.timeOffset||0)>0)?'/'+encodeURIComponent(s.video_id):'');var U={app:'stremio:///'+p,web:'https://web.stremio.com/#/'+p,ok:1};str17App(U);};});}
   }).catch(function(e){var st=B.querySelector('#str16-st');if(st)st.textContent='⚠️ '+(e&&e.message==='off'?'Session terminée, reconnecte-toi':str16ErrFr(e));if(!str16On())str16Draw(o);});
   str16Preview(o,view==='full');}
 function str16BindLogin(o,B){var f=B.querySelector('#str16-f'),err=B.querySelector('#str16-err');
@@ -21704,7 +21704,7 @@ function str16Card(o,c){var box=o.querySelector('#str16-lib');if(!box)return;
     if((s.timeOffset||0)>0)h+='<div class="str16-cl">▶️ En cours sur Stremio : '+(mv?'S'+mv[1]+' · ép. '+mv[2]+' · ':'')+str16Dur(s.timeOffset)+(s.duration?' / '+str16Dur(s.duration):'')+' <button class="soc-btn2 str16-sm" data-a="play" type="button">Reprendre</button></div>';
     box.innerHTML=h;
     box.querySelectorAll('[data-a]').forEach(function(b){b.onclick=function(){var a=b.dataset.a;
-      if(a==='play'){var p='detail/'+x.type+'/'+encodeURIComponent(x._id)+(s.video_id?'/'+encodeURIComponent(s.video_id):'');var U2={app:'stremio:///'+p,web:'https://web.stremio.com/#/'+p,ok:1};o.remove();str15Go(U2,STR15.m||'app');return;}
+      if(a==='play'){var p='detail/'+x.type+'/'+encodeURIComponent(x._id)+(s.video_id?'/'+encodeURIComponent(s.video_id):'');var U2={app:'stremio:///'+p,web:'https://web.stremio.com/#/'+p,ok:1};o.remove();str17App(U2);return;}
       b.disabled=true;var kk=str16KK(c.tt),st=c.type==='tv'?'series':'movie',it=null;try{it=str16Index().C[c.type+'_'+c.id]||null;}catch(_){}
       var pr,mu={};
       if(a==='rm'){kk.o=1;str16Mut(mu,c.tt,x,st,c.title,function(r){r.removed=true;});pr=str16Flush(mu).then(function(){toast('➖ Retiré de ta bibliothèque Stremio');});}
@@ -21750,6 +21750,46 @@ function str16Card(o,c){var box=o.querySelector('#str16-lib');if(!box)return;
  +'.str16-pill{display:inline-flex;align-items:center;padding:8px 12px;border-radius:12px;background:rgba(138,92,246,.18);font-weight:700;font-size:.84rem}'
  +'.str15-ch{display:flex;flex-direction:column;gap:10px;margin:8px 0 4px}.str15-ch button{display:flex;flex-direction:column;align-items:center;gap:2px;padding:12px 14px;font-size:1rem;margin:0}.str15-ch small{font-size:.72rem;font-weight:600;opacity:.8}.str15-ch .soc-btn{background:linear-gradient(135deg,#8a5cf6,#5b2be0)}';
  document.head.appendChild(st);})();
+/* ====== 🟣 v17 : le bouton Stremio des fiches monte tout en haut (juste sous le titre / en tête de fiche)
+   et un appui ouvre directement l'appli Stremio sur la bonne page. La petite flèche ▾ garde Stremio Web et ta bibliothèque. ====== */
+var STR17_HINT=0;
+function str17App(U){if(!U)return;try{location.href=U.app;}catch(_){}
+  if(STR17_HINT)return;STR17_HINT=1;setTimeout(function(){if(!document.hidden)try{toast('🟣 Rien ne s\'ouvre ? Il faut l\'appli Stremio sur cet appareil — sinon, touche ▾ → Stremio Web');}catch(_){}},2600);}
+/* où poser le bouton : en tête de la fiche collection, sous le titre des Attentes / du catalogue / de « Pour toi » */
+function str17Spot(after){var id=after.id||'';
+  if(id==='m-trailer'||id==='m-ost'){var mc=document.getElementById('modal-content'),mb=mc&&mc.querySelector('.modal-body');if(mb)return {root:mc,place:function(r){mb.insertBefore(r,mb.firstChild);}};}
+  var meta=after.closest&&after.closest('.bm-meta');if(meta){var h=meta.querySelector('h2');if(h){var nx=h.nextElementSibling,at=nx&&nx.classList.contains('bm-author')?nx:h;return {root:meta,place:function(r){at.insertAdjacentElement('afterend',r);}};}}
+  var box=after.closest&&after.closest('.soc-box');if(box){var t=box.querySelector('.soc-title');if(t)return {root:box,place:function(r){t.insertAdjacentElement('afterend',r);}};}
+  return {root:after.parentNode,place:function(r){after.insertAdjacentElement('afterend',r);}};}
+str16BtnLbl=function(b){var c=b&&b._s16;if(!c)return;var x=c.tt&&STR16.lib&&STR16.lib[c.tt],l=b.querySelector('.str15-l');if(!l)return;var inL=!!(x&&!x.removed);
+  l.textContent=!c.U?'⏳ Stremio…':(c.U.ok?'🟣 Regarder sur Stremio':'🔎 Chercher sur Stremio')+(inL?' ✓':'');
+  b.title=(c.U&&!c.U.ok?'Chercher ce titre dans l\'appli Stremio':'Ouvrir sa page dans l\'appli Stremio')+(inL?' (déjà dans ta bibliothèque Stremio)':'');};
+str15Inject=function(after,type,id,title){if(!after||!after.parentNode)return;var sp=str17Spot(after);if(!sp.root||sp.root.querySelector('.str15-b'))return;type=type==='tv'?'tv':'movie';
+  var row=document.createElement('div');row.className='str17-row';var b=document.createElement('button');b.type='button';b.className='str15-b str17-b';
+  b.innerHTML='<span class="str15-l">⏳ Stremio…</span><span class="str15-c" title="Stremio Web · ta bibliothèque Stremio">▾</span>';row.appendChild(b);sp.place(row);
+  var c={type:type,id:id,title:title,tt:'',U:null};b._s16=c;
+  c.p=str15Imdb(type,id).then(function(tt){c.tt=tt;c.U=str15Urls(type,tt,title);str16BtnLbl(b);if(tt&&str16On())str16Lib(300000).then(function(){str16BtnLbl(b);}).catch(function(){});return c.U;});
+  b.addEventListener('click',function(e){e.preventDefault();e.stopPropagation();var menu=!!e.target.closest('.str15-c');
+    if(c.U){if(menu)str15Choose(c.U,c);else str17App(c.U);return;}
+    c.p.then(function(U){if(menu)str15Choose(U,c);else str17App(U);});});};
+str15Choose=function(U,c){var old=document.getElementById('str15-ov');if(old)old.remove();var o=document.createElement('div');o.id='str15-ov';o.className='soc-ov';
+  o.innerHTML='<div class="soc-box"><div class="soc-h">🟣 Stremio</div>'+(c&&c.title?'<div class="str16-tt">'+esc(c.title)+'</div>':'')
+    +'<div class="str15-ch"><button class="soc-btn" data-o="app" type="button">📱 Ouvrir dans l\'appli Stremio</button><button class="soc-btn2" data-o="web" type="button">🌐 Ouvrir sur Stremio Web<small>dans le navigateur, si l\'appli n\'est pas sur cet appareil</small></button></div>'
+    +(U&&!U.ok?'<div class="soc-t" style="font-size:.78rem;opacity:.8">Je n\'ai pas trouvé sa page exacte : Stremio va le chercher par son titre.</div>':'')
+    +(c&&c.tt?'<div class="str16-lib" id="str16-lib">'+(str16On()?'<div class="soc-t">⏳ Je regarde ta bibliothèque Stremio…</div>':'<button class="soc-btn2 str16-w" id="str16-link" type="button">🔗 Relier mon compte Stremio<small>synchro de ta bibliothèque, de tes films et épisodes vus</small></button>')+'</div>':'')
+    +'<div class="soc-row"><button class="soc-btn2" id="str15-x" type="button">Fermer</button></div></div>';
+  document.body.appendChild(o);o.addEventListener('click',function(e){if(e.target===o)o.remove();});o.querySelector('#str15-x').onclick=function(){o.remove();};
+  o.querySelector('[data-o="app"]').onclick=function(){o.remove();str17App(U);};
+  o.querySelector('[data-o="web"]').onclick=function(){o.remove();str15Go(U,'web');};
+  var lk=o.querySelector('#str16-link');if(lk)lk.onclick=function(){o.remove();str16Open();};
+  if(c&&c.tt&&str16On())str16Card(o,c);};
+(function(){var st=document.createElement('style');st.textContent=''
+ +'.str17-row{display:flex;margin:2px 0 12px}.bm-meta .str17-row{margin:6px 0 8px}.soc-box .str17-row{justify-content:center;margin:10px 0 4px}'
+ +'.str17-b{display:inline-flex!important;align-items:center;gap:10px;border:none;border-radius:14px;padding:11px 12px 11px 18px;background:linear-gradient(135deg,#8a5cf6,#5b2be0)!important;color:#fff!important;font:800 1rem/1.1 Fredoka,Inter,sans-serif;cursor:pointer;box-shadow:0 6px 18px rgba(91,43,224,.35);transition:transform .15s,box-shadow .15s;max-width:100%}'
+ +'.str17-b:hover{transform:translateY(-1px);box-shadow:0 9px 22px rgba(91,43,224,.45)}.str17-b:active{transform:scale(.97)}.str17-b .str15-l{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}'
+ +'.str17-b .str15-c{flex:0 0 28px;width:28px;height:28px;margin:-4px -2px -4px 2px;border-radius:50%;background:rgba(255,255,255,.22);display:inline-flex;align-items:center;justify-content:center;font-size:.85rem}'
+ +'@media(max-width:600px){#modal-content .str17-row .str17-b{width:100%;justify-content:space-between}.bm-meta .str17-row{justify-content:center}}'
+ +'.str15-ch .soc-btn{background:linear-gradient(135deg,#8a5cf6,#5b2be0)}';document.head.appendChild(st);})();
 /* ---- Jeux ---- */
 /* ====== 🕸️ 6 degrés : les règles expliquées avant de jouer ====== */
 (function(){var oD=gameDeg;gameDeg=function(){var body=gStage('🕸️ 6 degrés','<div class="deg-rules"><div class="dr-big">🕸️</div><h3>Le but : relier deux acteurs</h3>'
