@@ -4198,7 +4198,7 @@ function renderLibrary(){
       +'</div>';
     return '<div class="movie-card" data-id="'+item.id+'" style="--i:'+Math.min(idx,24)+'">'
       +'<div class="poster-wrap">'
-      +(item.poster?'<img src="'+item.poster+'" alt="" loading="lazy" decoding="async">':'<div class="placeholder">'+(item.type==='serie'?'📺':'🎬')+'</div>')
+      +(item.poster?'<img src="'+item.poster+'" alt="" loading="lazy">':'<div class="placeholder">'+(item.type==='serie'?'📺':'🎬')+'</div>')
       +'<span class="type-badge '+item.type+(item.cartoon?' cartoon':'')+'">'+(item.cartoon?'🎨 ':'')+(item.type==='film'?'Film':'Série')+'</span>'
       +(item.fav?'<span class="fav-badge">❤️</span>':'')
       +'<button class="rewatch-toggle'+(item.toRewatch?' active':'')+'" data-rewatch="'+item.id+'" title="'+(item.toRewatch?'Sur la liste à revoir':'Marquer à revoir')+'">🔁</button>'
@@ -4272,7 +4272,7 @@ function fetchActorSuggestions(name){
 function tagpageMineCardHtml(item){
   return '<div class="movie-card" data-id="'+item.id+'">'
     +'<div class="poster-wrap">'
-    +(item.poster?'<img src="'+item.poster+'" alt="" loading="lazy" decoding="async">':'<div class="placeholder">'+(item.type==='serie'?'📺':'🎬')+'</div>')
+    +(item.poster?'<img src="'+item.poster+'" alt="" loading="lazy">':'<div class="placeholder">'+(item.type==='serie'?'📺':'🎬')+'</div>')
     +'<span class="type-badge '+item.type+'">'+(item.type==='film'?'Film':'Série')+'</span>'
     +(item.fav?'<span class="fav-badge">❤️</span>':'')
     +'</div>'
@@ -4602,7 +4602,7 @@ function enrichTextFields(obj,saveFn,onDone){
   var epType=obj.tmdbType==='tv'?'tv':'movie';
   fetch('https://api.themoviedb.org/3/'+epType+'/'+obj.tmdbId+'?api_key='+TMDB+'&language=en-US').then(function(r){return r.json();}).then(function(d){
     var enName=d.name||d.title||'',enOv=d.overview||'',changed=false;
-    if(needTitle&&enName&&!isForeign(enName)){obj.titleLatin=enName;changed=true;}
+    if(needTitle&&enName&&!isForeign(enName)&&obj.titleLatin!==enName){obj.titleLatin=enName;changed=true;}
     var tasks=[];
     if(needSyn&&enOv)tasks.push(function(cb){mmTranslate(enOv,'en',function(fr){if(fr&&!looksUntranslated(fr)){obj.synopsis=fr;changed=true;}cb();});});
     if(needDir)tasks.push(function(cb){mmTranslate(obj.director,scriptLang(obj.director),function(fr){if(fr&&!isForeign(fr)){obj.directorFr=fr;changed=true;}cb();});});
@@ -4681,7 +4681,7 @@ function enrichEpisodeSynopsis(ep,onDone){
 function openModal(id){
   var item=items.find(function(i){return i.id===id;});if(!item)return;
   if(typeof epOv!=='undefined'&&epOv&&epOv.classList.contains('show')&&_epOverlayItemId!==id)closeEpOverlayForce();
-  _modalOpenId=id;enrichItem(item,function(){if(_modalOpenId===id)openModal(id);});
+  _modalOpenId=id;enrichItem(item,function(){var R=(window._reop23=window._reop23||{});if(_modalOpenId===id&&!R[id]){R[id]=1;var sc=document.querySelector('#modal-overlay .modal,.modal-overlay.show .modal'),y=sc?sc.scrollTop:0;openModal(id);if(sc&&y)sc.scrollTop=y;}});
   var stale=isStale(item);
   var synopsis=item.synopsis?'<div class="modal-synopsis">'+esc(item.synopsis)+'</div>':'';
   var credits='';var _dir=item.directorFr||item.director,_cast=item.castFr||item.cast;
@@ -5812,7 +5812,7 @@ var tokuViewFr='';
 function tokuCardHtml(item){
   return '<div class="movie-card" data-id="'+item.id+'">'
     +'<div class="poster-wrap">'
-    +(item.poster?'<img src="'+item.poster+'" alt="" loading="lazy" decoding="async">':'<div class="placeholder">'+(item.type==='serie'?'📺':'🎬')+'</div>')
+    +(item.poster?'<img src="'+item.poster+'" alt="" loading="lazy">':'<div class="placeholder">'+(item.type==='serie'?'📺':'🎬')+'</div>')
     +'<span class="type-badge '+item.type+'">'+(item.type==='film'?'Film':'Série')+'</span>'
     +(item.fav?'<span class="fav-badge">❤️</span>':'')
     +'<span class="status-badge '+(item.status||'termine')+'">'+(item.status==='a_voir'?'À voir':item.status==='en_cours'?'En cours':item.status==='en_pause'?'En pause':'Vu')+'</span>'
@@ -22534,6 +22534,37 @@ function imp22Merge(cur,nw,kf){
     cur.forEach(function(x){seen[key(x)]=1;});nw.forEach(function(x){var k=key(x);if(!seen[k]){seen[k]=1;out.push(x);}});return out;}
   if(cur&&nw&&typeof cur==='object'&&typeof nw==='object'&&!Array.isArray(cur)&&!Array.isArray(nw)){var o={};Object.keys(cur).forEach(function(k){o[k]=cur[k];});Object.keys(nw).forEach(function(k){if(!(k in o))o[k]=nw[k];});return o;}
   return cur==null?nw:cur;}
+/* ====== 🩹 v23 : plus de clignotement en descendant, et plus de haut flou sur iPhone / iPad ======
+   1) Les affiches ne « disparaissent » plus une fraction de seconde : l'animation d'entrée des cartes (fondu) ne se rejoue plus
+      quand une carte revient à l'écran ou quand la liste se redessine (synchro, note, etc.) — elle ne joue qu'à la 1re ouverture.
+      Sur iPhone / iPad / Safari, les cartes hors de l'écran sont de nouveau toujours dessinées (Safari les faisait clignoter).
+   2) iPhone / iPad (iOS 26) : le haut de l'appli passait sous la barre d'état, qu'iOS floute quand rien de « plein » n'y est fixé.
+      → une bande unie fixe de la couleur de l'appli sous l'heure / la batterie (Safari la reprend comme couleur de barre),
+        l'en-tête commence en dessous, et plus de flou « verre » sur l'en-tête (qui empêchait Safari de prendre sa couleur). ====== */
+(function(){var de=document.documentElement,ua=navigator.userAgent||'';
+  var ios=/iphone|ipad|ipod/i.test(ua)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+  var wk=ios||(/Safari\//.test(ua)&&!/Chrome|Chromium|CriOS|Edg|OPR|Firefox|FxiOS|Android/i.test(ua));
+  if(wk)de.classList.add('is-webkit');
+  /* bande sous la barre d'état (hauteur = zone de la barre d'état ; 0 ailleurs) */
+  var pl=document.createElement('div');pl.id='sat-plate';pl.setAttribute('aria-hidden','true');document.body.appendChild(pl);
+  /* cartes : l'animation d'entrée ne joue qu'une fois par grille */
+  function still(id,ms){var g=document.getElementById(id);if(!g||g.classList.contains('cards-still')||g._v23)return;g._v23=1;setTimeout(function(){g.classList.add('cards-still');},ms);}
+  try{var oL=renderLibrary;renderLibrary=function(){var r=oL.apply(this,arguments);still('library-grid',1700);return r;};}catch(_){}
+  try{var oW=renderWishGrid;var wW=function(){var r=oW.apply(this,arguments);still('wish-grid',1700);return r;};for(var k in oW)if(Object.prototype.hasOwnProperty.call(oW,k))wW[k]=oW[k];renderWishGrid=wW;}catch(_){}
+  setTimeout(function(){still('library-grid',0);},4000);
+  var st=document.createElement('style');st.textContent=''
+   /* 1) cartes qui ne clignotent plus */
+   +'.cards-still .movie-card:not(.tap-bounce):not([class*="pframe-"]),.cards-still .movie-card img,.cards-still .wish-card,.cards-still .wish-poster{animation:none!important}'
+   +'html.is-webkit .movie-card,html.is-webkit #library-grid .movie-card,html.is-webkit #wish-grid .wish-card,html.is-webkit .in18-grid .in18-c,html.is-webkit #games-hub .gh-card{content-visibility:visible!important;contain-intrinsic-size:none!important}'
+   /* 2) barre d'état : bande unie + en-tête en dessous */
+   +'#sat-plate{position:fixed;top:0;left:0;right:0;height:env(safe-area-inset-top,0px);background:var(--cream);z-index:95;pointer-events:none}'
+   /* Safari 26 colore le haut avec un élément fixe plein écran d'au moins 6 px (sans flou) au lieu de flouter la page */
+   +'html.is-ios #sat-plate{height:max(6px,env(safe-area-inset-top,0px))}'
+   +'html.is-ios header,html.is-ios header.scrolled{-webkit-backdrop-filter:none!important;backdrop-filter:none!important}'
+   +'@media(min-width:761px){header:not(.scrolled){padding-top:calc(24px + env(safe-area-inset-top,0px))}header.scrolled{padding-top:calc(8px + env(safe-area-inset-top,0px))!important}'
+   +'html.is-ios.is-standalone header:not(.scrolled){padding-top:calc(34px + env(safe-area-inset-top,0px))}html.is-ios.is-standalone header.scrolled{padding-top:calc(14px + env(safe-area-inset-top,0px))!important}}'
+   +'@media(max-width:760px){html.is-ios.is-standalone header,html.is-ios.is-standalone header.scrolled{padding-top:calc(14px + var(--sat,env(safe-area-inset-top,0px)))!important;background:var(--cream)!important}}';
+  document.head.appendChild(st);})();
 /* ---- Jeux ---- */
 /* ====== 🕸️ 6 degrés : les règles expliquées avant de jouer ====== */
 (function(){var oD=gameDeg;gameDeg=function(){var body=gStage('🕸️ 6 degrés','<div class="deg-rules"><div class="dr-big">🕸️</div><h3>Le but : relier deux acteurs</h3>'
