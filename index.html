@@ -5980,10 +5980,11 @@ document.getElementById('import-file').addEventListener('change',function(e){
   var f=e.target.files[0];if(!f)return;
   var r=new FileReader();r.onload=function(ev){
     try{var d=JSON.parse(ev.target.result);var U21=imp21Begin('⬆️ Import d\'une sauvegarde','file');
-      if(d.items){var m=confirm('Fusionner ?');if(m){var ids=items.map(function(i){return i.id;});d.items.forEach(function(i){if(!ids.includes(i.id))items.push(i);});}else{items=d.items;}
-      if(d.wishlist)wishlist=d.wishlist;if(d.episodes)episodes=d.episodes;if(d.planned)planned=d.planned;if(d.customTop)customTop=d.customTop;if(d.sagas)sagas=d.sagas;if(d.marathons)marathons=d.marathons;if(d.pinnedSearches)pinnedSearches=d.pinnedSearches;
-      if(d.books){books=d.books;svBooks();renderBooks();}if(d.pancartes){pancartes=d.pancartes;svPanc();renderPancartes();}
-      if(d.tokuSubcats){tokuSubcats=d.tokuSubcats;svTokuSubcats();}if(d.seasonTheories){seasonTheories=d.seasonTheories;svTheories();}if(d.seasonMeta){seasonMeta=d.seasonMeta;svSeasonMeta();}}
+      if(d.items){var m=confirm('⬆️ Fusionner avec ta collection ?\n\nOK = ajouter seulement ce qui manque (rien n\'est effacé)\nAnnuler = REMPLACER toute ta collection par celle du fichier');if(m){var ids=items.map(function(i){return i.id;}),tk={};items.forEach(function(i){if(i&&i.tmdbId)tk[(i.tmdbType||'movie')+'_'+i.tmdbId]=1;});d.items.forEach(function(i){if(!i||ids.includes(i.id)||(i.tmdbId&&tk[(i.tmdbType||'movie')+'_'+i.tmdbId]))return;items.push(i);if(i.tmdbId)tk[(i.tmdbType||'movie')+'_'+i.tmdbId]=1;});}else{items=d.items;}
+      var MG=function(c,n,kf){return m?imp22Merge(c,n,kf):n;};
+      if(d.wishlist)wishlist=MG(wishlist,d.wishlist,'tmdb');if(d.episodes)episodes=MG(episodes,d.episodes);if(d.planned)planned=MG(planned,d.planned);if(d.customTop)customTop=MG(customTop,d.customTop);if(d.sagas)sagas=MG(sagas,d.sagas);if(d.marathons)marathons=MG(marathons,d.marathons);if(d.pinnedSearches)pinnedSearches=MG(pinnedSearches,d.pinnedSearches);
+      if(d.books){books=MG(books,d.books);svBooks();renderBooks();}if(d.pancartes){pancartes=MG(pancartes,d.pancartes);svPanc();renderPancartes();}
+      if(d.tokuSubcats){tokuSubcats=MG(tokuSubcats,d.tokuSubcats);svTokuSubcats();}if(d.seasonTheories){seasonTheories=MG(seasonTheories,d.seasonTheories);svTheories();}if(d.seasonMeta){seasonMeta=MG(seasonMeta,d.seasonMeta);svSeasonMeta();}}
       else if(Array.isArray(d)){items=d;}
       sv();svW();svE();svP();svT();svSG();svM();svPin();renderAll();renderWishGrid();if(!imp21End(U21,{msg:'⬆️ Sauvegarde importée'}))toast('Import ✓');
     }catch(ex){toast('Fichier invalide');}
@@ -22273,7 +22274,7 @@ function str21Restore(){if(STR16C.v21||STR21.busy)return;var K=STR16C.k||{},tts=
   }).catch(function(e){if(e&&e.message!=='off')console.warn('str21',e);}).then(function(){STR21.busy=false;});}
 setTimeout(str21Restore,5000);setInterval(function(){if(!STR16C.v21&&!document.hidden)str21Restore();},5*60000);
 /* ====== ↩️ v21 : annuler un import.
-   Chaque import (sauvegarde ⬆️, Netflix / copier-coller 📥, saga entière 📚, titres ajoutés par la synchro Stremio 🟣) est noté :
+   Chaque import (sauvegarde ⬆️, Netflix / copier-coller 📥, saga entière 📚) est noté (la synchro Stremio n'en fait pas partie) :
    ce qu'il a ajouté, et ce qu'il a changé (champ par champ, épisode par épisode). « Annuler » retire ce qu'il a ajouté et remet
    ce qu'il a changé comme avant — sans toucher à ce que tu as modifié toi-même depuis. Les 8 derniers imports (60 jours) restent
    annulables, sur cet appareil (gardés dans la base du navigateur, pas dans le cloud). ====== */
@@ -22328,7 +22329,7 @@ function imp21Db(){if(IMP21.dbp)return IMP21.dbp;IMP21.dbp=new Promise(function(
   IMP21.dbp.catch(function(){});return IMP21.dbp;}
 function imp21Tx(mode,fn){return imp21Db().then(function(db){return new Promise(function(res,rej){var tx=db.transaction('imp',mode),st=tx.objectStore('imp'),out;try{out=fn(st);}catch(e){rej(e);return;}tx.oncomplete=function(){res(out&&'result' in out?out.result:out);};tx.onerror=function(){rej(tx.error);};});});}
 function imp21List(){var pf=imp21Pf();return imp21Tx('readonly',function(st){return st.getAll();}).then(function(L){return L||[];},function(){return IMP21.mem.slice();})
-  .then(function(L){return L.filter(function(r){return r&&r.pf===pf&&Date.now()-r.id<60*864e5;}).sort(function(a,b){return b.id-a.id;});});}
+  .then(function(L){return L.filter(function(r){return r&&r.pf===pf&&r.src!=='stremio'&&Date.now()-r.id<60*864e5;}).sort(function(a,b){return b.id-a.id;});});}
 function imp21Save(rec){IMP21.mem.unshift(rec);IMP21.mem=IMP21.mem.slice(0,8);
   return imp21Tx('readwrite',function(st){st.put(rec);}).then(function(){return imp21List();}).then(function(L){var old=L.slice(8);var all=null;
     return imp21Tx('readwrite',function(st){old.forEach(function(r){st.delete(r.id);});var q=st.getAll();q.onsuccess=function(){(q.result||[]).forEach(function(r){if(r&&Date.now()-r.id>60*864e5)st.delete(r.id);});};});}).catch(function(){}).then(imp21Btn);}
@@ -22393,14 +22394,16 @@ function imp21Open(){var o=socOverlay('<div class="soc-h">↩️ Annuler un impo
       :'<div class="imp21-none">Aucun import récent à annuler.<small>Je garde les 8 derniers (60 jours).</small></div>';
     if(G.length)h+='<div class="imp21-h">📦 Imports faits avant</div><div class="imp21-n">Pour ceux-là, je n\'avais pas noté ce qu\'ils ont changé : je peux retirer les titres qu\'ils ont <b>ajoutés</b>, en choisissant lesquels.</div>'
       +G.map(function(g,i){return '<div class="imp21-r"><div class="imp21-rt"><b>'+esc(g.lb)+'</b><small>'+esc(imp21When(g))+' · '+g.its.length+' titre'+(g.its.length>1?'s':'')+' encore là</small></div><button type="button" class="soc-btn2 imp21-og" data-g="'+i+'">Voir</button></div>';}).join('');
-    box.innerHTML=h;
+    h+='<div class="imp21-h">⬆️ Un import de fichier fait avant ?</div><div class="imp21-n">Choisis le fichier <b>.json</b> que tu avais importé avec « ⬆️ Importer » : je retrouve les titres qu\'il a ajoutés à ta collection et tu choisis lesquels retirer.</div>'
+      +'<button type="button" class="soc-btn imp22-file">📂 Choisir le fichier que j\'avais importé</button>';
+    box.innerHTML=h;var fb=box.querySelector('.imp22-file');if(fb)fb.onclick=imp22FileOpen;
     box.querySelectorAll('.imp21-go').forEach(function(b){b.onclick=function(){var r=L[+b.dataset.i];imp21Undo(r,true).then(function(R){if(R){o.remove();imp21Open();}});};});
-    box.querySelectorAll('.imp21-og').forEach(function(b){b.onclick=function(){imp21OldOpen(G[+b.dataset.g]);};});});
+    box.querySelectorAll('.imp21-og').forEach(function(b){b.onclick=function(){var g=G[+b.dataset.g];imp22Pick(g.lb,imp21When(g)+' · coche les titres à retirer de ta collection. Ceux que tu as notés, aimés ou commentés depuis sont décochés.',g.its.map(function(i){var t=imp21Touched(i);return {i:i,on:!t,note:t?'⭐ noté / aimé depuis':''};}),g.lb);};});});
   return o;}
 /* ---------- imports faits avant la v21 : on retrouve les titres ajoutés (étiquette 📥 / 🟣, ou films d'une même saga ajoutés d'un coup) ---------- */
 function imp21SagaLb(n){n=String(n||'').trim();return '📚 '+(/^(la |le |les )?saga\b/i.test(n)?n:'Saga '+n);}
 function imp21When(g){if(!g.last)return 'date inconnue';return new Date(g.last).toLocaleString('fr-FR',{day:'numeric',month:'short',year:new Date(g.last).getFullYear()!==new Date().getFullYear()?'numeric':undefined,hour:'2-digit',minute:'2-digit'});}
-function imp21OldGroups(skip){var T=[['📥 Netflix','📥 Import Netflix'],['📥 Import','📥 Import Canal+, Max, Prime… (copier-coller)'],['🟣 Stremio','🟣 Ajoutés par Stremio']],L=[];
+function imp21OldGroups(skip){var T=[['📥 Netflix','📥 Import Netflix'],['📥 Import','📥 Import Canal+, Max, Prime… (copier-coller)']],L=[];
   (items||[]).forEach(function(i){if(!i||i.locked||skip[i.id])return;var tg=Array.isArray(i.tags)?i.tags:[],src=null;T.forEach(function(t){if(!src&&tg.indexOf(t[0])>=0)src=t;});
     if(src){L.push({i:i,k:src[0],lb:src[1],t:+i.addedAt||0});return;}
     if(i.collId&&i.tmdbType==='movie'&&!tg.length)L.push({i:i,k:'saga'+i.collId,lb:imp21SagaLb(i.collName),t:+i.addedAt||0,saga:1});});
@@ -22410,11 +22413,13 @@ function imp21OldGroups(skip){var T=[['📥 Netflix','📥 Import Netflix'],['�
   return G.filter(function(g){return !g.saga||g.its.length>=2;}).sort(function(a,b){return b.last-a.last;}).slice(0,20);}
 var IMP21_ST={termine:'✅ Vu',en_cours:'▶️ En cours',a_voir:'📌 À voir',en_pause:'⏸️ En pause',abandonne:'🚫 Abandonné'};
 function imp21Touched(i){return (+i.rating||0)>0||!!i.fav||!!String(i.review||'').trim()||!!String(i.personalNotes||'').trim();}
-function imp21OldOpen(g){var its=g.its.filter(function(i){return items.indexOf(i)>=0;});
-  var o=socOverlay('<div class="soc-h">'+esc(g.lb)+'</div><div class="soc-t">'+esc(imp21When(g))+' · coche les titres à retirer de ta collection. Ceux que tu as notés, aimés ou commentés depuis sont décochés.</div>'
+function imp22Pick(title,sub,rows,label){rows=rows.filter(function(x){return items.indexOf(x.i)>=0;});
+  var h='',lastH=null;rows.forEach(function(x,k){if(x.h&&x.h!==lastH){lastH=x.h;h+='<div class="imp22-sh">'+esc(x.h)+'</div>';}var i=x.i;
+    h+='<label class="imp21-oi"><input type="checkbox" data-k="'+k+'"'+(x.on?' checked':'')+'>'+(i.poster?'<img src="'+esc(i.poster)+'" alt="" loading="lazy">':'<span class="imp21-np">'+(i.type==='serie'?'📺':'🎬')+'</span>')
+      +'<span class="imp21-ot"><b>'+esc(i.title||'')+'</b><small>'+(IMP21_ST[i.status]||'')+(i.year?' · '+esc(i.year):'')+(x.note?' · '+esc(x.note):'')+'</small></span></label>';});
+  var o=socOverlay('<div class="soc-h">'+esc(title)+'</div><div class="soc-t">'+sub+'</div>'
     +'<div class="imp21-ck"><button type="button" class="soc-btn2" id="imp21-all">Tout cocher</button><button type="button" class="soc-btn2" id="imp21-none">Tout décocher</button></div>'
-    +'<div class="imp21-ol">'+its.map(function(i,k){var t=imp21Touched(i);return '<label class="imp21-oi"><input type="checkbox" data-k="'+k+'"'+(t?'':' checked')+'>'+(i.poster?'<img src="'+esc(i.poster)+'" alt="" loading="lazy">':'<span class="imp21-np">'+(i.type==='serie'?'📺':'🎬')+'</span>')
-      +'<span class="imp21-ot"><b>'+esc(i.title||'')+'</b><small>'+(IMP21_ST[i.status]||'')+(i.year?' · '+esc(i.year):'')+(t?' · ⭐ noté / aimé depuis':'')+'</small></span></label>';}).join('')+'</div>'
+    +'<div class="imp21-ol">'+(h||'<div class="imp21-none">Aucun de ces titres n\'est encore dans ta collection.</div>')+'</div>'
     +'<div class="soc-row"><button type="button" class="soc-btn2" id="imp21-back">Retour</button><button type="button" class="soc-btn" id="imp21-rm">🗑️ Retirer</button></div>');
   o.querySelector('.soc-box').classList.add('imp21-box');
   var cks=function(){return [].slice.call(o.querySelectorAll('.imp21-ol input'));},upd=function(){var n=cks().filter(function(c){return c.checked;}).length,b=o.querySelector('#imp21-rm');b.textContent='🗑️ Retirer '+n+' titre'+(n>1?'s':'');b.disabled=!n;};
@@ -22422,21 +22427,37 @@ function imp21OldOpen(g){var its=g.its.filter(function(i){return items.indexOf(i
   o.querySelector('#imp21-all').onclick=function(){cks().forEach(function(c){c.checked=true;});upd();};
   o.querySelector('#imp21-none').onclick=function(){cks().forEach(function(c){c.checked=false;});upd();};
   o.querySelector('#imp21-back').onclick=function(){imp21Open();};
-  o.querySelector('#imp21-rm').onclick=function(){var sel=cks().filter(function(c){return c.checked;}).map(function(c){return its[+c.dataset.k];});if(!sel.length)return;
+  o.querySelector('#imp21-rm').onclick=function(){var sel=cks().filter(function(c){return c.checked;}).map(function(c){return rows[+c.dataset.k].i;});if(!sel.length)return;
     if(!confirm('🗑️ Retirer '+sel.length+' titre'+(sel.length>1?'s':'')+' de ta collection (avec leurs épisodes cochés) ?\n\nTu pourras annuler juste après, ou plus tard avec « ↩️ Annuler un import ».'))return;
-    var U=imp21Begin('🗑️ Retrait de « '+g.lb.replace(/^\S+\s/,'')+' »','old'),S={};sel.forEach(function(i){S[i.id]=1;});
+    var U=imp21Begin('🗑️ Retrait de « '+String(label||title).replace(/^\S+\s/,'')+' »','old'),S={};sel.forEach(function(i){S[i.id]=1;});
     for(var j=items.length-1;j>=0;j--){if(items[j]&&S[items[j].id])items.splice(j,1);}
     sel.forEach(function(i){if(episodes&&episodes[i.id])delete episodes[i.id];});
     try{svE();}catch(_){}try{sv();}catch(_){}try{renderAll();}catch(_){}
     imp21End(U,{msg:'🗑️ '+sel.length+' titre'+(sel.length>1?'s':'')+' retiré'+(sel.length>1?'s':'')+' de ta collection'});o.remove();};
   return o;}
-function imp21Btn(){var b=document.getElementById('undo-import-btn');if(!b)return;imp21List().then(function(L){var sk={};L.forEach(function(r){((r.d&&r.d.add)||[]).forEach(function(id){sk[id]=1;});});b.style.display=(L.length||imp21OldGroups(sk).length)?'':'none';}).catch(function(){});}
+/* ---------- ⬆️ ancien import de fichier : on rechoisit le fichier, et on retrouve ce qu'il a ajouté.
+   « Fusionner » ajoutait les titres du fichier À LA FIN de ta collection, dans l'ordre du fichier (tes ajouts à toi vont au début) :
+   ce bloc de fin est ce que l'import a ajouté. Les autres titres du fichier déjà là avant (même identifiant) sont proposés décochés. ---------- */
+function imp22FileOpen(){var inp=document.createElement('input');inp.type='file';inp.accept='.json,application/json';inp.style.display='none';document.body.appendChild(inp);
+  inp.onchange=function(){var f=inp.files&&inp.files[0];inp.remove();if(!f)return;var rd=new FileReader();rd.onload=function(){var d=null;try{d=JSON.parse(String(rd.result||''));}catch(_){}
+    var F=d&&(Array.isArray(d)?d:d.items);if(!Array.isArray(F)||!F.length){toast('😕 Ce fichier n\'est pas une sauvegarde de Ciné Tracker (ou il est vide)');return;}imp22FileReview(F,f.name);};rd.readAsText(f);};
+  inp.click();}
+function imp22FileGuess(F){var fi={},fv={};F.forEach(function(x,k){if(x&&x.id!=null&&!fi.hasOwnProperty(x.id)){fi[x.id]=k;fv[x.id]=x;}});
+  var n=items.length,idx=items.map(function(it){return it&&fi.hasOwnProperty(it.id)?fi[it.id]:-1;}),s=n;while(s>0&&idx[s-1]>=0)s--;
+  var p=s;for(var k=n-1;k>s;k--){if(idx[k]<idx[k-1]){p=k;break;}}
+  var block=items.slice(p),other=items.filter(function(it,k){return k<p&&idx[k]>=0;});
+  var mod=function(it){var f=fv[it.id];return !!f&&['status','rating','fav','review','watchedDate','personalNotes'].some(function(k){return imp21J(it[k]==null||it[k]===''?undefined:it[k])!==imp21J(f[k]==null||f[k]===''?undefined:f[k]);});};
+  return {block:block,other:other,mod:mod};}
+function imp22FileReview(F,name){var G=imp22FileGuess(F),rows=[];
+  G.block.forEach(function(i){var m=G.mod(i);rows.push({i:i,on:!m,note:m?'✏️ modifié depuis l\'import':'',h:'📥 Ajoutés par ce fichier ('+G.block.length+')'});});
+  G.other.forEach(function(i){rows.push({i:i,on:false,note:'était sans doute déjà à toi',h:'🤔 Aussi dans le fichier, mais déjà dans ta collection avant ('+G.other.length+')'});});
+  if(!rows.length){toast('🤷 Aucun titre de « '+name+' » n\'est dans ta collection');return;}
+  imp22Pick('⬆️ '+name,'Coche ce que tu veux retirer de ta collection. Ce qui a été modifié depuis l\'import est décoché.<br><small class="imp22-w">ℹ️ À l\'époque, l\'import remplaçait aussi tes Attentes, épisodes cochés, sagas et tops par ceux du fichier : ça, seule une sauvegarde ⬇️ faite avant l\'import peut le remettre : ⬆️ Importer ce fichier-là, puis « Annuler » quand on te demande de fusionner (= remplacer).</small>',rows,'⬆️ '+name);}
+function imp21Btn(){var b=document.getElementById('undo-import-btn');if(b)b.style.display='';}
 (function(){var b=document.getElementById('undo-import-btn');if(b)b.addEventListener('click',function(){imp21Open();});setTimeout(imp21Btn,1500);
   /* dans la fenêtre d'import : lien vers les imports précédents */
   try{var oI=openImportModal;openImportModal=function(){var r=oI.apply(this,arguments);try{var bx=document.querySelector('#soc-ov .soc-box');imp21List().then(function(L){if(!L.length||!bx||!document.body.contains(bx)||bx.querySelector('.imp21-lk'))return;var a=document.createElement('button');a.type='button';a.className='imp21-lk';a.textContent='↩️ Annuler un import précédent ('+L.length+')';a.onclick=function(){imp21Open();};bx.appendChild(a);});}catch(_){}return r;};window.CineImport=function(){openImportModal();};}catch(_){}
-  /* synchro Stremio : quand elle ajoute des titres à ta collection, c'est un import qu'on peut annuler */
-  try{var oA=str16Apply;str16Apply=function(P,sel){var U=null;try{if(P&&P.inAdd&&P.inAdd.length&&!(sel&&sel.inAdd&&sel.inAdd.every(function(v){return v===false;})))U=imp21Begin('🟣 Titres ajoutés par Stremio','stremio');}catch(_){}
-    return oA.apply(this,arguments).then(function(R){try{if(U&&R&&R.inAdd)imp21End(U,{msg:'🟣 Ajoutés depuis ta bibliothèque Stremio'});}catch(_){}return R;});};}catch(_){}})();
+})();
 (function(){var st=document.createElement('style');st.textContent=''
  +'.imp21-snack{position:fixed;left:50%;top:calc(64px + env(safe-area-inset-top,0px));transform:translate(-50%,-24px);opacity:0;z-index:100050;display:flex;align-items:center;gap:10px;'
  +'width:min(560px,calc(100vw - 24px));box-sizing:border-box;padding:10px 10px 10px 14px;border-radius:16px;background:#1d1530;color:#fff;box-shadow:0 12px 34px rgba(0,0,0,.35);transition:transform .3s,opacity .3s;font-family:Inter,system-ui,sans-serif}'
@@ -22452,6 +22473,7 @@ function imp21Btn(){var b=document.getElementById('undo-import-btn');if(!b)retur
  +'.imp21-ol{display:flex;flex-direction:column;gap:2px;max-height:48vh;overflow-y:auto;margin-bottom:6px}.imp21-oi{display:flex;align-items:center;gap:10px;padding:6px 8px;border-radius:10px;cursor:pointer;text-align:left}.imp21-oi:hover{background:var(--card-bg)}'
  +'.imp21-oi input{width:18px;height:18px;flex:0 0 18px;accent-color:#e5484d}.imp21-oi img,.imp21-np{flex:0 0 32px;width:32px;height:47px;border-radius:5px;object-fit:cover;background:#1b1330;display:flex;align-items:center;justify-content:center}'
  +'.imp21-ot{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}.imp21-ot b{font-size:.88rem;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.imp21-ot small{font-size:.74rem;color:var(--muted)}#imp21-rm:disabled{opacity:.5}'
+ +'.imp22-file{display:block;width:100%;margin:8px 0 2px}.imp22-sh{margin:10px 2px 4px;font-weight:800;font-size:.84rem;color:var(--ink);text-align:left}.imp22-w{display:block;margin-top:6px;opacity:.85;line-height:1.35}'
  +'.imp21-lk{display:block;margin:10px auto 0;border:none;background:none;color:var(--muted);font:600 .82rem Inter,system-ui,sans-serif;text-decoration:underline;cursor:pointer}';
  document.head.appendChild(st);})();
 /* ====== 🎁 v22 (1/2) : Pass — « Tout récupérer » pour les quêtes, et la page ne remonte plus quand tu en récupères une ====== */
@@ -22504,6 +22526,14 @@ function str22ToWish(a,st,d){var x=a.x||{},s=x.state||{};d=d||{};var rel=d.relea
   var up=st==='attentes'||(st==='a_voir'&&!!(d.id)&&(!rel||rel>todayStr())&&!str16FilmSeen(x)&&!s.watched&&!(s.timeOffset>0));if(!up)return false;
   wishlist.unshift({id:Date.now()+Math.floor(Math.random()*99999),tmdbId:a.m.id,tmdbType:a.m.t,title:d.title||d.name||x.name||'',year:rel.slice(0,4),releaseDate:rel,
     poster:d.poster_path?'https://image.tmdb.org/t/p/w500'+d.poster_path:str16Poster(x.poster),hype:3,addedAt:Date.now()});return true;}
+
+/* ====== ⬆️ v22 : fusion d'une sauvegarde — on ajoute ce qui manque, on ne remplace plus rien ====== */
+function imp22Merge(cur,nw,kf){
+  if(Array.isArray(cur)&&Array.isArray(nw)){var seen={},out=cur.slice();
+    var key=function(x){if(x&&typeof x==='object'){if(kf==='tmdb'&&x.tmdbId)return 't'+(x.tmdbType||'movie')+'_'+x.tmdbId;if(x.id!=null)return 'i'+x.id;if(x.tmdbId)return 't'+(x.tmdbType||'movie')+'_'+x.tmdbId;}return 'j'+JSON.stringify(x);};
+    cur.forEach(function(x){seen[key(x)]=1;});nw.forEach(function(x){var k=key(x);if(!seen[k]){seen[k]=1;out.push(x);}});return out;}
+  if(cur&&nw&&typeof cur==='object'&&typeof nw==='object'&&!Array.isArray(cur)&&!Array.isArray(nw)){var o={};Object.keys(cur).forEach(function(k){o[k]=cur[k];});Object.keys(nw).forEach(function(k){if(!(k in o))o[k]=nw[k];});return o;}
+  return cur==null?nw:cur;}
 /* ---- Jeux ---- */
 /* ====== 🕸️ 6 degrés : les règles expliquées avant de jouer ====== */
 (function(){var oD=gameDeg;gameDeg=function(){var body=gStage('🕸️ 6 degrés','<div class="deg-rules"><div class="dr-big">🕸️</div><h3>Le but : relier deux acteurs</h3>'
