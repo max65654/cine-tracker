@@ -12395,7 +12395,7 @@ function openSagaBulk(cid){
     o.querySelector('#sb-alla').onclick=function(){o.querySelectorAll('.sb-st').forEach(function(s){s.value='a_voir';});};
     o.querySelector('#sb-x').onclick=function(){o.remove();};
     o.querySelector('#sb-go').onclick=function(){
-      var n=0,U21=imp21Begin('📚 Saga '+cleanCollName(c.name),'saga');
+      var n=0,U21=imp21Begin(imp21SagaLb(cleanCollName(c.name)),'saga');
       o.querySelectorAll('.sb-row').forEach(function(row){
         if(!row.querySelector('.sb-on').checked)return;var x=parts[+row.dataset.sbi];
         var st=row.querySelector('.sb-st').value,r=parseFloat(row.querySelector('.sb-r').value)||0,fav=row.querySelector('.sb-fav').classList.contains('on'),dt=row.querySelector('.sb-d').value,av=row.querySelector('.sb-av').value.trim();
@@ -22316,7 +22316,7 @@ function imp21Empty(d){return !d.add.length&&!d.chg.length&&!d.del.length&&!d.wa
 function imp21Sum(d){var a=[],n;
   if((n=d.add.length))a.push(n+' titre'+(n>1?'s':'')+' ajouté'+(n>1?'s':''));
   if((n=d.chg.length))a.push(n+' modifié'+(n>1?'s':''));
-  if((n=d.del.length))a.push(n+' remplacé'+(n>1?'s':''));
+  if((n=d.del.length))a.push(n+' retiré'+(n>1?'s':''));
   if((n=d.wadd.length))a.push(n+' attente'+(n>1?'s':'')+' ajoutée'+(n>1?'s':''));
   if((n=d.wchg.length+d.wdel.length))a.push(n+' attente'+(n>1?'s':'')+' modifiée'+(n>1?'s':''));
   var ne=Object.keys(d.eps).filter(function(k){return d.add.indexOf(+k)<0&&d.add.indexOf(k)<0;}).length;if(ne)a.push('épisodes de '+ne+' série'+(ne>1?'s':''));
@@ -22344,7 +22344,7 @@ function imp21Snack(rec,msg){var old=IMP21.snack;if(old)old.remove();clearTimeou
   el.querySelector('.imp21-u').onclick=function(){close();imp21Undo(rec,true);};el.querySelector('.imp21-x').onclick=close;
   document.body.appendChild(el);IMP21.snack=el;requestAnimationFrame(function(){el.classList.add('on');});IMP21.t=setTimeout(close,20000);}
 /* ---------- annuler ---------- */
-function imp21Same(x,y){return imp21J(x)===imp21J(y);}
+function imp21Same(x,y){return imp21J(x==null?undefined:x)===imp21J(y==null?undefined:y);}
 function imp21Undo(rec,ask){if(!rec||!rec.d)return Promise.resolve(null);var d=rec.d;
   if(ask&&!confirm('↩️ Annuler « '+rec.label+' » ('+new Date(rec.t).toLocaleString('fr-FR',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})+') ?\n\n'+rec.sum+'\n\nCe que l\'import a ajouté sera retiré et ce qu\'il a changé sera remis comme avant. Ce que tu as modifié toi-même depuis est gardé.'))return Promise.resolve(null);
   var R={rm:0,back:0,re:0,eps:0,keep:0,x:0},chI=false,chW=false,chE=false,addS={};
@@ -22387,11 +22387,49 @@ function imp21Undo(rec,ask){if(!rec||!rec.d)return Promise.resolve(null);var d=r
 function imp21Open(){var o=socOverlay('<div class="soc-h">↩️ Annuler un import</div><div class="soc-t">Les derniers imports faits sur cet appareil. « Annuler » retire ce qu\'un import a ajouté et remet comme avant ce qu\'il a changé — tes changements faits depuis sont gardés.</div><div id="imp21-l" class="imp21-l"><div class="soc-t">⏳</div></div><div class="soc-row"><button class="soc-btn2" id="imp21-c">Fermer</button></div>');
   o.querySelector('.soc-box').classList.add('imp21-box');o.querySelector('#imp21-c').onclick=function(){o.remove();};
   imp21List().then(function(L){var box=o.querySelector('#imp21-l');if(!box)return;
-    if(!L.length){box.innerHTML='<div class="imp21-none">Aucun import à annuler pour l\'instant.<small>Je garde les 8 derniers (60 jours).</small></div>';return;}
-    box.innerHTML=L.map(function(r,i){return '<div class="imp21-r"><div class="imp21-rt"><b>'+esc(r.label)+'</b><small>'+esc(str16Ago(r.t))+' · '+esc(r.sum)+'</small></div><button type="button" class="soc-btn imp21-go" data-i="'+i+'">↩️ Annuler</button></div>';}).join('');
-    box.querySelectorAll('.imp21-go').forEach(function(b){b.onclick=function(){var r=L[+b.dataset.i];imp21Undo(r,true).then(function(R){if(R){o.remove();imp21Open();}});};});});
+    var skip={};L.forEach(function(r){((r.d&&r.d.add)||[]).forEach(function(id){skip[id]=1;});});var G=imp21OldGroups(skip);
+    var h=L.length?L.map(function(r,i){return '<div class="imp21-r"><div class="imp21-rt"><b>'+esc(r.label)+'</b><small>'+esc(str16Ago(r.t))+' · '+esc(r.sum)+'</small></div><button type="button" class="soc-btn imp21-go" data-i="'+i+'">↩️ Annuler</button></div>';}).join('')
+      :'<div class="imp21-none">Aucun import récent à annuler.<small>Je garde les 8 derniers (60 jours).</small></div>';
+    if(G.length)h+='<div class="imp21-h">📦 Imports faits avant</div><div class="imp21-n">Pour ceux-là, je n\'avais pas noté ce qu\'ils ont changé : je peux retirer les titres qu\'ils ont <b>ajoutés</b>, en choisissant lesquels.</div>'
+      +G.map(function(g,i){return '<div class="imp21-r"><div class="imp21-rt"><b>'+esc(g.lb)+'</b><small>'+esc(imp21When(g))+' · '+g.its.length+' titre'+(g.its.length>1?'s':'')+' encore là</small></div><button type="button" class="soc-btn2 imp21-og" data-g="'+i+'">Voir</button></div>';}).join('');
+    box.innerHTML=h;
+    box.querySelectorAll('.imp21-go').forEach(function(b){b.onclick=function(){var r=L[+b.dataset.i];imp21Undo(r,true).then(function(R){if(R){o.remove();imp21Open();}});};});
+    box.querySelectorAll('.imp21-og').forEach(function(b){b.onclick=function(){imp21OldOpen(G[+b.dataset.g]);};});});
   return o;}
-function imp21Btn(){var b=document.getElementById('undo-import-btn');if(!b)return;imp21List().then(function(L){b.style.display=L.length?'':'none';}).catch(function(){});}
+/* ---------- imports faits avant la v21 : on retrouve les titres ajoutés (étiquette 📥 / 🟣, ou films d'une même saga ajoutés d'un coup) ---------- */
+function imp21SagaLb(n){n=String(n||'').trim();return '📚 '+(/^(la |le |les )?saga\b/i.test(n)?n:'Saga '+n);}
+function imp21When(g){if(!g.last)return 'date inconnue';return new Date(g.last).toLocaleString('fr-FR',{day:'numeric',month:'short',year:new Date(g.last).getFullYear()!==new Date().getFullYear()?'numeric':undefined,hour:'2-digit',minute:'2-digit'});}
+function imp21OldGroups(skip){var T=[['📥 Netflix','📥 Import Netflix'],['📥 Import','📥 Import Canal+, Max, Prime… (copier-coller)'],['🟣 Stremio','🟣 Ajoutés par Stremio']],L=[];
+  (items||[]).forEach(function(i){if(!i||i.locked||skip[i.id])return;var tg=Array.isArray(i.tags)?i.tags:[],src=null;T.forEach(function(t){if(!src&&tg.indexOf(t[0])>=0)src=t;});
+    if(src){L.push({i:i,k:src[0],lb:src[1],t:+i.addedAt||0});return;}
+    if(i.collId&&i.tmdbType==='movie'&&!tg.length)L.push({i:i,k:'saga'+i.collId,lb:imp21SagaLb(i.collName),t:+i.addedAt||0,saga:1});});
+  var by={},G=[];L.forEach(function(x){(by[x.k]=by[x.k]||[]).push(x);});
+  Object.keys(by).forEach(function(k){var cur=null;by[k].sort(function(p,q){return p.t-q.t;}).forEach(function(x){var gap=x.saga?90e3:30*60e3;
+    if(!cur||x.t-cur.last>gap){cur={k:k,lb:x.lb,saga:!!x.saga,first:x.t,last:x.t,its:[]};G.push(cur);}cur.its.push(x.i);cur.last=x.t;});});
+  return G.filter(function(g){return !g.saga||g.its.length>=2;}).sort(function(a,b){return b.last-a.last;}).slice(0,20);}
+var IMP21_ST={termine:'✅ Vu',en_cours:'▶️ En cours',a_voir:'📌 À voir',en_pause:'⏸️ En pause',abandonne:'🚫 Abandonné'};
+function imp21Touched(i){return (+i.rating||0)>0||!!i.fav||!!String(i.review||'').trim()||!!String(i.personalNotes||'').trim();}
+function imp21OldOpen(g){var its=g.its.filter(function(i){return items.indexOf(i)>=0;});
+  var o=socOverlay('<div class="soc-h">'+esc(g.lb)+'</div><div class="soc-t">'+esc(imp21When(g))+' · coche les titres à retirer de ta collection. Ceux que tu as notés, aimés ou commentés depuis sont décochés.</div>'
+    +'<div class="imp21-ck"><button type="button" class="soc-btn2" id="imp21-all">Tout cocher</button><button type="button" class="soc-btn2" id="imp21-none">Tout décocher</button></div>'
+    +'<div class="imp21-ol">'+its.map(function(i,k){var t=imp21Touched(i);return '<label class="imp21-oi"><input type="checkbox" data-k="'+k+'"'+(t?'':' checked')+'>'+(i.poster?'<img src="'+esc(i.poster)+'" alt="" loading="lazy">':'<span class="imp21-np">'+(i.type==='serie'?'📺':'🎬')+'</span>')
+      +'<span class="imp21-ot"><b>'+esc(i.title||'')+'</b><small>'+(IMP21_ST[i.status]||'')+(i.year?' · '+esc(i.year):'')+(t?' · ⭐ noté / aimé depuis':'')+'</small></span></label>';}).join('')+'</div>'
+    +'<div class="soc-row"><button type="button" class="soc-btn2" id="imp21-back">Retour</button><button type="button" class="soc-btn" id="imp21-rm">🗑️ Retirer</button></div>');
+  o.querySelector('.soc-box').classList.add('imp21-box');
+  var cks=function(){return [].slice.call(o.querySelectorAll('.imp21-ol input'));},upd=function(){var n=cks().filter(function(c){return c.checked;}).length,b=o.querySelector('#imp21-rm');b.textContent='🗑️ Retirer '+n+' titre'+(n>1?'s':'');b.disabled=!n;};
+  o.querySelector('.imp21-ol').addEventListener('change',upd);upd();
+  o.querySelector('#imp21-all').onclick=function(){cks().forEach(function(c){c.checked=true;});upd();};
+  o.querySelector('#imp21-none').onclick=function(){cks().forEach(function(c){c.checked=false;});upd();};
+  o.querySelector('#imp21-back').onclick=function(){imp21Open();};
+  o.querySelector('#imp21-rm').onclick=function(){var sel=cks().filter(function(c){return c.checked;}).map(function(c){return its[+c.dataset.k];});if(!sel.length)return;
+    if(!confirm('🗑️ Retirer '+sel.length+' titre'+(sel.length>1?'s':'')+' de ta collection (avec leurs épisodes cochés) ?\n\nTu pourras annuler juste après, ou plus tard avec « ↩️ Annuler un import ».'))return;
+    var U=imp21Begin('🗑️ Retrait de « '+g.lb.replace(/^\S+\s/,'')+' »','old'),S={};sel.forEach(function(i){S[i.id]=1;});
+    for(var j=items.length-1;j>=0;j--){if(items[j]&&S[items[j].id])items.splice(j,1);}
+    sel.forEach(function(i){if(episodes&&episodes[i.id])delete episodes[i.id];});
+    try{svE();}catch(_){}try{sv();}catch(_){}try{renderAll();}catch(_){}
+    imp21End(U,{msg:'🗑️ '+sel.length+' titre'+(sel.length>1?'s':'')+' retiré'+(sel.length>1?'s':'')+' de ta collection'});o.remove();};
+  return o;}
+function imp21Btn(){var b=document.getElementById('undo-import-btn');if(!b)return;imp21List().then(function(L){var sk={};L.forEach(function(r){((r.d&&r.d.add)||[]).forEach(function(id){sk[id]=1;});});b.style.display=(L.length||imp21OldGroups(sk).length)?'':'none';}).catch(function(){});}
 (function(){var b=document.getElementById('undo-import-btn');if(b)b.addEventListener('click',function(){imp21Open();});setTimeout(imp21Btn,1500);
   /* dans la fenêtre d'import : lien vers les imports précédents */
   try{var oI=openImportModal;openImportModal=function(){var r=oI.apply(this,arguments);try{var bx=document.querySelector('#soc-ov .soc-box');imp21List().then(function(L){if(!L.length||!bx||!document.body.contains(bx)||bx.querySelector('.imp21-lk'))return;var a=document.createElement('button');a.type='button';a.className='imp21-lk';a.textContent='↩️ Annuler un import précédent ('+L.length+')';a.onclick=function(){imp21Open();};bx.appendChild(a);});}catch(_){}return r;};window.CineImport=function(){openImportModal();};}catch(_){}
@@ -22408,6 +22446,11 @@ function imp21Btn(){var b=document.getElementById('undo-import-btn');if(!b)retur
  +'.imp21-l{display:flex;flex-direction:column;gap:8px;margin:12px 0;max-height:52vh;overflow-y:auto}.imp21-r{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:14px;background:var(--card-bg);border:1px solid var(--border)}'
  +'.imp21-rt{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px;text-align:left}.imp21-rt b{font-size:.92rem;color:var(--ink)}.imp21-rt small{font-size:.76rem;color:var(--muted);line-height:1.3}'
  +'.imp21-r .soc-btn{margin:0;flex:0 0 auto;padding:9px 12px;font-size:.84rem;white-space:nowrap}.imp21-none{padding:18px 8px;text-align:center;color:var(--ink);font-weight:600}.imp21-none small{display:block;margin-top:4px;color:var(--muted);font-weight:500}'
+ +'.imp21-h{margin:14px 0 2px;font-weight:800;color:var(--ink);text-align:left}.imp21-n{font-size:.8rem;color:var(--muted);text-align:left;line-height:1.35;margin-bottom:2px}'
+ +'.imp21-ck{display:flex;gap:8px;justify-content:center;margin:8px 0}.imp21-ck .soc-btn2{margin:0;padding:7px 12px;font-size:.8rem}'
+ +'.imp21-ol{display:flex;flex-direction:column;gap:2px;max-height:48vh;overflow-y:auto;margin-bottom:6px}.imp21-oi{display:flex;align-items:center;gap:10px;padding:6px 8px;border-radius:10px;cursor:pointer;text-align:left}.imp21-oi:hover{background:var(--card-bg)}'
+ +'.imp21-oi input{width:18px;height:18px;flex:0 0 18px;accent-color:#e5484d}.imp21-oi img,.imp21-np{flex:0 0 32px;width:32px;height:47px;border-radius:5px;object-fit:cover;background:#1b1330;display:flex;align-items:center;justify-content:center}'
+ +'.imp21-ot{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}.imp21-ot b{font-size:.88rem;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.imp21-ot small{font-size:.74rem;color:var(--muted)}#imp21-rm:disabled{opacity:.5}'
  +'.imp21-lk{display:block;margin:10px auto 0;border:none;background:none;color:var(--muted);font:600 .82rem Inter,system-ui,sans-serif;text-decoration:underline;cursor:pointer}';
  document.head.appendChild(st);})();
 /* ---- Jeux ---- */
