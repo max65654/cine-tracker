@@ -22739,6 +22739,55 @@ function sec26Open(){if(!sec26Adm()||document.getElementById('sec26'))return;
    +'.sec26-bar button{border:none;border-radius:10px;padding:8px 14px;background:#2c2340;color:#fff;font:700 .84rem Inter,system-ui,sans-serif;cursor:pointer}'
    +'.sec26 iframe{flex:1;width:100%;border:0;background:#0b0712}html.sec26-on,html.sec26-on body{overflow:hidden!important}';
   document.head.appendChild(st);})();
+/* ====== ⭐ v27 : « Alors, ton avis ? » — ce que tu finis sur Stremio (film, ou série terminée) passe déjà tout seul en Vu ;
+   maintenant, en arrivant dans l'appli, une petite carte te demande ta note, ton coup de cœur et ton avis.
+   (Les épisodes gardent leur petite carte à eux.) « Plus tard » = on te le redemande à ta prochaine visite. ====== */
+var AV27={later:{},open:0};
+(function(){var oA=str16Apply;str16Apply=function(P,sel,prog){var first=!STR16C.first,before={},when={};
+    (items||[]).forEach(function(i){if(i)before[i.id]=i.status;});
+    try{(P&&P.inFilm||[]).forEach(function(a){if(a&&a.it&&a.x){var t=Date.parse((a.x.state||{}).lastWatched||'');if(!isNaN(t))when[a.it.id]=t;}});}catch(_){}
+    return oA.apply(this,arguments).then(function(R){if(first)return R;var ch=false,now=Date.now();
+      (items||[]).forEach(function(i){if(!i||i.locked||i.status!=='termine'||before[i.id]==='termine'||i.rating>0)return;i.avisQ=now;i.stremioAt=when[i.id]||now;ch=true;});
+      if(ch){try{sv();}catch(_){}setTimeout(av27Next,2500);}return R;});};})();
+function av27Q(){var now=Date.now(),ch=false;var q=(items||[]).filter(function(i){if(!i||!i.avisQ)return false;if(i.rating>0||now-i.avisQ>21*864e5){delete i.avisQ;ch=true;return false;}return !AV27.later[i.id];}).sort(function(a,b){return (b.stremioAt||b.avisQ)-(a.stremioAt||a.avisQ);});if(ch)try{sv();}catch(_){}return q;}
+function av27Busy(){var ns=document.getElementById('ntf-stack');if(ns&&ns.children.length)return true;return document.querySelector('#str19-rate,.pbig,.plvl,.poffer-ov,.cc-match,.modal-overlay.show,#cp-ov,.soc-ov,#battle-ov,#sec26,.qz-ov,.defi-ov');}
+function av27Next(){if(AV27.open||document.getElementById('av27'))return;var q=av27Q();if(!q.length)return;if(av27Busy()){clearTimeout(AV27.w);AV27.w=setTimeout(av27Next,4000);return;}av27Show(q[0],q.length);}
+function av27Ago(t){var m=Math.round((Date.now()-t)/60000);if(m<2)return 'à l\'instant';if(m<60)return 'il y a '+m+' min';var h=Math.round(m/60);if(h<24)return 'il y a '+h+' h';var d=Math.round(h/24);return d<2?'hier':'il y a '+d+' jours';}
+function av27Show(it,n){var old=document.getElementById('av27');if(old)old.remove();AV27.open=1;var o=document.createElement('div');o.id='av27';o.className='av27';
+  var img=/^https?:\/\//.test(String(it.poster||''))?it.poster:'',tv=it.type==='serie'||it.type==='anime_serie'||it.tmdbType==='tv';
+  o.innerHTML='<div class="av27-c" role="dialog" aria-label="Ton avis"><button class="av27-x" type="button" aria-label="Plus tard">✕</button>'
+    +'<div class="av27-top"><div class="av27-im">'+(img?'<img src="'+esc(img)+'" alt="" onerror="this.remove()">':'')+'<span>'+(tv?'📺':'🎬')+'</span></div><div class="av27-tt"><small>🟣 '+(tv?'Série finie':'Fini')+' sur Stremio · '+esc(av27Ago(it.stremioAt||it.avisQ))+(n>1?' · encore '+(n-1)+' à noter':'')+'</small><b>'+esc(it.title)+(it.year?' <i>('+esc(String(it.year))+')</i>':'')+'</b></div></div>'
+    +'<div class="av27-q">Alors, ton avis ?</div><div class="av27-st">'+[1,2,3,4,5].map(function(k){return '<button type="button" data-n="'+k+'" aria-label="'+k+' sur 5">★</button>';}).join('')+'</div>'
+    +'<div class="av27-row"><button type="button" class="av27-b'+(it.fav?' on':'')+'" data-av="fav">'+(it.fav?'❤️':'🤍')+' Coup de cœur</button><button type="button" class="av27-b" data-av="txt">✍️ Mon avis</button></div>'
+    +'<div class="av27-txt"'+(it.review?'':' hidden')+'><textarea maxlength="2000" placeholder="Ce que t\'en as pensé…">'+esc(it.review||'')+'</textarea></div>'
+    +'<div class="av27-ft"><button type="button" class="av27-l" data-av="skip">Ne pas noter</button><button type="button" class="av27-go" data-av="ok">Plus tard</button></div></div>';
+  document.body.appendChild(o);requestAnimationFrame(function(){o.classList.add('on');});var tm=0,go=o.querySelector('.av27-go');
+  var saveTxt=function(){var box=o.querySelector('.av27-txt'),ta=box.querySelector('textarea');if(box.hidden)return false;var v=ta.value.trim();if(v!==(it.review||'')){it.review=v;return true;}return false;};
+  var close=function(msg){clearTimeout(tm);var ch=saveTxt();if(it.rating>0||ch)delete it.avisQ;try{sv();}catch(_){}try{renderAll();}catch(_){}if(msg)try{toast(msg);}catch(_){}o.classList.remove('on');setTimeout(function(){o.remove();AV27.open=0;setTimeout(av27Next,700);},260);};
+  o.querySelectorAll('[data-n]').forEach(function(b){b.onmouseenter=function(){o.querySelectorAll('[data-n]').forEach(function(x){x.classList.toggle('h',+x.dataset.n<=+b.dataset.n);});};b.onmouseleave=function(){o.querySelectorAll('[data-n]').forEach(function(x){x.classList.remove('h');});};
+    b.onclick=function(){clearTimeout(tm);it.rating=+b.dataset.n;o.querySelectorAll('[data-n]').forEach(function(x){x.classList.toggle('on',+x.dataset.n<=it.rating);});o.querySelector('.av27-st').classList.add('ok');go.textContent='✓ Valider';try{sv();}catch(_){}
+      if(o.querySelector('.av27-txt').hidden)tm=setTimeout(function(){if(document.body.contains(o))close('⭐ Noté '+it.rating+'/5');},4000);};});
+  o.addEventListener('click',function(e){var a=e.target.closest('[data-av]');if(!a)return;clearTimeout(tm);var k=a.dataset.av;
+    if(k==='fav'){it.fav=!it.fav;a.classList.toggle('on',it.fav);a.textContent=(it.fav?'❤️':'🤍')+' Coup de cœur';try{sv();}catch(_){}}
+    else if(k==='txt'){var tx=o.querySelector('.av27-txt');tx.hidden=false;go.textContent='✓ Valider';tx.querySelector('textarea').focus();}
+    else if(k==='skip'){delete it.avisQ;close();}
+    else if(k==='ok'){if(it.rating>0||saveTxt())close(it.rating?'⭐ Noté '+it.rating+'/5'+(it.review?' · avis gardé':''):'✍️ Avis gardé');else{AV27.later[it.id]=1;close();}}});
+  o.querySelector('.av27-x').onclick=function(){if(!(it.rating>0))AV27.later[it.id]=1;close();};}
+/* en arrivant : on attend la synchro Stremio du démarrage, puis on demande */
+setTimeout(av27Next,14000);document.addEventListener('visibilitychange',function(){if(!document.hidden)setTimeout(av27Next,6000);});
+(function(){var st=document.createElement('style');st.textContent=''
+  +'.av27{position:fixed;z-index:10045;left:50%;bottom:calc(18px + env(safe-area-inset-bottom,0px));transform:translate(-50%,30px);opacity:0;transition:transform .32s cubic-bezier(.2,1.2,.4,1),opacity .25s;width:min(400px,calc(100% - 20px));pointer-events:none}'
+  +'.av27.on{transform:translate(-50%,0);opacity:1;pointer-events:auto}@media(max-width:760px){.av27{bottom:calc(var(--tabh,64px) + var(--sab,0px) + 10px)}}'
+  +'.av27-c{position:relative;background:var(--card-bg);color:var(--ink);border:1px solid var(--border);border-radius:24px;padding:14px 16px 12px;box-shadow:0 18px 50px rgba(20,10,40,.35)}'
+  +'.av27-x{position:absolute;top:8px;right:8px;width:30px;height:30px;border-radius:50%;border:none;background:var(--input-bg);color:var(--muted);cursor:pointer}'
+  +'.av27-top{display:flex;gap:12px;align-items:center;padding-right:28px}.av27-im{position:relative;flex:none;width:58px;aspect-ratio:2/3;border-radius:10px;overflow:hidden;background:color-mix(in srgb,var(--violet) 20%,var(--card-bg));display:flex;align-items:center;justify-content:center}.av27-im img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:1}'
+  +'.av27-tt{min-width:0;display:flex;flex-direction:column;gap:3px}.av27-tt small{font-size:.72rem;color:#8a5cf6;font-weight:700}.av27-tt b{font:600 1rem/1.25 Fredoka,Inter,sans-serif;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}.av27-tt i{font-style:normal;color:var(--muted);font-weight:500;font-size:.85em}'
+  +'.av27-q{font:600 .95rem Fredoka,Inter,sans-serif;margin:12px 0 4px;text-align:center}.av27-st{display:flex;justify-content:center;gap:4px}.av27-st button{border:none;background:none;font-size:2rem;line-height:1;color:var(--border);cursor:pointer;padding:2px 3px;transition:transform .12s,color .12s}'
+  +'.av27-st button.on,.av27-st button.h{color:#f5b301}.av27-st button:active{transform:scale(1.3)}.av27-st.ok button.on{animation:av27pop .35s}@keyframes av27pop{50%{transform:scale(1.25)}}'
+  +'.av27-row{display:flex;gap:8px;justify-content:center;margin:10px 0 2px}.av27-b{border:1px solid var(--border);background:var(--input-bg);color:var(--ink);border-radius:999px;padding:7px 13px;font-size:.84rem;font-weight:600;cursor:pointer}.av27-b.on{border-color:#ff8fa3;background:color-mix(in srgb,#ff4d6d 12%,var(--card-bg))}'
+  +'.av27-txt textarea{width:100%;box-sizing:border-box;min-height:70px;margin-top:8px;border:1px solid var(--border);border-radius:12px;background:var(--input-bg);color:var(--ink);padding:9px 11px;font:inherit;font-size:.9rem;resize:vertical}'
+  +'.av27-ft{display:flex;justify-content:space-between;align-items:center;margin-top:12px}.av27-l{border:none;background:none;color:var(--muted);font-size:.8rem;cursor:pointer;text-decoration:underline}.av27-go{border:none;background:var(--raspberry);color:#fff;border-radius:999px;padding:9px 18px;font:600 .88rem Fredoka,Inter,sans-serif;cursor:pointer}';
+  document.head.appendChild(st);})();
 /* ---- Jeux ---- */
 /* ====== 🕸️ 6 degrés : les règles expliquées avant de jouer ====== */
 (function(){var oD=gameDeg;gameDeg=function(){var body=gStage('🕸️ 6 degrés','<div class="deg-rules"><div class="dr-big">🕸️</div><h3>Le but : relier deux acteurs</h3>'
