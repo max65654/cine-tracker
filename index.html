@@ -11037,7 +11037,7 @@ function runQcm(body,qs,opts){
 function gameQuiz(){
   var body=gStage('🧠 Quiz de ma collection','');
   var qs=buildCollectionQuestions(10);
-  if(qs.length<5){body.innerHTML='<div class="news-empty">Il faut au moins une dizaine de titres dans ta collection (avec année, casting, affiche) pour le quiz. Ajoute des titres et reviens !</div>';return;}
+  if(qs.length<5){body.innerHTML='<div class="news-empty">Il faut au moins une dizaine de titres avec leur résumé dans ta collection pour le quiz. Ajoute des titres et reviens !</div>';return;}
   runQcm(body,qs,{onDone:function(sc){gEnd('quiz',{score:sc,max:qs.length,text:'✅ '+sc+' / '+qs.length+' bonnes réponses'},sc*12+(sc===qs.length?30:0),'Quiz collection '+sc+'/'+qs.length);}});
 }
 
@@ -11205,7 +11205,7 @@ function gameDuelQuiz(){
     var start=function(qs){if(qs.length<6){body.innerHTML='<div class="news-empty">Pas assez de titres pour un duel.</div>';return;}
       runQcm(body,qs,{players:[p1,p2],onDone:function(sc,ps){var w=ps[0]===ps[1]?'🤝 Égalité !':('🏆 '+(ps[0]>ps[1]?p1:p2)+' gagne !');gEnd('mduel',{score:Math.max(ps[0],ps[1]),text:w+' ('+p1+' '+ps[0]+' – '+ps[1]+' '+p2+')'},40,'Duel quiz');}});};
     if(qs.length>=6)start(qs);
-    else famousMovies().then(function(l){var f=gPick(l,10).map(function(m){var y=gYear(m);return {q:'En quelle année est sorti <b>'+esc(m.title)+'</b> ?',opts:gShuffle([y,y+2,y-3,y+6]).map(String),a:String(y),img:gPoster(m.poster_path)};});start(f);});
+    else famousMovies().then(function(l){var f=qz24Famous(l);start(f);});
   });
 }
 
@@ -18466,7 +18466,7 @@ GAMES.splice(3,0,{id:'qpk',ico:'🧠',n:'Quiz à débloquer',d:'Harry Potter, Fr
 (function(){var oO=openGame;openGame=function(id,ctx){if(id==='qpk'){gameQuizPacks();return;}return oO(id,ctx);};})();
 (function(){var st=document.createElement('style');st.textContent='.qp-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:12px;margin-top:12px}.qp-card{display:flex;flex-direction:column;align-items:center;gap:4px;text-align:center;padding:14px 10px;border-radius:18px;border:3px solid #1b1330;background:linear-gradient(180deg,#c3d0ea,#8397bf);color:#1b1330;box-shadow:0 5px 0 #1b1330}.qp-card.free,.qp-card.own{background:linear-gradient(180deg,#b7f5d8,#2fbf71)}.qp-card.soon{filter:grayscale(.6);opacity:.85}.qp-i{font-size:2.6rem}.qp-card small{opacity:.75}.qp-btns{display:flex;gap:6px;margin-top:6px}.qp-soon{font-size:.78rem;font-weight:800;margin-top:4px}.qp-early{font-size:.75rem!important;margin-top:4px}.qp-buy{width:100%;margin-top:6px}';document.head.appendChild(st);})();
 /* --- écran de préparation (5 à 20 questions) pour Quiz de ma collection, Affiche floutée, Qui suis-je ? --- */
-(function(){var T={quiz:'🧠 Quiz de ma collection',blur:'🌫️ Affiche floutée',who:'🕵️ Qui suis-je ?'},D={quiz:'Des questions sur TES films et séries : casting, années, affiches…',blur:'L\'affiche se dévoile petit à petit : trouve le film le plus vite possible.',who:'Photo pixelisée + filmographie : devine l\'acteur ou l\'actrice.'};
+(function(){var T={quiz:'🧠 Quiz de ma collection',blur:'🌫️ Affiche floutée',who:'🕵️ Qui suis-je ?'},D={quiz:'Des questions sur ce qui se passe dans TES films et séries (et les épisodes que tu as vus)',blur:'L\'affiche se dévoile petit à petit : trouve le film le plus vite possible.',who:'Photo pixelisée + filmographie : devine l\'acteur ou l\'actrice.'};
   var oO=openGame;openGame=function(id,ctx){if(T[id]&&!(ctx&&ctx.adv)&&!openGame._go){var body=gStage(T[id],'<div class="clp-setup"><div class="soc-t">'+D[id]+'</div>'+gSetupHtml(id,{types:false,levels:false})+'<div class="clp-modes"><button class="defi-o" id="g3-go"><span>🎯</span>Jouer</button></div></div>');gSetupBind(body,id,{});
     body.querySelector('#g3-go').onclick=function(){openGame._go=1;try{oO(id,ctx);}finally{openGame._go=0;}};return;}return oO(id,ctx);};})();
 /* ====== ⚔️ CINÉ CLASH v7 : sa propre page avec le fond de ton arène, 15 arènes à franchir, bots de plus en plus forts, trophées entre potes, chargements avec musique et anecdotes, persos qui parlent ====== */
@@ -22565,6 +22565,126 @@ function imp22Merge(cur,nw,kf){
    +'html.is-ios.is-standalone header:not(.scrolled){padding-top:calc(34px + env(safe-area-inset-top,0px))}html.is-ios.is-standalone header.scrolled{padding-top:calc(14px + env(safe-area-inset-top,0px))!important}}'
    +'@media(max-width:760px){html.is-ios.is-standalone header,html.is-ios.is-standalone header.scrolled{padding-top:calc(14px + var(--sat,env(safe-area-inset-top,0px)))!important;background:var(--cream)!important}}';
   document.head.appendChild(st);})();
+/* ====== 🧠 v24 : des quiz sur ce qui SE PASSE (plus de « qui joue qui » ni de « qui est qui »)
+   + Pass Premium : tu marques la série du mois comme vue dans ton tracker → le quiz de déblocage t'est proposé tout de suite.
+   Les questions sont faites à partir des résumés (épisodes, films) découpés en événements :
+   « Que se passe-t-il dans l'épisode 3 ? », « Dans quel épisode … ? », « Vrai ou faux ? », « Lequel arrive en premier ? ».
+   Les phrases qui présentent un personnage ou un acteur (« X est un … », « incarné par … ») sont écartées. ====== */
+function qz24Who(x){return /\b(incarn|interpr[eèé]t|jou[ée]e?s? par|dans le r[ôo]le|acteur|actrice|casting|doubl[ée])/i.test(x)
+  ||/^[^,.;:!?]{0,45}\b(est|sont|était|étaient|sera)\s+(un|une|le|la|les|l'|des|son|sa|ses|leur|leurs)\b/i.test(x);}
+function qz24Sents(txt){var s=String(txt||'').replace(/\s+/g,' ').trim();if(s.length<30)return [];
+  var L=s.replace(/([.!?…])\s+(?=[A-ZÀ-ÖØ-Ý«"'(\d])/g,'$1\n').split('\n').map(function(x){return x.trim();}).filter(function(x){return x.length>=30&&x.length<=240&&!qz24Who(x);});
+  if(!L.length&&s.length>=40&&!qz24Who(s))L=[ivCut(s,220)];return L;}
+function qz24Esc(s){return String(s).replace(/[.*+?^${}()|[\]\\]/g,'\\$&');}
+/* cache le titre dans la phrase (pour « de quel film / titre parle ce passage ? ») */
+function qz24Mask(t,title){var T=String(title||'').replace(/\s*[:(–-].*$/,'').trim();if(T.length<3)return t;try{return t.replace(new RegExp(qz24Esc(T),'ig'),'…');}catch(_){return t;}}
+/* U : unités (épisodes ou films) {s:[phrases], lab, what, tfQ, ord, img} → questions en texte brut {q, opts, a, img} */
+function qz24Make(U,N,o){o=o||{};var units=U.filter(function(u){return u.s&&u.s.length;});if(units.length<3)return [];
+  var tot=0;units.forEach(function(u){tot+=u.s.length;});if(tot<4)return [];
+  /* « asked » : une phrase n'est le sujet que d'une seule question ; elle peut resservir comme mauvaise réponse ailleurs */
+  var asked={},qs=[],types=o.types||['what','which','tf','order'],guard=0,seenQ={};
+  var cut=function(t){return ivCut(t,o.cut||160);};
+  var rnd=function(a){return a[Math.floor(Math.random()*a.length)];};
+  var pickS=function(u){var c=u.s.filter(function(t){return !asked[t];});return c.length?rnd(c):null;};
+  var other=function(u,n,not){var r=[];gShuffle(units.filter(function(v){return v!==u&&v.lab!==u.lab;})).forEach(function(v){if(r.length>=n)return;var c=v.s.filter(function(t){return !not||!not[t];});if(c.length)r.push({u:v,t:rnd(c)});});return r;};
+  while(qs.length<N&&guard++<N*12){var ty=types[(qs.length+guard)%types.length],u=units[Math.floor(Math.random()*units.length)],q=null,subj=null;
+    if(ty==='what'){var t=pickS(u);if(!t)continue;var ot=other(u,3);if(ot.length<3)continue;var op=gShuffle([t].concat(ot.map(function(x){return x.t;})));
+      q={q:u.what,opts:op.map(cut),a:op.indexOf(t),img:u.img||''};subj=t;}
+    else if(ty==='which'){var t2=pickS(u);if(!t2)continue;var lb=gShuffle(units.filter(function(v){return v!==u&&v.lab!==u.lab;})).slice(0,3);if(lb.length<3)continue;var o2=gShuffle([u].concat(lb));
+      q={q:(o.whichQ||'Dans quel épisode ?')+' « '+cut(o.mask?o.mask(t2,u):t2)+' »',opts:o2.map(function(v){return v.lab;}),a:o2.indexOf(u),img:''};subj=t2;}
+    else if(ty==='tf'){var tru=Math.random()<.5,t3=null;if(tru)t3=pickS(u);else{var ot3=other(u,1,asked);if(ot3.length)t3=ot3[0].t;}if(!t3)continue;
+      q={q:'Vrai ou faux ? '+u.tfQ+' : « '+cut(t3)+' »',opts:['✅ Vrai','❌ Faux'],a:tru?0:1,img:''};subj=t3;}
+    else if(ty==='order'){var ord={},us=gShuffle(units).filter(function(v){if(v.ord==null||ord[v.ord])return false;ord[v.ord]=1;return true;}).slice(0,4);if(us.length<3)continue;
+      var ps=us.map(function(v){return {u:v,t:rnd(v.s)};});var first=ps.slice().sort(function(a,b){return a.u.ord-b.u.ord;})[0];if(asked[first.t]){var alt=pickS(first.u);if(!alt)continue;first.t=alt;}
+      q={q:o.orderQ||'Lequel de ces événements arrive en premier ?',opts:ps.map(function(x){return cut(x.t);}),a:ps.indexOf(first),img:''};subj=first.t;}
+    if(!q||q.opts.length!==new Set(q.opts).size)continue;var sig=q.q+'#'+q.opts.slice().sort().join('|');if(seenQ[sig])continue;seenQ[sig]=1;asked[subj]=1;qs.push(q);}
+  return qs;}
+function qz24EpUnits(E,pre){return (E||[]).map(function(e,i){var nt=e&&e.title&&!/^([ée]pisode|episode)\s*\d+$/i.test(e.title)?e.title:'';
+  return {s:qz24Sents(e&&e.synopsis),lab:'Épisode '+(i+1)+(nt?' — '+nt:''),what:(pre||'')+'Que se passe-t-il dans l\'épisode '+(i+1)+(nt?' « '+nt+' »':'')+' ?',tfQ:(pre||'')+'Dans l\'épisode '+(i+1),ord:i+1};});}
+/* ---------- quiz de fin de saison (Pass Premium + quiz bonus) ---------- */
+ivBuildQuiz=function(it,sn,N){N=N||5;var E=(episodes[it.id]||{})[sn]||[];
+  var qs=qz24Make(qz24EpUnits(E),N,{orderQ:'Dans la saison, lequel de ces événements arrive en premier ?'});
+  if(qs.length<Math.min(N,4))return null;
+  return qs.map(function(q){return {q:esc(q.q),opts:q.opts.map(function(x){return esc(x);}),a:q.a};});};
+/* il faut des résumés : on charge la saison, et s'ils manquent en français (série toute neuve), on prend l'anglais (traduit si possible) */
+function qz24Count(E){return (E||[]).filter(function(e){return qz24Sents(e&&e.synopsis).length;}).length;}
+function qz24Prep(it,sn){var E=(episodes[it.id]||{})[sn]||[];
+  var p=(E.length&&E.some(function(e){return e.synopsis;}))?Promise.resolve(E):loadSeasonEps(it.id,it.tmdbId,sn).then(function(x){try{svE();}catch(_){}return x;});
+  return p.then(function(E2){E2=(episodes[it.id]||{})[sn]||E2||[];if(!E2.length||qz24Count(E2)>=E2.length)return qz24Count(E2);
+    return ivJson('https://api.themoviedb.org/3/tv/'+it.tmdbId+'/season/'+sn+'?api_key='+TMDB+'&language=en-US').then(function(d){var en=(d&&d.episodes)||[],todo=[];
+      E2.forEach(function(e,i){if(!e||qz24Sents(e.synopsis).length)return;var x=en[i];if(x&&x.overview&&x.overview.length>40)todo.push({e:e,t:x.overview});});
+      return todo.reduce(function(pr,j){return pr.then(function(){return new Promise(function(res){var done=false,fin=function(fr){if(done)return;done=true;
+        j.e.synopsis=(fr&&fr.length>30&&!/MYMEMORY|QUERY LENGTH|INVALID|LIMIT/i.test(fr))?fr:j.t;res();};try{mmTranslate(j.t,'en',fin);}catch(_){fin('');}setTimeout(function(){fin('');},9000);});});},Promise.resolve())
+        .then(function(){if(todo.length){try{svE();}catch(_){}}return qz24Count(E2);});});});}
+/* ---------- 👑 Pass Premium : vu dans le tracker → quiz ---------- */
+function prem24Out(r){return !!(r&&(r.out||(r.air&&r.air<=todayStr())));}
+function prem24Item(r){var L=items.filter(function(i){return i&&!i.locked&&String(i.tmdbId)===String(r.tv)&&(i.tmdbType==='tv'||i.type==='serie');});
+  return L.find(function(i){return prem24Seen(i,r);})||L[0]||null;}
+function prem24Seen(it,r){if(!it)return false;if(it.status==='termine')return true;var E=(episodes[it.id]||{})[r.season]||[],td=todayStr();
+  var rel=E.filter(function(e){return !e.airDate||e.airDate<=td;});return rel.length>0&&rel.every(function(e){return e.seen;});}
+function prem24Is(it,sn){var r=_premLast;return !!(it&&r&&String(r.tv)===String(it.tmdbId)&&+r.season===+sn);}
+/* pas de « temps de visionnage minimum » pour le Premium : le quiz sert de preuve (mais pas avant la sortie) */
+(function(){var oT=ivSeasonTiming;ivSeasonTiming=function(it,sn){try{if(prem24Is(it,sn)){var rel=premReleaseAt(_premLast);if(rel&&Date.now()<rel.getTime()&&!_premLast.out)return {ok:false,ready:rel.getTime(),totalMin:0};return {ok:true,ready:Date.now(),totalMin:0};}}catch(_){}return oT.apply(this,arguments);};})();
+/* le quiz Premium apparaît aussi dans 🎟️ Pass → Quêtes dès que la série est marquée vue (même sans avoir coché chaque épisode) */
+(function(){var oP=ivPendingSeasons;ivPendingSeasons=function(){var out=oP.apply(this,arguments);try{var r=_premLast;if(r&&prem24Out(r)&&!premiumUnlocked(r)&&!out.some(function(o){return o.prem;})){var it=prem24Item(r);
+  if(it&&prem24Seen(it,r)){var key=ivKey(r.tv,r.season);out.unshift({it:it,sn:+r.season,key:key,lock:passState.quizLock[key]||0,tm:ivSeasonTiming(it,r.season),prem:true});}}}catch(_){}return out;};})();
+/* avant le quiz : résumés prêts ; pour le Premium, jamais de « validé sans quiz » */
+(function(){var oQ=openSeasonQuiz;openSeasonQuiz=function(itemId,sn,onDone){var self=this,args=arguments,it=items.find(function(i){return i.id===itemId;});
+  if(!it||!it.tmdbId)return oQ.apply(self,args);var key=ivKey(it.tmdbId,sn);
+  if(passState.verified[key]||(passState.quizLock[key]&&passState.quizLock[key]>Date.now()))return oQ.apply(self,args);
+  var prem=prem24Is(it,sn);try{toast('🧠 Je prépare le quiz…');}catch(_){}
+  qz24Prep(it,sn).then(function(n){if(prem&&n<3){var o=socOverlay('<div class="soc-big">⏳</div><div class="soc-h">Quiz bientôt prêt</div><div class="soc-t">Les résumés des épisodes de « '+esc(it.title)+' » ne sont pas encore en ligne (la saison vient de sortir). Le quiz se construit avec : reviens dans un jour ou deux, il t\'attendra dans 🎟️ Pass → Quêtes.</div><div class="soc-row"><button class="soc-btn" id="p24-k">OK</button></div>');o.querySelector('#p24-k').onclick=function(){o.remove();};return;}
+    oQ.apply(self,args);},function(){oQ.apply(self,args);});};})();
+var PREM24={seen:null,t:0};
+function prem24Open(it,r){var o=socOverlay('<div class="prem24"><div class="soc-big">👑</div><div class="soc-h">Tu as vu « '+esc(r.label||r.name||it.title)+' » !</div>'
+  +'<div class="soc-t">Dernière étape pour débloquer le <b>Pass Premium</b> : un quiz de <b>10 questions sur ce qui se passe dans les épisodes</b>. Il faut <b>8 bonnes réponses</b>. Si tu rates, tu pourras réessayer après minuit.</div>'
+  +'<div class="soc-row"><button class="soc-btn2" id="p24-later">Plus tard</button><button class="soc-btn" id="p24-go">🧠 Faire le quiz</button></div><div class="p24-n">Le quiz reste aussi dans 🎟️ Pass → Quêtes.</div></div>');
+  o.id='soc-ov';o.classList.add('prem24-ov');
+  o.querySelector('#p24-later').onclick=function(){o.remove();};
+  o.querySelector('#p24-go').onclick=function(){o.remove();openSeasonQuiz(it.id,+r.season,function(){try{renderPass();}catch(_){}});};}
+function prem24Check(){clearTimeout(PREM24.t);try{if(typeof passNotStarted==='function'&&passNotStarted())return;var r=_premLast;if(!r||!prem24Out(r)||premiumUnlocked(r))return;
+  var it=prem24Item(r),seen=!!(it&&prem24Seen(it,r)),was=PREM24.seen;PREM24.seen=seen;if(!seen)return;
+  var key=ivKey(r.tv,r.season);if((passState.quizLock[key]||0)>Date.now())return;
+  var newly=was===false,st=passState.prem24||{};if(!newly&&st.k===key&&st.d===todayStr())return;
+  if(document.querySelector('.soc-ov,.plvl,.pbig,.poffer-ov,.cc-match,#game-stage[style*="flex"]')){PREM24.seen=was;PREM24.t=setTimeout(prem24Check,20000);return;}
+  passState.prem24={k:key,d:todayStr()};svPass();prem24Open(it,r);}catch(e){console.warn('prem24',e);}}
+(function(){var soon=function(){clearTimeout(PREM24.t);PREM24.t=setTimeout(prem24Check,1200);};
+  try{var oS=sv;sv=function(){var x=oS.apply(this,arguments);soon();return x;};}catch(_){}
+  try{var oE=svE;svE=function(){var x=oE.apply(this,arguments);soon();return x;};}catch(_){}
+  try{var oR=premiumResolve;premiumResolve=function(){return oR.apply(this,arguments).then(function(r){setTimeout(function(){if(PREM24.seen===null)prem24Check();},2500);return r;});};}catch(_){}
+  setTimeout(prem24Check,12000);})();
+/* ---------- 🧠 Quiz à débloquer (packs) : événements des épisodes / des films ---------- */
+var _qp24C={};
+function qp24Data(p){if(_qp24C[p.id])return _qp24C[p.id];var td=todayStr(),pr;
+  if(p.t==='coll')pr=ivJson('https://api.themoviedb.org/3/collection/'+p.tid+'?api_key='+TMDB+'&language=fr-FR').then(function(c){if(!c)return null;
+    var parts=(c.parts||[]).filter(function(x){return x.release_date&&x.release_date<=td&&x.overview;}).sort(function(a,b){return a.release_date.localeCompare(b.release_date);});return {kind:'coll',parts:parts};});
+  else pr=ivJson('https://api.themoviedb.org/3/tv/'+p.tid+'?api_key='+TMDB+'&language=fr-FR').then(function(d){if(!d)return null;
+    var sns=(d.seasons||[]).filter(function(s){return s.season_number>0&&s.episode_count&&(!s.air_date||s.air_date<=td);});var pk=gPick(sns,Math.min(4,sns.length));
+    return Promise.all(pk.map(function(s){return ivJson('https://api.themoviedb.org/3/tv/'+p.tid+'/season/'+s.season_number+'?api_key='+TMDB+'&language=fr-FR').then(function(sd){return {n:s.season_number,eps:((sd&&sd.episodes)||[]).filter(function(e){return e.overview&&(!e.air_date||e.air_date<=td);})};});}))
+      .then(function(seas){return {kind:'tv',d:d,seas:seas};});});
+  _qp24C[p.id]=pr.then(function(x){if(!x)delete _qp24C[p.id];return x;},function(){delete _qp24C[p.id];return null;});return _qp24C[p.id];}
+qpBuild=function(p,N){N=N||10;return qp24Data(p).then(function(D){if(!D)return [];var qs=[];
+  if(D.kind==='tv'){var nm=D.d.name||p.n,img=gPoster(D.d.poster_path),U=[];
+    D.seas.forEach(function(s){s.eps.forEach(function(e){var nt=e.name&&!/^([ée]pisode|episode)\s*\d+$/i.test(e.name)?e.name:'';
+      U.push({s:qz24Sents(e.overview),lab:'Saison '+s.n+' · ép. '+e.episode_number+(nt?' — '+nt:''),what:'Dans « '+nm+' », que se passe-t-il dans '+(nt?'l\'épisode « '+nt+' » (saison '+s.n+', épisode '+e.episode_number+')':'l\'épisode '+e.episode_number+' de la saison '+s.n)+' ?',tfQ:'Dans « '+nm+' », saison '+s.n+' épisode '+e.episode_number,ord:s.n*1000+e.episode_number,img:img});});});
+    qs=qz24Make(U,N,{whichQ:'Dans quel épisode de « '+nm+' » ?',orderQ:'Dans « '+nm+' », lequel de ces événements arrive en premier ?'});}
+  else{var U2=D.parts.map(function(m,i){return {s:qz24Sents(m.overview),lab:m.title,what:'Que se passe-t-il dans « '+m.title+' » ?',tfQ:'Dans « '+m.title+' »',ord:i+1,img:gPoster(m.poster_path)};});
+    qs=qz24Make(U2,N,{whichQ:'Dans quel film de la saga se passe ceci :',orderQ:'Dans la saga, lequel de ces événements arrive en premier ?',mask:function(t,u){return qz24Mask(t,u.lab);}});}
+  return gShuffle(qs).slice(0,N).map(function(q){return {q:q.q,img:q.img||'',opts:q.opts,a:q.a};});});};
+/* ---------- 🧠 Quiz de ma collection : ce qui se passe dans TES films et séries ---------- */
+buildCollectionQuestions=function(n,pool){n=n||10;pool=pool||items.filter(function(i){return i&&!i.locked&&i.title;});
+  var U=pool.map(function(i){return {s:qz24Sents(i.synopsis),lab:i.title,what:'Que se passe-t-il dans « '+i.title+' » ?',tfQ:'Dans « '+i.title+' »',ord:null,img:i.poster&&/^http/.test(i.poster)?i.poster:''};});
+  var qs=qz24Make(U,Math.max(3,Math.round(n*.7)),{types:['what','which','tf'],whichQ:'De quel titre parle ce passage :',mask:function(t,u){return qz24Mask(t,u.lab);}});
+  /* + des épisodes que tu as vus */
+  gShuffle(pool.filter(function(i){return i.type==='serie'&&episodes[i.id];})).slice(0,6).forEach(function(i){var E=[];Object.keys(episodes[i.id]).sort(function(a,b){return a-b;}).forEach(function(sn){if(sn==='0'||!Array.isArray(episodes[i.id][sn]))return;
+      qz24EpUnits(episodes[i.id][sn],'').forEach(function(u,k){var e=episodes[i.id][sn][k];if(!e||!e.seen)return;u.lab='S'+sn+' · ép. '+(k+1)+(e.title&&!/^([ée]pisode|episode)\s*\d+$/i.test(e.title)?' — '+e.title:'');u.what='Dans « '+i.title+' », que se passe-t-il dans l\'épisode '+(k+1)+' de la saison '+sn+' ?';u.tfQ='Dans « '+i.title+' », saison '+sn+' épisode '+(k+1);u.ord=(+sn)*1000+k;u.img=i.poster||'';E.push(u);});});
+    if(qs.length<n)qs=qs.concat(qz24Make(E,Math.min(2,n-qs.length),{types:['what','which','order'],whichQ:'Dans « '+i.title+' », dans quel épisode ?',orderQ:'Dans « '+i.title+' », lequel arrive en premier ?'}));});
+  if(qs.length<n)qs=qs.concat(qz24Make(U,n-qs.length,{types:['tf','what','which'],whichQ:'De quel titre parle ce passage :',mask:function(t,u){return qz24Mask(t,u.lab);}}));
+  return gShuffle(qs).slice(0,n).map(function(q){return {q:esc(q.q),opts:q.opts,a:q.opts[q.a],img:q.img||''};});};
+/* quiz « célèbres » (duel quand ta collection est trop petite) */
+function qz24Famous(l){var U=gPick(l||[],40).map(function(m){return {s:qz24Sents(m.overview),lab:m.title,what:'Que se passe-t-il dans « '+m.title+' » ?',tfQ:'Dans « '+m.title+' »',ord:null,img:gPoster(m.poster_path)};});
+  return qz24Make(U,10,{types:['which','what','tf'],whichQ:'De quel film parle ce passage :',mask:function(t,u){return qz24Mask(t,u.lab);}}).map(function(q){return {q:esc(q.q),opts:q.opts,a:q.opts[q.a],img:q.img||''};});}
+(function(){var st=document.createElement('style');st.textContent='.prem24{text-align:center}.prem24 .soc-big{font-size:3.2rem}.p24-n{margin-top:10px;font-size:.78rem;color:var(--muted)}';document.head.appendChild(st);})();
 /* ---- Jeux ---- */
 /* ====== 🕸️ 6 degrés : les règles expliquées avant de jouer ====== */
 (function(){var oD=gameDeg;gameDeg=function(){var body=gStage('🕸️ 6 degrés','<div class="deg-rules"><div class="dr-big">🕸️</div><h3>Le but : relier deux acteurs</h3>'
