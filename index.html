@@ -22987,7 +22987,7 @@ function recoBtnScan(root){if(!window.CineSocial)return;(root||document).querySe
     if(remote>last+5000){try{if(sessionStorage.getItem('cineCloudReloaded')!==String(remote)){sessionStorage.setItem('cineCloudReloaded',String(remote));pullAll(uid).then(function(){location.reload();});return;}}catch(_){}}
     if(!remote){for(var i=0;i<localStorage.length;i++){var rk=localStorage.key(i);var pre='u_'+uid+'__';if(rk&&rk.indexOf(pre)===0){dirty[rk.slice(pre.length)]=rget(rk);}}
       // données locales « d'avant » (profil principal sans compte) : proposées à l'import
-      if(!Object.keys(dirty).length&&rget('cineItems')&&!rget('sceneTrackerHere')&&!rget('st_tpdb_key')&&confirm('Importer dans ton compte la collection déjà présente sur cet appareil ?')){for(var j=0;j<localStorage.length;j++){var k2=localStorage.key(j);if(k2&&k2.indexOf('cine')===0&&k2.indexOf('cineCloud')!==0&&k2!=='cineAuthUid'&&k2!=='cineProfilesReg'){rset(pre+k2,rget(k2));dirty[k2]=rget(k2);}}flush(uid);setTimeout(function(){location.reload();},2500);return;}
+      if(!Object.keys(dirty).length&&rget('cineItems')&&confirm('Importer dans ton compte la collection déjà présente sur cet appareil ?')){for(var j=0;j<localStorage.length;j++){var k2=localStorage.key(j);if(k2&&k2.indexOf('cine')===0&&k2.indexOf('cineCloud')!==0&&k2!=='cineAuthUid'&&k2!=='cineProfilesReg'){rset(pre+k2,rget(k2));dirty[k2]=rget(k2);}}flush(uid);setTimeout(function(){location.reload();},2500);return;}
       flush(uid);}
   }
   /* --- Admin : demandes d'inscription --- */
