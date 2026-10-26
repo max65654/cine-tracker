@@ -2935,23 +2935,6 @@ body.dark .subr-details summary{color:#C9A8FF;}
   <div class="modal" style="max-width:980px;width:100%;"><button class="modal-close" id="tagpage-close">✕</button><div id="tagpage-content" style="padding:24px 26px 30px"></div></div>
 </div>
 
-<!-- Page secrète : ajoute direct depuis ThePornDB, avec l'interface (recherche) du tracker VR,
-     mais tout le reste (grille, fiche, filtres…) reste 100% l'interface normale de CE tracker. -->
-<div class="modal-overlay" id="secret-overlay">
-  <div class="modal" style="max-width:640px;width:100%;">
-    <button class="modal-close" id="secret-close">✕</button>
-    <div style="padding:24px 26px 30px">
-      <h2 style="font-family:'Fredoka',sans-serif;margin-top:0;">🔞 Ajout rapide — ThePornDB</h2>
-      <p style="font-size:.8rem;color:var(--muted2);margin-bottom:16px;">Cherche un film ou une scène. En cliquant un résultat, il est ajouté direct à ta collection normale (tag « VR »), et s'ouvre ensuite comme n'importe quel autre titre.</p>
-      <div class="search-box" style="margin-bottom:0">
-        <input type="text" id="secret-tpdb-search" placeholder="🔍 Chercher sur ThePornDB…">
-        <div class="search-results" id="secret-tpdb-results"></div>
-      </div>
-      <div id="secret-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:12px;margin-top:20px;"></div>
-    </div>
-  </div>
-</div>
-
 <!-- Retag en masse : ajouter/retirer des tags sur tous les titres déjà présents -->
 <div class="modal-overlay" id="retag-overlay">
   <div class="modal" style="max-width:820px;width:100%;"><button class="modal-close" id="retag-close">✕</button>
@@ -4304,7 +4287,7 @@ function openEntityPage(ent){
     :items.filter(function(i){return(i.tags||[]).indexOf(ent.value)>=0;});
   var box=document.getElementById('tagpage-content');
   box.innerHTML='<div class="tagpage-header"><span class="tph-icon">'+(isActor?'🎭':'🏷️')+'</span><h2>'+esc(ent.value)+'</h2>'
-    +'<button type="button" class="sub-action" id="tagpage-vr-btn" style="margin-left:auto;">🔥 Voir dans mon tracker VR</button></div>'
+    +'</div>'
     +'<div class="tagpage-section"><h3>Dans ta liste ('+mine.length+')</h3>'
     +(mine.length?'<div class="tagpage-mylist-grid" id="tagpage-mine"></div>':'<div class="news-empty">Rien dans ta liste pour l\'instant.</div>')
     +'</div>'
@@ -4312,8 +4295,6 @@ function openEntityPage(ent){
     +'<div class="trend-loading" id="tagpage-api">Chargement…</div>'
     +'</div>';
   document.getElementById('tagpage-overlay').classList.add('show');
-  var vrBtn=document.getElementById('tagpage-vr-btn');
-  if(vrBtn)vrBtn.addEventListener('click',function(){openVrLinkPanel(isActor?'actress':'tag',ent.value);});
   if(mine.length){
     var mineBox=document.getElementById('tagpage-mine');
     mineBox.innerHTML=mine.map(tagpageMineCardHtml).join('');
@@ -4341,155 +4322,6 @@ function openEntityPage(ent){
   }).catch(function(){var apiBox=document.getElementById('tagpage-api');if(apiBox)apiBox.outerHTML='<div class="news-empty" id="tagpage-api">⚠️ TMDB momentanément indisponible.</div>';});
 }
 
-/* ====== Pont vers mon-vr-tracker.html (même dossier) ======
-   Ouvre le tracker VR complet dans un nouvel onglet — l'app entière et normale, pas une
-   fenêtre réduite — avec sa recherche globale pré-remplie sur l'actrice/le tag cliqué.
-   Ce tracker-ci reste toujours l'appli principale ; l'autre s'ouvre à côté, jamais dedans. */
-function openVrLinkPanel(kind,value){
-  window.open('mon-vr-tracker.html?ct_q='+encodeURIComponent(value),'_blank');
-}
-
-/* ====== Page secrète : ajout direct depuis ThePornDB ======
-   Déclenchée en cliquant 5x sur le titre H1. La recherche emprunte l'interface du tracker VR,
-   mais l'item créé vit dans CE tracker et s'affiche ensuite avec l'interface normale (grille,
-   fiche, filtres, tags…) comme n'importe quel autre titre — juste tagué « VR ». */
-var SECRET_TPDB_KEY_K='ct_secret_tpdb_key';
-function getSecretTpdbKey(){return localStorage.getItem(SECRET_TPDB_KEY_K)||'';}
-(function(){
-  var h1=document.getElementById('app-h1');if(!h1)return;
-  var clicks=0,clickTimer=null;
-  h1.addEventListener('click',function(){
-    clicks++;clearTimeout(clickTimer);clickTimer=setTimeout(function(){clicks=0;},2000);
-    if(clicks>=5){clicks=0;clearTimeout(clickTimer);openSecretOverlay();}
-  });
-  var closeBtn2=document.getElementById('secret-close');
-  if(closeBtn2)closeBtn2.addEventListener('click',function(){document.getElementById('secret-overlay').classList.remove('show');});
-})();
-var LOCK_PIN_K='ct_lock_pin';
-function openSecretOverlay(){
-  var savedPin=localStorage.getItem(LOCK_PIN_K);
-  if(!savedPin){
-    var p1=prompt('Crée un code (4 chiffres ou plus) pour verrouiller ce coin :');
-    if(p1===null)return;
-    p1=p1.trim();if(!p1){toast('Code vide — annulé.');return;}
-    localStorage.setItem(LOCK_PIN_K,p1);
-  } else {
-    var p2=prompt('Code du coin verrouillé :');
-    if(p2===null)return;
-    if(p2.trim()!==savedPin){toast('Code incorrect.');return;}
-  }
-  document.getElementById('secret-overlay').classList.add('show');
-  renderSecretGrid();
-}
-var PRESET_GENRES_LOCKED=['Horreur','Fantastique','Science-fiction','Jeux vidéo','Films & Séries','Animation','Super-héros','Cosplay','Action','Comédie','Aventure','Thriller','Romance','Historique'];
-function secretCardHtml(item){
-  return '<div class="movie-card" data-id="'+item.id+'">'
-    +'<div class="poster-wrap'+(item.posterFormat==='landscape'?' landscape':'')+'">'
-    +(item.poster?'<img src="'+item.poster+'" alt="">':'<div class="placeholder">🎬</div>')
-    +'</div><div class="info"><h3>'+esc(item.title)+'</h3><div class="meta">'+(item.year||'—')+'</div></div></div>';
-}
-function renderSecretGrid(){
-  var grid=document.getElementById('secret-grid');if(!grid)return;
-  var mine=items.filter(function(i){return i.locked;}).sort(function(a,b){return(b.addedAt||0)-(a.addedAt||0);});
-  if(!mine.length){grid.innerHTML='<div class="news-empty" style="grid-column:1/-1">Rien ici pour l\'instant — cherche un titre au-dessus.</div>';return;}
-  grid.innerHTML=mine.map(secretCardHtml).join('');
-  grid.querySelectorAll('.movie-card').forEach(function(c){c.addEventListener('click',function(){openSecretEditor(parseInt(c.dataset.id));});});
-}
-function openSecretEditor(id){
-  var it=items.find(function(x){return x.id===id;});if(!it)return;
-  var grid=document.getElementById('secret-grid');
-  it.tags=it.tags||[];
-  grid.innerHTML='<div style="grid-column:1/-1">'
-    +'<button type="button" class="sub-action" id="secret-editor-back">← Retour à la grille</button>'
-    +'<h3 style="font-family:\'Fredoka\',sans-serif;margin:14px 0 10px;">'+esc(it.title)+'</h3>'
-    +'<label style="font-size:.8rem;color:var(--muted);display:block;margin-bottom:4px;">Format de l\'affiche</label>'
-    +'<select id="secret-format-select" style="margin-bottom:16px;padding:6px 10px;border-radius:8px;">'
-    +'<option value="vertical"'+(it.posterFormat!=='landscape'?' selected':'')+'>📱 Vertical (portrait)</option>'
-    +'<option value="landscape"'+(it.posterFormat==='landscape'?' selected':'')+'>🖥️ Paysage</option>'
-    +'</select><br>'
-    +'<label style="font-size:.8rem;color:var(--muted);display:block;margin-bottom:6px;">Genres (thèmes parodiés)</label>'
-    +'<div id="secret-genre-chips" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px;">'
-    +PRESET_GENRES_LOCKED.map(function(g){return '<button type="button" class="preset-genre-chip'+(it.tags.indexOf(g)>=0?' on':'')+'" data-g="'+esc(g)+'" style="background:'+(it.tags.indexOf(g)>=0?'var(--raspberry)':'var(--card-bg)')+';color:'+(it.tags.indexOf(g)>=0?'#fff':'var(--muted)')+';border:2px solid var(--border);border-radius:999px;padding:5px 12px;font-size:.74rem;font-weight:600;cursor:pointer;">'+esc(g)+'</button>';}).join('')
-    +'</div>'
-    +'<button type="button" class="sub-action" id="secret-editor-save">✓ Enregistrer</button>'
-    +'</div>';
-  document.getElementById('secret-editor-back').addEventListener('click',renderSecretGrid);
-  grid.querySelectorAll('#secret-genre-chips [data-g]').forEach(function(chip){
-    chip.addEventListener('click',function(){
-      var g=chip.dataset.g,i=it.tags.indexOf(g);
-      if(i>=0){it.tags.splice(i,1);chip.classList.remove('on');chip.style.background='var(--card-bg)';chip.style.color='var(--muted)';}
-      else{it.tags.push(g);chip.classList.add('on');chip.style.background='var(--raspberry)';chip.style.color='#fff';}
-    });
-  });
-  document.getElementById('secret-editor-save').addEventListener('click',function(){
-    it.posterFormat=document.getElementById('secret-format-select').value;
-    sv();toast('Enregistré ✓');renderSecretGrid();
-  });
-}
-(function(){
-  var sIn=document.getElementById('secret-tpdb-search'),sRes=document.getElementById('secret-tpdb-results');
-  if(!sIn||!sRes)return;
-  var st,_results=[];
-  function showNoKeyPrompt(){
-    sRes.innerHTML='<div class="search-loading" style="cursor:default;">Ajoute d\'abord une clé API ThePornDB gratuite (<a href="#" id="secret-tpdb-setkey">clique ici</a>) — gratuite sur theporndb.net.</div>';
-    sRes.classList.add('show');
-    var lnk=document.getElementById('secret-tpdb-setkey');
-    if(lnk)lnk.addEventListener('click',function(e){
-      e.preventDefault();
-      var k=prompt('Colle ta clé API ThePornDB (gratuite sur theporndb.net, section API) :');
-      if(k){localStorage.setItem(SECRET_TPDB_KEY_K,k.trim());sRes.classList.remove('show');toast('Clé enregistrée — relance ta recherche 👍');}
-    });
-  }
-  sIn.addEventListener('input',function(){
-    clearTimeout(st);var q=sIn.value.trim();
-    if(q.length<2){sRes.classList.remove('show');return;}
-    var key=getSecretTpdbKey();
-    if(!key){showNoKeyPrompt();return;}
-    sRes.innerHTML='<div class="search-loading">Recherche…</div>';sRes.classList.add('show');
-    st=setTimeout(function(){
-      var hdrs={headers:{'Authorization':'Bearer '+key,'Accept':'application/json'}};
-      Promise.all([
-        fetch('https://api.theporndb.net/scenes?q='+encodeURIComponent(q)+'&parse='+encodeURIComponent(q),hdrs).then(function(r){return r.json();}).catch(function(){return null;}),
-        fetch('https://api.theporndb.net/movies?q='+encodeURIComponent(q)+'&parse='+encodeURIComponent(q),hdrs).then(function(r){return r.json();}).catch(function(){return null;})
-      ]).then(function(both){
-        var scenesD=both[0],moviesD=both[1];
-        var scenes=(scenesD&&(scenesD.data||scenesD.scenes||scenesD.results))||[];
-        var movies=(moviesD&&(moviesD.data||moviesD.movies||moviesD.results))||[];
-        scenes.forEach(function(sc){sc._tpdbType='scene';});
-        movies.forEach(function(mv){mv._tpdbType='movie';});
-        _results=scenes.concat(movies);
-        if(!_results.length){sRes.innerHTML='<div class="search-loading" style="cursor:default;">Aucun résultat.</div>';return;}
-        sRes.innerHTML=_results.slice(0,14).map(function(sc,i){
-          var img=sc.image||sc.front_image||sc.cover||sc.background||sc.back_image||(Array.isArray(sc.posters)&&sc.posters[0]&&(sc.posters[0].url||sc.posters[0]))||'';
-          var studio=(sc.site&&sc.site.name)||(sc.studio&&sc.studio.name)||'';
-          var y=(sc.date||sc.released_at||'').toString().slice(0,4);
-          var typeTag=sc._tpdbType==='movie'?'🎬 Film':'🎥 Scène';
-          var sub=[typeTag,studio,y].filter(Boolean).join(' · ');
-          return '<div class="search-result-item" data-i="'+i+'">'+(img?'<img src="'+img+'" alt="" referrerpolicy="no-referrer" loading="lazy" onerror="this.style.display=\'none\';">':'<div style="width:32px;height:48px;background:var(--border);border-radius:5px;flex-shrink:0;"></div>')+'<div class="sri-info"><div>'+esc(sc.title||sc.name||'')+'</div><div class="y">'+esc(sub)+'</div></div></div>';
-        }).join('');
-        sRes.querySelectorAll('.search-result-item').forEach(function(el){el.addEventListener('click',function(){
-          var sc=_results[parseInt(el.dataset.i)];if(!sc)return;
-          addSecretTpdbItem(sc);
-          sIn.value='';sRes.classList.remove('show');
-        });});
-      }).catch(function(){sRes.innerHTML='<div class="search-loading" style="cursor:default;">Erreur de connexion à ThePornDB.</div>';});
-    },380);
-  });
-  document.addEventListener('click',function(e){if(!e.target.closest('#secret-tpdb-search')&&!e.target.closest('#secret-tpdb-results'))sRes.classList.remove('show');});
-})();
-function addSecretTpdbItem(sc){
-  var title=sc.title||sc.name||'Sans titre';
-  var dateStr=sc.date||sc.released_at||sc.release_date||'';
-  var year=dateStr?String(dateStr).slice(0,4):'';
-  var synopsis=sc.description||sc.synopsis||sc.details||'';
-  var studio=(sc.site&&sc.site.name)||(sc.studio&&sc.studio.name)||(sc.parent&&sc.parent.name)||sc.studio_name||'';
-  var performers=(sc.performers||[]).map(function(p){return p&&(p.name||(p.parent&&p.parent.name));}).filter(Boolean).join(', ');
-  var poster=sc.image||sc.front_image||sc.cover||(Array.isArray(sc.posters)&&sc.posters[0]&&(sc.posters[0].url||sc.posters[0]))||sc.background||sc.back_image||'';
-  var banner=sc.background||sc.back_image||sc.image||poster||'';
-  var it={id:Date.now()+Math.floor(Math.random()*999),title:title,year:year,type:'film',cartoon:false,status:'a_voir',rating:0,fav:false,tags:[],review:'',personalNotes:'',quote:'',poster:poster,banner:banner,director:studio,cast:performers,watchedDate:'',favChar:'',favCouple:'',addedAt:Date.now(),synopsis:synopsis,seriesStatus:'',nbSeasons:0,tmdbId:null,tmdbType:null,progress:null,lastEpDate:null,runtime:0,epRuntime:0,tmdbRating:0,rewatchCount:0,networkName:studio,locked:true,posterFormat:'vertical'};
-  items.unshift(it);sv();renderAll();renderSecretGrid();
-  toast('Ajouté dans le coin verrouillé ✓ — '+title);
-}
 (function(){
   var to=document.getElementById('tagpage-overlay'),tc=document.getElementById('tagpage-close');
   if(tc)tc.addEventListener('click',closeTagPage);
@@ -22708,37 +22540,6 @@ function fy25Seeds(seen,n,R){var W=seen.map(function(i){return {i:i,t:fy25When(i
   setTimeout(chk,3000);
   try{var oS=sv;sv=function(){var x=oS.apply(this,arguments);clearTimeout(t);t=setTimeout(chk,1500);return x;};}catch(_){}
   try{var oE=svE;svE=function(){var x=oE.apply(this,arguments);clearTimeout(t);t=setTimeout(chk,1500);return x;};}catch(_){}})();
-/* ====== 🔒 v26 : espace privé — seulement pour l'admin (compte maxfenec@…)
-   Un petit bouton 🔒, visible uniquement quand tu es connecté en admin, ouvre ton Scène Tracker en plein écran,
-   par-dessus Ciné Tracker et séparé de lui : ses données (et sa clé ThePornDB, son compte Stremio n° 2) restent à lui,
-   rien ne passe dans Ciné Tracker (pas de collection, pas d'activité, pas de profil public, pas de jeux).
-   Les autres comptes ne voient ni le bouton ni la fenêtre. ====== */
-var SEC26_URL='https://max65654.github.io/scene-tracker/';
-function sec26Adm(){try{return !!(window.CineConfig&&window.CineConfig.isAdmin&&window.CineConfig.isAdmin());}catch(_){return false;}}
-function sec26Close(){var o=document.getElementById('sec26');if(o)o.remove();document.documentElement.classList.remove('sec26-on');}
-function sec26Open(){if(!sec26Adm()||document.getElementById('sec26'))return;
-  var o=document.createElement('div');o.id='sec26';o.className='sec26';o.setAttribute('role','dialog');o.setAttribute('aria-label','Espace privé');
-  o.innerHTML='<div class="sec26-bar"><span>🔒 Espace privé</span><button type="button" id="sec26-x">✕ Fermer</button></div>'
-    +'<iframe id="sec26-f" title="Scène Tracker" src="'+SEC26_URL+'?inct=1" allow="fullscreen; autoplay; clipboard-write; encrypted-media; picture-in-picture" allowfullscreen></iframe>';
-  document.body.appendChild(o);document.documentElement.classList.add('sec26-on');o.querySelector('#sec26-x').onclick=sec26Close;}
-(function(){
-  /* en-tête (ordi / tablette) : à côté des petits boutons ⛶ 🎞️ 🔊 … */
-  function put(){var adm=sec26Adm(),b=document.getElementById('sec26-btn');
-    if(adm&&!b){var host=document.getElementById('dark-toggle');if(host&&host.parentNode){b=document.createElement('button');b.id='sec26-btn';b.type='button';b.className=host.className;b.title='Espace privé';b.textContent='🔒';b.onclick=sec26Open;host.parentNode.insertBefore(b,host.nextSibling);}}
-    else if(!adm&&b){b.remove();sec26Close();}
-    if(!adm){var m=document.getElementById('ms-sec26');if(m)m.remove();}}
-  setTimeout(put,1500);setInterval(put,3000);
-  /* téléphone : tout en bas du menu « Plus » */
-  function sheet(){var sh=document.getElementById('m-sheet');if(!sh||!sh.classList.contains('open')||!sec26Adm())return;var l=sh.querySelector('.ms-list');if(!l||l.querySelector('#ms-sec26'))return;
-    var x=document.createElement('button');x.className='ms-li';x.id='ms-sec26';x.type='button';x.textContent='🔒 Mon espace privé';x.onclick=function(){sh.classList.remove('open');sec26Open();};l.appendChild(x);}
-  function watch(){var sh=document.getElementById('m-sheet');if(!sh)return setTimeout(watch,1500);new MutationObserver(sheet).observe(sh,{attributes:true,attributeFilter:['class']});}watch();
-  document.addEventListener('keydown',function(e){if(e.key==='Escape'&&document.getElementById('sec26'))sec26Close();});
-  var st=document.createElement('style');st.textContent=''
-   +'.sec26{position:fixed;inset:0;z-index:10090;background:#0b0712;display:flex;flex-direction:column}'
-   +'.sec26-bar{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:calc(6px + env(safe-area-inset-top,0px)) calc(12px + env(safe-area-inset-right,0px)) 6px calc(12px + env(safe-area-inset-left,0px));background:#15101f;color:#fff;font:700 .85rem Inter,system-ui,sans-serif}'
-   +'.sec26-bar button{border:none;border-radius:10px;padding:8px 14px;background:#2c2340;color:#fff;font:700 .84rem Inter,system-ui,sans-serif;cursor:pointer}'
-   +'.sec26 iframe{flex:1;width:100%;border:0;background:#0b0712}html.sec26-on,html.sec26-on body{overflow:hidden!important}';
-  document.head.appendChild(st);})();
 /* ====== ⭐ v27 : « Alors, ton avis ? » — ce que tu finis sur Stremio (film, ou série terminée) passe déjà tout seul en Vu ;
    maintenant, en arrivant dans l'appli, une petite carte te demande ta note, ton coup de cœur et ton avis.
    (Les épisodes gardent leur petite carte à eux.) « Plus tard » = on te le redemande à ta prochaine visite. ====== */
@@ -22750,7 +22551,7 @@ var AV27={later:{},open:0};
       (items||[]).forEach(function(i){if(!i||i.locked||i.status!=='termine'||before[i.id]==='termine'||i.rating>0)return;i.avisQ=now;i.stremioAt=when[i.id]||now;ch=true;});
       if(ch){try{sv();}catch(_){}setTimeout(av27Next,2500);}return R;});};})();
 function av27Q(){var now=Date.now(),ch=false;var q=(items||[]).filter(function(i){if(!i||!i.avisQ)return false;if(i.rating>0||now-i.avisQ>21*864e5){delete i.avisQ;ch=true;return false;}return !AV27.later[i.id];}).sort(function(a,b){return (b.stremioAt||b.avisQ)-(a.stremioAt||a.avisQ);});if(ch)try{sv();}catch(_){}return q;}
-function av27Busy(){var ns=document.getElementById('ntf-stack');if(ns&&ns.children.length)return true;return document.querySelector('#str19-rate,.pbig,.plvl,.poffer-ov,.cc-match,.modal-overlay.show,#cp-ov,.soc-ov,#battle-ov,#sec26,.qz-ov,.defi-ov');}
+function av27Busy(){var ns=document.getElementById('ntf-stack');if(ns&&ns.children.length)return true;return document.querySelector('#str19-rate,.pbig,.plvl,.poffer-ov,.cc-match,.modal-overlay.show,#cp-ov,.soc-ov,#battle-ov,.qz-ov,.defi-ov');}
 function av27Next(){if(AV27.open||document.getElementById('av27'))return;var q=av27Q();if(!q.length)return;if(av27Busy()){clearTimeout(AV27.w);AV27.w=setTimeout(av27Next,4000);return;}av27Show(q[0],q.length);}
 function av27Ago(t){var m=Math.round((Date.now()-t)/60000);if(m<2)return 'à l\'instant';if(m<60)return 'il y a '+m+' min';var h=Math.round(m/60);if(h<24)return 'il y a '+h+' h';var d=Math.round(h/24);return d<2?'hier':'il y a '+d+' jours';}
 function av27Show(it,n){var old=document.getElementById('av27');if(old)old.remove();AV27.open=1;var o=document.createElement('div');o.id='av27';o.className='av27';
