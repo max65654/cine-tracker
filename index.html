@@ -23189,8 +23189,6 @@ function v29DeepHints(){
   var key=currentSeason().id+'|'+Math.floor(Date.now()/864e5);if(V29.deepK===key)return V29.deep;
   var d=premiumDef(),H=(d.hintsAll||[]).slice(),top=H.length?Math.floor(Date.now()/864e5)%H.length:-1,out=[];
   H.forEach(function(h,i){if(i!==top)out.push('💡 '+h);});(d.infos||[]).forEach(function(x){out.push('ℹ️ '+x);});
-  var nid=v29MonthIds(2)[1],nd=new Date(),last=new Date(nd.getFullYear(),nd.getMonth()+1,0).getDate();
-  if(nd.getDate()>last-10){var nc=v29Cfg(nid);(nc.hints||[]).forEach(function(h){out.push('🔮 '+h);});}
   V29.deepK=key;V29.deep=out;return out;
 }
 (function(){var oH=f2HintFor;f2HintFor=function(p){var b=oH.apply(this,arguments);if(b)return b;
@@ -23420,7 +23418,7 @@ v29css('v29-css-k',':root{color-scheme:light}body.dark{color-scheme:dark}'
       }).then(function(snap){
         userDoc=snap.data();
         if(isAdmin()){try{localStorage.setItem('ctMaintAdm','1');}catch(_){}maintUnlock();closeOverlay();startSync(u.uid);watchRequests();maintWatch();return;}
-        return db.collection('config').doc('premium').get().then(function(c){var a=c&&c.exists&&c.data()._app;return a&&typeof a.maintenance==='boolean'?a.maintenance:MAINT_DEFAULT;},function(){return MAINT_DEFAULT;}).then(function(mt){
+        return db.collection('config').doc('premium').get().then(function(c){var a=c&&c.exists&&c.data()._app;return a&&typeof a.maintenance==='boolean'?a.maintenance:MAINT_DEFAULT;},function(){return false;}).then(function(mt){
           try{localStorage.removeItem('ctMaintAdm');}catch(_){}maintCache(mt);if(mt){closeOverlay();maintLock();maintWatch();return;}
           maintUnlock();
           if(!userDoc.approved){showPending();return;}
@@ -23584,8 +23582,20 @@ v29css('v29-css-k',':root{color-scheme:light}body.dark{color-scheme:dark}'
     window.addEventListener('pagehide',function(){try{db.collection('presence').doc(me.uid).set({t:0},{merge:true});}catch(_){}});
     try{window.dispatchEvent(new Event('cine-social-ready'));}catch(_){}
   }
-  window.CineConfig={isAdmin:function(){return isAdmin();},setPremium:function(id,v){var o={};o[id]=v;return db.collection('config').doc('premium').set(o,{merge:true});}};
-  function startConfig(){try{db.collection('config').doc('premium').onSnapshot(function(d){try{window.dispatchEvent(new CustomEvent('cine-config',{detail:{premium:(d&&d.exists&&d.data())||{}}}));}catch(_){}},function(){});}catch(_){}}
+  /* 👑 Config Premium : les réglages généraux restent dans config/premium ; chaque SAISON (clé « 2026-12 ») a son propre document config/prem_2026-12.
+     Les règles Firestore ne laissent les joueurs lire que le mois en cours (ou passé) : les mois préparés à l'avance restent invisibles (admin seulement). */
+  var _cfg={base:{},m:{},w:{}};
+  function cfgMonthId(off){var d=new Date();d=new Date(d.getFullYear(),d.getMonth()+(off||0),1);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');}
+  function cfgEmit(){try{var o=Object.assign({},_cfg.base);Object.keys(_cfg.m).forEach(function(k){if(_cfg.m[k])o[k]=Object.assign({},o[k]||{},_cfg.m[k]);});window.dispatchEvent(new CustomEvent('cine-config',{detail:{premium:o}}));}catch(_){}}
+  window.CineConfig={isAdmin:function(){return isAdmin();},setPremium:function(id,v){
+    if(/^\d{4}-\d{2}$/.test(String(id))&&v&&typeof v==='object'){return db.collection('config').doc('prem_'+id).set({d:v,t:Date.now()}).then(function(){_cfg.m[id]=v;});}
+    var o={};o[id]=v;return db.collection('config').doc('premium').set(o,{merge:true});}};
+  function cfgWatchMonth(id){if(_cfg.w[id])return;_cfg.w[id]=1;try{db.collection('config').doc('prem_'+id).onSnapshot(function(d){_cfg.m[id]=(d&&d.exists&&d.data().d)||null;cfgEmit();},function(){_cfg.w[id]=0;});}catch(_){_cfg.w[id]=0;}}
+  function startConfig(){
+    try{db.collection('config').doc('premium').onSnapshot(function(d){_cfg.base=(d&&d.exists&&d.data())||{};cfgEmit();},function(){});}catch(_){}
+    if(isAdmin()){try{db.collection('config').onSnapshot(function(qs){qs.forEach(function(d){if(d.id==='premium')_cfg.base=d.data()||{};else if(/^prem_\d{4}-\d{2}$/.test(d.id))_cfg.m[d.id.slice(5)]=(d.data()||{}).d||null;});cfgEmit();},function(){});}catch(_){}}
+    else{cfgWatchMonth(cfgMonthId(0));setInterval(function(){cfgWatchMonth(cfgMonthId(0));},600000);}
+  }
   function startSync(uid){
     setTimeout(function(){try{startChat();}catch(_){}},1500);
     setTimeout(function(){try{startConfig();}catch(_){}},900);
