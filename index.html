@@ -1111,6 +1111,7 @@ body.dark .sim-badge.sim-mid{background:#3a2c0a;color:#ffcb6b;}
 
 /* ── PLATEFORMES (Attentes) ── */
 .platform-chips{display:flex;flex-wrap:wrap;gap:10px;margin-top:10px;}
+.platform-sub{flex-basis:100%;margin-top:8px;font-family:'Fredoka',sans-serif;font-weight:700;font-size:.92rem;color:var(--ink)}.platform-sub small{opacity:.6;font-weight:500;font-size:.72rem}.platform-chip.studio{padding:8px 14px;font-size:.8rem}
 .platform-chip{font-family:'Fredoka',sans-serif;font-weight:600;font-size:.86rem;padding:10px 18px;border-radius:999px;border:2px solid var(--border);background:var(--card-bg);color:var(--ink);cursor:pointer;transition:transform .15s,border-color .15s;}
 .platform-chip:hover{transform:translateY(-2px);border-color:var(--raspberry);}
 .platform-chip.active{background:var(--raspberry);color:#fff;border-color:var(--raspberry);}
@@ -9108,8 +9109,10 @@ function runEnrichQueue(){
   Promise.all(todo.map(enrichItemFromTmdb)).then(function(){
     _enrichRunning=false;
     safeSet(SK,items);
-    try{renderAll();}catch(_){}
-    if(items.some(needsEnrich))setTimeout(runEnrichQueue,1500);
+    var more=items.some(needsEnrich);
+    /* on ne redessine pas toute la collection à chaque lot : au plus toutes les 6 s, et une fois à la fin */
+    if(!more||Date.now()-(window._enrLastR||0)>6000){window._enrLastR=Date.now();try{renderAll();}catch(_){}}
+    if(more)setTimeout(runEnrichQueue,1500);
   });
 }
 function enrichItemFromTmdb(i){
@@ -15954,6 +15957,45 @@ var PLATFORM_DEFS=[
   {key:'paramount',label:'Paramount+',emoji:'⛰️',match:['paramount plus','paramount+'],networkIds:[4330]},
   {key:'max',label:'Max',emoji:'🟣',match:['max','hbo max'],networkIds:[3186,49]}
 ];
+/* 🎬 Studios de cinéma (production) : l'identifiant TMDB est vérifié au 1er clic (nom attendu), sinon retrouvé par recherche */
+var STUDIO_DEFS=[
+  {key:'st_disney',label:'Walt Disney',emoji:'🏰',id:2,chk:'disney',q:'Walt Disney Pictures'},
+  {key:'st_pixar',label:'Pixar',emoji:'💡',id:3,chk:'pixar',q:'Pixar'},
+  {key:'st_wda',label:'Disney Animation',emoji:'❄️',id:6125,chk:'walt disney animation',q:'Walt Disney Animation Studios'},
+  {key:'st_marvel',label:'Marvel Studios',emoji:'🦸',id:420,chk:'marvel studios',q:'Marvel Studios'},
+  {key:'st_lucas',label:'Lucasfilm',emoji:'⚔️',id:1,chk:'lucasfilm',q:'Lucasfilm'},
+  {key:'st_fox',label:'20th Century',emoji:'🎞️',id:25,chk:'20th century',q:'20th Century Studios'},
+  {key:'st_wb',label:'Warner Bros.',emoji:'🛡️',id:174,chk:'warner bros',q:'Warner Bros. Pictures'},
+  {key:'st_nl',label:'New Line',emoji:'🌀',id:12,chk:'new line',q:'New Line Cinema'},
+  {key:'st_dc',label:'DC Studios',emoji:'🦇',id:128064,chk:'dc ',q:'DC Studios'},
+  {key:'st_uni',label:'Universal',emoji:'🌍',id:33,chk:'universal',q:'Universal Pictures'},
+  {key:'st_par',label:'Paramount',emoji:'⛰️',id:4,chk:'paramount',q:'Paramount Pictures'},
+  {key:'st_sony',label:'Columbia / Sony',emoji:'🗽',id:5,chk:'columbia',q:'Columbia Pictures'},
+  {key:'st_lg',label:'Lionsgate',emoji:'🦁',id:1632,chk:'lionsgate',q:'Lionsgate'},
+  {key:'st_leg',label:'Legendary',emoji:'🐉',id:923,chk:'legendary',q:'Legendary Pictures'},
+  {key:'st_amb',label:'Amblin',emoji:'🚲',id:56,chk:'amblin',q:'Amblin Entertainment'},
+  {key:'st_focus',label:'Focus Features',emoji:'🎯',id:10146,chk:'focus features',q:'Focus Features'},
+  {key:'st_a24',label:'A24',emoji:'🖤',id:41077,chk:'a24',q:'A24'},
+  {key:'st_blum',label:'Blumhouse',emoji:'👻',id:3172,chk:'blumhouse',q:'Blumhouse Productions'},
+  {key:'st_dw',label:'DreamWorks Anim.',emoji:'🌙',id:521,chk:'dreamworks animation',q:'DreamWorks Animation'},
+  {key:'st_ill',label:'Illumination',emoji:'🍌',id:6704,chk:'illumination',q:'Illumination'},
+  {key:'st_spa',label:'Sony Animation',emoji:'🕷️',id:2251,chk:'sony pictures animation',q:'Sony Pictures Animation'},
+  {key:'st_ghibli',label:'Studio Ghibli',emoji:'🌿',id:10342,chk:'ghibli',q:'Studio Ghibli'},
+  {key:'st_toho',label:'Toho',emoji:'🦖',id:882,chk:'toho',q:'Toho'},
+  {key:'st_gaumont',label:'Gaumont',emoji:'🌼',id:9,chk:'gaumont',q:'Gaumont'},
+  {key:'st_pathe',label:'Pathé',emoji:'🐓',id:11,chk:'path',q:'Pathé'},
+  {key:'st_canal',label:'StudioCanal',emoji:'🇫🇷',id:694,chk:'studiocanal',q:'StudioCanal'},
+  {key:'st_euro',label:'EuropaCorp',emoji:'🚗',id:6,chk:'europacorp',q:'EuropaCorp'}
+];
+STUDIO_DEFS.forEach(function(d){d.studio=true;d.match=[];d.networkIds=[];});
+function platDef(k){return PLATFORM_DEFS.find(function(p){return p.key===k;})||STUDIO_DEFS.find(function(p){return p.key===k;});}
+function stResolve(def){
+  var C=ld('cineStCo34',{});if(C[def.key]){def.coId=C[def.key];return Promise.resolve(def.coId);}
+  var chk=ivNorm(def.chk).trim();
+  return ivJson('https://api.themoviedb.org/3/company/'+def.id+'?api_key='+TMDB).then(function(c){if(c&&c.name&&ivNorm(c.name).indexOf(chk)>=0)return c.id;
+    return ivJson('https://api.themoviedb.org/3/search/company?api_key='+TMDB+'&query='+encodeURIComponent(def.q)).then(function(r){var l=(r&&r.results)||[],h=l.find(function(x){return ivNorm(x.name).indexOf(chk)>=0;});return h?h.id:0;});})
+  .catch(function(){return 0;}).then(function(id){def.coId=id;if(id){C[def.key]=id;try{localStorage.setItem('cineStCo34',JSON.stringify(C));}catch(_){}}return id;});
+}
 var _platformMapCache=null;
 function getPlatformProviderMap(){
   if(_platformMapCache)return _platformMapCache;
@@ -15980,6 +16022,7 @@ function renderPlatformChips(){
   var box=document.getElementById('platform-chips');if(!box)return;
   var defs=PLATFORM_DEFS.slice().sort(function(a,b){return (mySubs.indexOf(b.key)>=0)-(mySubs.indexOf(a.key)>=0);});
   box.innerHTML=defs.map(function(p){var mine=mySubs.indexOf(p.key)>=0;return '<button class="platform-chip'+(mine?' mine':'')+(platformCurKey===p.key?' active':'')+'" data-pk="'+p.key+'">'+p.emoji+' '+p.label+(mine?' ✅':'')+'</button>';}).join('');
+  box.innerHTML+='<div class="platform-sub">🎬 Studios de cinéma <small>(films et séries produits par le studio)</small></div>'+STUDIO_DEFS.map(function(p){return '<button class="platform-chip studio'+(platformCurKey===p.key?' active':'')+'" data-pk="'+p.key+'">'+p.emoji+' '+p.label+'</button>';}).join('');
   box.querySelectorAll('.platform-chip').forEach(function(b){b.addEventListener('click',function(){openPlatformPanel(b.dataset.pk);});});
 }
 var platformCurKey=null,platformCurType='all',platformWhen='upcoming',_platformCache={};
@@ -15992,9 +16035,10 @@ function platformLearnNote(){
 }
 function openPlatformPanel(key){
   platformCurKey=key;platformCurType='all';platformWhen='upcoming';
-  var def=PLATFORM_DEFS.find(function(p){return p.key===key;});if(!def)return;
+  var def=platDef(key);if(!def)return;
   document.querySelectorAll('.platform-chip').forEach(function(b){b.classList.toggle('active',b.dataset.pk===key);});
-  document.getElementById('platform-panel-title').textContent=def.emoji+' '+def.label+' — prochaines sorties pour toi';
+  var rb=document.querySelector('#platform-panel .cat-tab2[data-pwhen="recent"]');if(rb)rb.textContent=def.studio?'🆕 Déjà sorties (12 derniers mois)':'🆕 Déjà sorties (60 derniers jours)';
+  document.getElementById('platform-panel-title').textContent=def.emoji+' '+def.label+' — '+(def.studio?'studio · ':'')+'prochaines sorties pour toi';
   document.querySelectorAll('#platform-panel .cat-tab2[data-ptype]').forEach(function(b){b.classList.toggle('active',b.dataset.ptype==='all');});
   document.querySelectorAll('#platform-panel .cat-tab2[data-pwhen]').forEach(function(b){b.classList.toggle('active',b.dataset.pwhen==='upcoming');});
   var ln=document.getElementById('platform-learn-note');if(ln)ln.textContent=platformLearnNote();
@@ -16019,7 +16063,7 @@ function openPlatformPanel(key){
     b.addEventListener('click',function(){
       document.querySelectorAll('#platform-panel .cat-tab2[data-pwhen]').forEach(function(x){x.classList.remove('active');});
       b.classList.add('active');platformWhen=b.dataset.pwhen;
-      var def=PLATFORM_DEFS.find(function(p){return p.key===platformCurKey;});if(def)loadPlatformDiscover(def);
+      var def=platDef(platformCurKey);if(def)loadPlatformDiscover(def);
     });
   });
 })();
@@ -16029,12 +16073,24 @@ function loadPlatformDiscover(def){
   var when=platformWhen,cacheKey=def.key+'_'+when;
   if(_platformCache[cacheKey]){drawPlatformGrid(_platformCache[cacheKey]);return;}
   grid.innerHTML='<div class="trend-loading">'+def.emoji+' Recherche des '+(when==='upcoming'?'prochaines sorties':'nouveautés')+' '+def.label+'…</div>';
-  getPlatformProviderMap().then(function(map){
-    var pid=pickProviderId(map,def.match);
-    var todayS=todayStr(),tomorrow=shiftDate(todayS,1),pastLimit=shiftDate(todayS,-60),farLimit=shiftDate(todayS,540);
+  (def.studio?stResolve(def).then(function(){return {};}):getPlatformProviderMap()).then(function(map){
+    var pid=def.studio?null:pickProviderId(map,def.match);
+    var todayS=todayStr(),tomorrow=shiftDate(todayS,1),pastLimit=shiftDate(todayS,def.studio?-365:-60),farLimit=shiftDate(todayS,540);
     var base='https://api.themoviedb.org/3/discover/';
     var calls=[];
-    if(when==='upcoming'){
+    if(def.studio){
+      if(!def.coId){grid.innerHTML='<div class="news-empty">⚠️ Studio introuvable sur TMDB pour le moment.</div>';return;}
+      var co='&with_companies='+def.coId+'&include_adult=false';
+      var asM=function(l){return l.map(function(x){return Object.assign({},x,{media_type:'movie'});});},asT=function(l){return l.map(function(x){return Object.assign({},x,{media_type:'tv'});});};
+      if(when==='upcoming'){
+        calls.push(fetchPagesJson(base+'movie?api_key='+TMDB+'&language=fr-FR'+co+'&primary_release_date.gte='+tomorrow+'&sort_by=popularity.desc',2).then(asM));
+        calls.push(fetchPagesJson(base+'tv?api_key='+TMDB+'&language=fr-FR'+co+'&first_air_date.gte='+tomorrow+'&sort_by=popularity.desc',1).then(asT));
+        calls.push(fetchPagesJson(base+'tv?api_key='+TMDB+'&language=fr-FR'+co+'&air_date.gte='+tomorrow+'&air_date.lte='+farLimit+'&sort_by=popularity.desc',1).then(asT));
+      } else {
+        calls.push(fetchPagesJson(base+'movie?api_key='+TMDB+'&language=fr-FR'+co+'&primary_release_date.gte='+pastLimit+'&primary_release_date.lte='+todayS+'&sort_by=popularity.desc',2).then(asM));
+        calls.push(fetchPagesJson(base+'tv?api_key='+TMDB+'&language=fr-FR'+co+'&air_date.gte='+pastLimit+'&air_date.lte='+todayS+'&sort_by=popularity.desc',1).then(asT));
+      }
+    } else if(when==='upcoming'){
       var nets=(def.networkIds||[]).join('|');
       // Séries originales pas encore lancées + séries de la plateforme avec un épisode/saison à venir
       if(nets){
@@ -16814,7 +16870,7 @@ function buildParticles(){
   var pics=items.filter(function(i){return i.poster&&(i.status==='termine'||i.status==='en_cours'||i.status==='en_pause'||!i.status);}).map(function(i){return i.poster;});
   pics=pics.filter(function(p,idx){return pics.indexOf(p)===idx;});
   for(var s=pics.length-1;s>0;s--){var j=Math.floor(Math.random()*(s+1));var t=pics[s];pics[s]=pics[j];pics[j]=t;}
-  var emo=['🍿','✨','🎬','🎞️','⭐'];var N=14;
+  var emo=['🍿','✨','🎬','🎞️','⭐'];var N=8;
   for(var i=0;i<N;i++){var el;
     if(pics.length>=4){el=document.createElement('img');el.src=pics[i%pics.length];el.className='cp cp-poster';el.style.width=(30+Math.random()*26)+'px';el.style.opacity=(0.16+Math.random()*0.22).toFixed(2);}
     else{el=document.createElement('span');el.className='cp';el.textContent=emo[Math.floor(Math.random()*emo.length)];el.style.fontSize=(14+Math.random()*16)+'px';el.style.opacity=(0.07+Math.random()*0.12).toFixed(2);}
@@ -25641,6 +25697,49 @@ function g33Inject(){
 }
 (function(){var o=renderForYou;renderForYou=function(){var r=o.apply(this,arguments);try{g33Inject();}catch(e){}return r;};})();
 (function(){var st=document.createElement('style');st.textContent='.g33-h{display:flex;flex-direction:column;gap:2px;margin:18px 0 -4px;padding:10px 14px;border-radius:14px;background:linear-gradient(90deg,rgba(255,77,109,.16),rgba(91,58,140,.12));font-size:.95rem}.g33-h small{opacity:.7;font-size:.72rem}';document.head.appendChild(st);})();
+
+/* ====== V34 · Ciné Clash mis en pause (pas assez fluide) — interrupteur : ajoute ?clash=1 à l'adresse pour le remettre, ?clash=0 pour le recacher ====== */
+var CLASH_ON34=(function(){try{var q=/[?&]clash=(1|0)(&|$)/.exec(location.search);if(q)localStorage.setItem('cineClashOn34',q[1]);return localStorage.getItem('cineClashOn34')==='1';}catch(_){return false;}})();
+if(!CLASH_ON34){
+  GAMES=GAMES.filter(function(g){return g.id!=='clash';});
+  (function(){var oG=openGame;openGame=function(id,ctx){if(id==='clash'){try{toast('⚔️ Ciné Clash est en pause pour l\'instant');}catch(_){}return;}return oG.apply(this,arguments);};})();
+  ccListen=function(){};            /* plus d'invitations de combat qui s'affichent */
+  ccChestNotify=function(){};       /* plus de notifications « coffre prêt » */
+  (function(){var oT=toast;toast=function(m){if(/Ciné Clash/.test(String(m||'')))return;return oT.apply(this,arguments);};})();
+  try{if(window.CineToast){var oCT=window.CineToast;window.CineToast=function(m){if(/Ciné Clash/.test(String(m||'')))return;return oCT.apply(this,arguments);};}}catch(_){}
+}
+
+/* ====== V34 — fluidité : animations décoratives sur le GPU, en pause quand on ne les voit pas ====== */
+(function(){
+  var css=''
+  /* bannière du profil : on déplace une image déjà peinte (transform) au lieu de repeindre le fond à chaque image */
+  +'.v31-hban{animation:v34pan 26s ease-in-out infinite alternate!important;will-change:transform;background-position:center!important}'
+  +'@keyframes v34pan{from{transform:scale(1.05) translate3d(0,0,0)}to{transform:scale(1.12) translate3d(-2.2%,1.4%,0)}}'
+  /* reflet de l\'annonce Premium : transform au lieu de left (plus de recalcul de mise en page) */
+  +'.v31-sbn-sh{left:0!important;transform:translate3d(-120%,0,0) skewX(-18deg);will-change:transform;animation:v34sh 6.5s ease-in-out infinite!important}'
+  +'@keyframes v34sh{0%,55%{transform:translate3d(-120%,0,0) skewX(-18deg)}100%{transform:translate3d(345%,0,0) skewX(-18deg)}}'
+  +'.v31-sbn-bg{will-change:transform}'
+  /* tout ce qui est décoratif se met en pause dès qu\'on a quitté le haut de page ou que l\'app est en arrière-plan */
+  +'html.v34-away .v31-hban,html.v34-away .v31-sbn-bg,html.v34-away .v31-sbn-sh,html.v34-away #v31-hbn,html.v34-away .sc-hero *,html.v34-away [class*="kenburns"],html.v34-away [class*="KenBurns"]{animation-play-state:paused!important}'
+  +'html.v34-hid *,html.v34-hid *::before,html.v34-hid *::after{animation-play-state:paused!important}'
+  /* pendant un défilement rapide : particules figées */
+  +'html.v34-scr #cine-particles .cp{animation-play-state:paused!important}'
+  +'@media(prefers-reduced-motion:reduce){.v31-hban,.v31-sbn-bg,.v31-sbn-sh{animation:none!important}}';
+  var st=document.createElement('style');st.id='v34-fluid-css';st.textContent=css;document.head.appendChild(st);
+  var de=document.documentElement,away=false,scr=false,tmr=0,tick=false;
+  function upd(){
+    tick=false;
+    var y=window.pageYOffset||de.scrollTop||0,a=y>520;
+    if(a!==away){away=a;de.classList.toggle('v34-away',a);}
+  }
+  window.addEventListener('scroll',function(){
+    if(!scr){scr=true;de.classList.add('v34-scr');}
+    clearTimeout(tmr);tmr=setTimeout(function(){scr=false;de.classList.remove('v34-scr');},160);
+    if(!tick){tick=true;requestAnimationFrame(upd);}
+  },{passive:true});
+  document.addEventListener('visibilitychange',function(){de.classList.toggle('v34-hid',!!document.hidden);});
+  upd();
+})();
 
 /* ==V29-END== */
 
