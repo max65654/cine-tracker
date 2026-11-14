@@ -23001,10 +23001,11 @@ function v29PremSync(r){
 function v29PremList(){
   var cs=currentSeason(),ids=v29MonthIds(14),past=Object.keys(_premCfg||{}).filter(function(k){return /^\d{4}-\d\d$/.test(k)&&k<cs.id;}).sort().reverse();
   function row(id){var c=v29Cfg(id),s=v29Static(id),name=c.label||c.q||s.label||s.q||'',n={h:(c.hints||[]).length||((c.hint||s.hint)?1:0),i:(c.infos||[]).length,w:(c.wall||[]).length,c:(c.cast||[]).length},ready=!!(name&&n.h&&(c.phrase||s.phrase));
-    return '<button type="button" class="v29-pm" data-pm="'+id+'"><span class="v29-pm-m">'+v29MonthLbl(id)+(id===cs.id?' <i>· en cours</i>':'')+'</span><span class="v29-pm-s">'+(name?esc(name):'— série pas encore choisie —')+'</span><span class="v29-pm-c">💡'+n.h+' · ℹ️'+n.i+' · 🧱'+n.w+' · 🃏'+n.c+'</span><span class="v29-pm-st'+(ready?' ok':'')+'">'+(ready?'✅ prêt':'✏️ à compléter')+'</span></button>';}
+    return '<button type="button" class="v29-pm" data-pm="'+id+'"><span class="v29-pm-p" data-pmp="'+id+'"'+(c.poster?' style="background-image:url('+v29TmdbImg(c.poster,'w92')+')"':'')+'>'+(c.poster?'':(name?'🎬':'＋'))+'</span><span class="v29-pm-m">'+v29MonthLbl(id)+(id===cs.id?' <i>· en cours</i>':'')+'</span><span class="v29-pm-s">'+(name?esc(name):'— série pas encore choisie —')+'</span><span class="v29-pm-c">💡'+n.h+' · ℹ️'+n.i+' · 🧱'+n.w+' · 🃏'+n.c+'</span><span class="v29-pm-st'+(ready?' ok':'')+'">'+(ready?'✅ prêt':'✏️ à compléter')+'</span></button>';}
   var o=v29Sheet('👑 Premium — préparation & archives','<div class="v29-note">Prépare les séries Premium des mois à venir (jusqu\'à 14 mois d\'avance) avec leurs indices, infos, casting et mur de photos. Tout est enregistré en ligne : tu retrouves chaque saison ici, même après le mois.</div>'
     +'<div class="v29-h">📅 À venir</div><div class="v29-pm-l">'+ids.map(row).join('')+'</div>'+(past.length?'<div class="v29-h">🗄️ Archives (saisons passées)</div><div class="v29-pm-l">'+past.map(row).join('')+'</div>':'<div class="v29-note">Les saisons passées apparaîtront ici dans les archives.</div>'));
   o.querySelectorAll('[data-pm]').forEach(function(b){b.onclick=function(){v29PremEdit(b.dataset.pm);};});
+  try{v33PmFill(o);}catch(_){}
 }
 openPremiumAdmin=function(){if(!v29IsAdmin()){toast('Réservé à l\'admin');return;}v29PremList();};
 /* ---------- Éditeur d'un mois ---------- */
@@ -23014,7 +23015,7 @@ function v29PremEdit(id){
   var S={tv:c.tv||s.tv||0,season:c.season||s.season||'',label:c.label||s.label||'',q:c.q||s.q||'',phrase:c.phrase||s.phrase||'',
     hints:(Array.isArray(c.hints)&&c.hints.length?c.hints:((c.hint||s.hint)?[c.hint||s.hint]:[])).slice(),infos:(c.infos||[]).slice(),decor:(c.decor||[]).slice(),cast:(c.cast||[]).slice(),wall:(c.wall||[]).slice(),pal:(Array.isArray(c.palette)?c.palette:[]).slice()};
   var o=v29Sheet('✏️ '+v29MonthLbl(id),
-    '<div class="v29-h">🎬 La série</div><input id="pe-q" class="v29-in" placeholder="Cherche la série (nom)…" value="'+esc(S.label||S.q)+'"><div id="pe-res" class="v29-res"></div>'
+    '<div class="v29-h">🎬 La série</div><div id="pe-cur" class="v29-cur"></div><input id="pe-q" class="v29-in" placeholder="🔎 Chercher / changer de série (nom)…" value=""><div id="pe-res" class="v29-res"></div>'
     +'<div class="v29-row"><input id="pe-label" class="v29-in" placeholder="Nom affiché" value="'+esc(S.label)+'"><input id="pe-season" class="v29-in v29-s" type="number" min="1" placeholder="Saison" value="'+esc(S.season)+'"></div>'
     +'<div class="v29-h">👑 Le mot de la fin <small>(révélé au dernier palier)</small></div><input id="pe-phrase" class="v29-in" placeholder="Phrase finale" value="'+esc(S.phrase)+'">'
     +'<div class="v29-h">🎞️ Bande-annonce <small>(lien YouTube — onglet 🎞️ Trailers, bouton dans le Pass et notification)</small></div><div class="v29-row"><input id="pe-trl" class="v29-in" placeholder="Lien YouTube de la bande-annonce…" value="'+esc((c.trailer&&c.trailer.yt)?'https://youtu.be/'+c.trailer.yt:'')+'"><input id="pe-trs" class="v29-in v29-s" type="number" min="0" placeholder="Début (s)" value="'+esc((c.trailer&&c.trailer.t0)||'')+'"></div><label class="v29-note" style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="pe-trp"'+((c.trailer&&c.trailer.pub)?' checked':'')+'> Visible par tout le monde dès maintenant <small>(sinon : cachée tant que le Pass du mois n’est pas débloqué, pour ne pas révéler la série)</small></label>'
@@ -23030,10 +23031,26 @@ function v29PremEdit(id){
     +'<div class="v29-save"><button type="button" class="v29-b" id="pe-back">← Liste</button><button type="button" class="v29-b pri" id="pe-save">💾 Enregistrer pour tout le monde</button></div>','v29-edit');
   var $=function(q){return o.querySelector(q);};
   /* recherche de série */
-  var tmr=null;function search(){var q=$('#pe-q').value.trim();if(q.length<2)return;ivJson('https://api.themoviedb.org/3/search/tv?api_key='+TMDB+'&language=fr-FR&query='+encodeURIComponent(q)).then(function(r){var l=((r&&r.results)||[]).slice(0,6);
-    $('#pe-res').innerHTML=l.map(function(x){return '<button type="button" class="v29-r" data-pick="'+x.id+'"><img src="'+(x.poster_path?v29TmdbImg(x.poster_path,'w92'):'')+'" alt=""><span><b>'+esc(x.name)+'</b><small>'+esc((x.first_air_date||'').slice(0,4))+'</small></span></button>';}).join('')||'<small>Rien trouvé.</small>';
-    $('#pe-res').querySelectorAll('[data-pick]').forEach(function(b){b.onclick=function(){var x=l.find(function(y){return String(y.id)===b.dataset.pick;});S.tv=x.id;S.q=x.name;$('#pe-label').value=x.name;$('#pe-res').innerHTML='<small>✅ Série choisie : <b>'+esc(x.name)+'</b></small>';loadCast(true);};});});}
+  var tmr=null,curInfo=null;
+  /* carte de la série choisie : affiche, titre, année, résumé — reste visible tant qu'on n'a pas changé */
+  function drawCur(){var box=$('#pe-cur');if(!box)return;
+    if(!S.tv){box.innerHTML='<div class="v29-cur-e">Aucune série choisie pour ce mois — tape un nom ci-dessous puis touche l\'affiche de la bonne série.</div>';return;}
+    var x=curInfo&&curInfo._w===S.tv?curInfo:null,ns=x&&x.number_of_seasons;
+    box.innerHTML='<div class="v29-cur-c">'+(x&&x.poster_path?'<img src="'+v29TmdbImg(x.poster_path,'w185')+'" alt="">':'<div class="v29-cur-ph">🎬</div>')
+      +'<div class="v29-cur-i"><b>'+esc(x?x.name:(S.label||S.q||'…'))+'</b><small>'+(x?esc((x.first_air_date||'').slice(0,4)+(ns?' · '+ns+' saison'+(ns>1?'s':''):'')):'chargement…')+'</small>'
+      +(x&&x.overview?'<p>'+esc(x.overview.slice(0,150))+(x.overview.length>150?'…':'')+'</p>':'')
+      +'<span class="v29-cur-ok'+(S._guess?' w':'')+'">'+(S._guess?'⚠️ Devinée d\'après le nom : touche « Enregistrer » pour la verrouiller':'✅ Série choisie · reste enregistrée (verrouillée par son identifiant)')+'</span></div></div>';}
+  function loadCur(){drawCur();if(!S.tv)return;var want=S.tv;ivJson('https://api.themoviedb.org/3/tv/'+want+'?api_key='+TMDB+'&language=fr-FR').then(function(x){if(x&&x.name&&S.tv===want){x._w=want;curInfo=x;S.poster=x.poster_path||S.poster||'';drawCur();}});}
+  function showRes(l){$('#pe-res').innerHTML=l.map(function(x){return '<button type="button" class="v29-r'+(x.id===S.tv&&!S._guess?' on':'')+'" data-pick="'+x.id+'"><img src="'+(x.poster_path?v29TmdbImg(x.poster_path,'w92'):'')+'" alt=""><span><b>'+esc(x.name)+'</b><small>'+esc((x.first_air_date||'').slice(0,4))+(x.overview?' · '+esc(x.overview.slice(0,70))+'…':'')+'</small></span></button>';}).join('')||'<small>Rien trouvé.</small>';
+    $('#pe-res').querySelectorAll('[data-pick]').forEach(function(b){b.onclick=function(){var x=l.find(function(y){return String(y.id)===b.dataset.pick;});if(!x)return;S.tv=x.id;S.q=x.name;S._guess=false;S.poster=x.poster_path||'';curInfo=null;$('#pe-label').value=x.name;$('#pe-q').value='';$('#pe-res').innerHTML='';loadCur();loadCast(true);};});}
+  function findSeries(q){return ivJson('https://api.themoviedb.org/3/search/tv?api_key='+TMDB+'&language=fr-FR&query='+encodeURIComponent(q)).then(function(r){return ((r&&r.results)||[]).slice(0,6);});}
+  function search(){var q=$('#pe-q').value.trim();if(q.length<2)return;findSeries(q).then(showRes);}
+  function bestOf(l,q){var n=ivNorm(q);return l.find(function(x){return ivNorm(x.name)===n||ivNorm(x.original_name)===n;})||l[0]||null;}
   $('#pe-q').addEventListener('input',function(){clearTimeout(tmr);tmr=setTimeout(search,450);});
+  /* à l'ouverture : série déjà choisie → on la montre ; sinon on devine par le nom (ex. « The Body ») et on propose les affiches */
+  if(S.tv)loadCur();
+  else if(S.q||S.label){var q0=S.q||S.label;drawCur();findSeries(q0).then(function(l){var bb=bestOf(l,q0);if(bb&&!S.tv){S.tv=bb.id;S._guess=true;S.poster=bb.poster_path||'';if(!S.label)S.label=bb.name;}loadCur();showRes(l);});}
+  else drawCur();
   /* casting */
   function drawCast(list){S._castOpts=list;$('#pe-cast').innerHTML=list.length?list.map(function(a,i){var on=S.cast.some(function(x){return x.id===a.id;});return '<label class="v29-ca'+(on?' on':'')+'"><input type="checkbox" data-ci="'+i+'"'+(on?' checked':'')+'><img src="'+esc(a.photo)+'" alt=""><span><b>'+esc(a.name)+'</b><small>'+esc(a.role||'')+'</small></span></label>';}).join(''):'<small>Choisis d\'abord une série.</small>';
     $('#pe-cast').querySelectorAll('[data-ci]').forEach(function(cb){cb.onchange=function(){var a=S._castOpts[+cb.dataset.ci];if(cb.checked){if(!S.cast.some(function(x){return x.id===a.id;}))S.cast.push(a);}else S.cast=S.cast.filter(function(x){return x.id!==a.id;});cb.closest('label').classList.toggle('on',cb.checked);drawActressSel();};});drawActressSel();}
@@ -23069,8 +23086,8 @@ function v29PremEdit(id){
         var hs=[h[0],h[1]!=null?h[1]:(h[0]+38)%360,h[2]!=null?h[2]:(h[0]+170)%360],S0=[[78,50],[55,32],[70,44]];[1,2,3].forEach(function(n,i){var e=$('#pe-c'+n);e.value=v29HslHex(hs[i],S0[i][0],S0[i][1]);e.dataset.set='1';});toast('🪄 Couleurs reprises de l\'affiche');});});};
   /* enregistrer */
   $('#pe-back').onclick=v29PremList;
-  $('#pe-save').onclick=function(){
-    var v={tv:S.tv||0,season:+$('#pe-season').value||0,label:$('#pe-label').value.trim(),q:S.q||$('#pe-label').value.trim(),phrase:$('#pe-phrase').value.trim(),
+  function doSave(){
+    var v={tv:S.tv||0,poster:S.poster||'',season:+$('#pe-season').value||0,label:$('#pe-label').value.trim(),q:S.q||$('#pe-label').value.trim(),phrase:$('#pe-phrase').value.trim(),
       trailer:(function(){var id=v29YtId($('#pe-trl').value);return id?{yt:id,t0:Math.max(0,+$('#pe-trs').value||0),pub:$('#pe-trp').checked?1:0}:'';})(),hints:v29Lines($('#pe-hints').value,20,220),infos:v29Lines($('#pe-infos').value,20,260),decor:$('#pe-decor').value.split(/\s+/).filter(Boolean).slice(0,12),
       cast:S.cast.slice(0,16).map(function(a){return {id:a.id,name:a.name,photo:a.photo,role:a.role||''};}),wall:S.wall.slice(0,120).map(function(w){var x={u:w.u,t:w.t||'img'};if(w.a)x.a=w.a;if(w.c)x.c=String(w.c).slice(0,120);if(w.img)x.img=w.img;return x;}),upd:Date.now()};
     var pc=[$('#pe-c1'),$('#pe-c2'),$('#pe-c3')];if(pc.some(function(x){return x.dataset.set==='1';}))v.palette=pc.map(function(x){return x.value;});
@@ -23078,8 +23095,10 @@ function v29PremEdit(id){
     if(JSON.stringify(v).length>180000){toast('😕 Trop de contenu pour ce mois — retire quelques médias');return;}
     if(!window.CineConfig||!window.CineConfig.setPremium){toast('☁️ Connecte-toi pour enregistrer');return;}
     var b=$('#pe-save');b.disabled=true;b.textContent='⏳ …';
+    try{v33BakPut(id,v);}catch(_){}
     window.CineConfig.setPremium(id,v).then(function(){_premCfg=_premCfg||{};_premCfg[id]=Object.assign(_premCfg[id]||{},v);_premRes={};V29.P.wall={};toast('✅ '+v29MonthLbl(id)+' enregistré pour tout le monde');try{renderPass();}catch(_){}v29PremList();try{v29DecorRefresh();v29SerApply();}catch(_){}})
-      .catch(function(e){b.disabled=false;b.textContent='💾 Enregistrer pour tout le monde';toast('❌ '+((e&&e.code)==='permission-denied'?'Règles Firestore à mettre à jour':'Erreur d\'enregistrement'));});};
+      .catch(function(e){b.disabled=false;b.textContent='💾 Enregistrer pour tout le monde';toast('❌ '+((e&&e.code)==='permission-denied'?'Règles Firestore à mettre à jour':'Erreur d\'enregistrement'));});}
+  $('#pe-save').onclick=function(){var nm=S.q||$('#pe-label').value.trim();if(S.tv||nm.length<2)return doSave();var bt=this;bt.disabled=true;bt.textContent='⏳ …';findSeries(nm).then(function(l){var bb=bestOf(l,nm);if(bb){S.tv=bb.id;S.poster=bb.poster_path||'';S.q=bb.name;}bt.disabled=false;doSave();});};
 }
 
 /* ====== 👑 PREMIUM v29 — côté joueur : carnet, mur, actrice préférée, saisons, décor, indices Actus ====== */
@@ -23235,7 +23254,7 @@ v29css('v29-css-h','.v29-pex{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px
  +'.v29-wallgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(86px,1fr));gap:6px;margin-top:8px}.v29-wi{position:relative;aspect-ratio:1;border-radius:10px;overflow:hidden;background:#222}.v29-wi img,.v29-wi video{width:100%;height:100%;object-fit:cover}.v29-wi button{position:absolute;top:3px;right:3px;width:22px;height:22px;border-radius:50%;border:none;background:rgba(0,0,0,.65);color:#fff;font-size:.7rem;cursor:pointer}.v29-wi i{position:absolute;left:0;right:0;bottom:0;background:rgba(0,0,0,.55);color:#fff;font-size:.6rem;padding:2px 4px;font-style:normal;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}'
  +'.v29-tw{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;padding:8px;text-align:center;font-size:1.4rem;background:#0f1419;color:#fff}.v29-tw small{font-size:.62rem;opacity:.75;margin-top:4px}'
  +'.v29-save{position:sticky;bottom:-18px;display:flex;gap:8px;justify-content:space-between;padding:12px 0 2px;background:linear-gradient(180deg,transparent,var(--card-bg,#fff) 30%);margin-top:14px}'
- +'.v29-pm-l{display:flex;flex-direction:column;gap:8px}.v29-pm{display:grid;grid-template-columns:1fr auto;gap:2px 10px;align-items:center;text-align:left;padding:11px 12px;border:none;border-radius:14px;background:rgba(127,127,127,.12);color:inherit;cursor:pointer}.v29-pm-m{font-weight:800}.v29-pm-m i{font-weight:500;opacity:.7}.v29-pm-s{grid-column:1;font-size:.85rem;opacity:.85}.v29-pm-c{grid-column:1;font-size:.72rem;opacity:.65}.v29-pm-st{grid-column:2;grid-row:1/4;font-size:.72rem;font-weight:800;opacity:.8}.v29-pm-st.ok{color:#16a34a;opacity:1}'
+ +'.v29-pm-l{display:flex;flex-direction:column;gap:8px}.v29-pm{display:grid;grid-template-columns:auto 1fr auto;gap:2px 12px;align-items:center;text-align:left;padding:11px 12px;border:none;border-radius:14px;background:rgba(127,127,127,.12);color:inherit;cursor:pointer}.v29-pm-p{grid-column:1;grid-row:1/4;width:44px;height:64px;border-radius:8px;background:rgba(127,127,127,.2) center/cover no-repeat;display:flex;align-items:center;justify-content:center;font-size:1.1rem}.v29-pm-m{grid-column:2;font-weight:800}.v29-pm-m i{font-weight:500;opacity:.7}.v29-pm-s{grid-column:2;font-size:.85rem;opacity:.85}.v29-pm-c{grid-column:2;font-size:.72rem;opacity:.65}.v29-pm-st{grid-column:3;grid-row:1/4;font-size:.72rem;font-weight:800;opacity:.8}.v29-pm-st.ok{color:#16a34a;opacity:1}'
  +'.v29-ps{display:flex;gap:10px;align-items:center;padding:8px;border-radius:14px;background:rgba(127,127,127,.12)}.v29-ps img{width:46px;height:68px;object-fit:cover;border-radius:8px}.v29-ps div{display:flex;flex-direction:column;gap:2px}.v29-ps small{opacity:.75;font-size:.74rem}'
  +'.v29-tabs{display:flex;gap:6px;overflow-x:auto;margin-bottom:6px}.v29-tab{flex:none;border:none;border-radius:12px;padding:8px 12px;background:rgba(127,127,127,.15);color:inherit;font-weight:800;font-size:.8rem;cursor:pointer;text-align:left}.v29-tab small{display:block;font-weight:500;opacity:.7;font-size:.66rem}.v29-tab.on{background:var(--raspberry,#e11d48);color:#fff}'
  +'.v29-binder{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:10px}.v29-card{position:relative;display:flex;flex-direction:column;gap:3px;padding:6px;border-radius:14px;background:rgba(127,127,127,.12);text-align:center}.v29-card-i{aspect-ratio:2/3;border-radius:10px;background:#222 center/cover;display:flex;align-items:center;justify-content:center;filter:grayscale(1) brightness(.5)}.v29-card.on .v29-card-i{filter:none;box-shadow:0 0 0 2px #f5b301,0 4px 14px rgba(245,179,1,.35)}.v29-card-i span{font-size:1.6rem}.v29-card b{font-size:.76rem}.v29-card small{font-size:.64rem;opacity:.7}.v29-card i{position:absolute;top:8px;right:8px;background:#f5b301;color:#000;font-weight:800;font-size:.62rem;font-style:normal;padding:1px 6px;border-radius:99px}'
@@ -25423,6 +25442,205 @@ if(/[?&]dbg=1/.test(location.search))window.__v31ms={run:ms32Run,blocked:ms31Blo
 v29css('v32-css-m','#ms32-dim{position:fixed;left:0;top:0;width:100%;height:100%;z-index:9099;pointer-events:none;opacity:0;transition:opacity .4s;--dc:rgba(5,2,14,1);--lr:-300px;background:radial-gradient(circle at var(--lx,50%) var(--ly,50%),rgba(0,0,0,0) var(--lr),var(--dc) calc(var(--lr) + 240px))}');
 
 })();
+
+/* ====== V33 · extraits, bandes-annonces et images qui CHANGENT à chaque ouverture d'une fiche ======
+   TMDB donne souvent plusieurs vidéos (bande-annonce, teaser, extraits, coulisses… + celles des saisons)
+   et plusieurs images : on les garde toutes et on passe à la suivante à chaque ouverture. */
+var M33={mem:{},rot:v29json('cineRot33',{}),ts:{},tok:0};
+var M33_T={'Trailer':0,'Teaser':1,'Clip':2,'Featurette':3,'Behind the Scenes':4,'Bloopers':5};
+var M33_L={'Trailer':'Bande-annonce','Teaser':'Teaser','Clip':'Extrait','Featurette':'Featurette','Behind the Scenes':'Coulisses','Bloopers':'Bêtisier'};
+function m33Save(){var k=Object.keys(M33.rot);if(k.length>400)k.slice(0,k.length-300).forEach(function(x){delete M33.rot[x];});try{localStorage.setItem('cineRot33',JSON.stringify(M33.rot));}catch(_){}}
+function m33Ck(it){return (it.tmdbType==='tv'?'tv':'movie')+it.tmdbId;}
+function m33Img(p,w){return p?'https://image.tmdb.org/t/p/'+w+p:'';}
+function m33Load(it){
+  if(!it||!it.tmdbId)return Promise.resolve(null);
+  var mt=it.tmdbType==='tv'?'tv':'movie',ck=m33Ck(it);if(M33.mem[ck])return M33.mem[ck];
+  var L='include_video_language=fr,en,null&include_image_language=fr,en,null';
+  var p=ivJson('https://api.themoviedb.org/3/'+mt+'/'+it.tmdbId+'?api_key='+TMDB+'&language=fr-FR&append_to_response=videos,images&'+L).then(function(d){
+    if(!d||!d.id)return null;
+    var vids=((d.videos&&d.videos.results)||[]).slice(),sn=mt==='tv'?(d.seasons||[]).map(function(s){return s.season_number;}).filter(function(n){return n>0;}).slice(-3):[];
+    return Promise.all(sn.map(function(n){return ivJson('https://api.themoviedb.org/3/tv/'+it.tmdbId+'/season/'+n+'/videos?api_key='+TMDB+'&include_video_language=fr,en,null').then(function(r){return ((r&&r.results)||[]).map(function(v){return Object.assign({_s:n},v);});}).catch(function(){return [];});})).then(function(ex){
+      ex.forEach(function(l){vids=vids.concat(l);});
+      var seen={},V=vids.filter(function(v){if(!v||v.site!=='YouTube'||!v.key||seen[v.key]||!(v.type in M33_T))return false;seen[v.key]=1;return true;});
+      V.sort(function(a,b){return (M33_T[a.type]-M33_T[b.type])||((b.iso_639_1==='fr')-(a.iso_639_1==='fr'))||((b.official?1:0)-(a.official?1:0))||(new Date(b.published_at||0)-new Date(a.published_at||0));});
+      var im=d.images||{},vote=function(a,b){return ((a.iso_639_1?1:0)-(b.iso_639_1?1:0))||((b.vote_average||0)-(a.vote_average||0));};
+      var bd=(im.backdrops||[]).filter(function(x){return (x.width||0)>=1000;}).sort(vote).slice(0,14).map(function(x){return {u:m33Img(x.file_path,'w1280')};});
+      var po=(im.posters||[]).slice().sort(function(a,b){return ((b.vote_average||0)-(a.vote_average||0));}).slice(0,14).map(function(x){return {u:m33Img(x.file_path,'w500')};});
+      var dB=m33Img(d.backdrop_path,'w1280'),dP=m33Img(d.poster_path,'w500');
+      if(dB&&!bd.some(function(x){return x.u===dB;}))bd.unshift({u:dB});
+      if(dP&&!po.some(function(x){return x.u===dP;}))po.unshift({u:dP});
+      return {v:V.slice(0,14),bd:bd,po:po};
+    });
+  }).catch(function(){return null;}).then(function(r){if(!r)delete M33.mem[ck];return r;});
+  return M33.mem[ck]=p;
+}
+/* indice suivant : 1re fois au hasard, puis on enchaîne ; « keep » = la fiche est déjà ouverte (elle se recharge toute seule une fois) → on garde le même choix */
+function m33Keep(item){try{return !!(item&&modalOv.classList.contains('show')&&_modalOpenId===item.id);}catch(_){return false;}}
+function m33Next(ck,kind,n,keep){
+  if(!n)return -1;var r=M33.rot[ck]=M33.rot[ck]||{},st=M33.ts[ck+kind];
+  if(keep&&st&&st.i<n)return st.i;
+  var i=(typeof r[kind]==='number'?r[kind]+1:Math.floor(Math.random()*n))%n;r[kind]=i;M33.ts[ck+kind]={i:i};m33Save();return i;}
+function m33Set(ck,kind,i){var r=M33.rot[ck]=M33.rot[ck]||{};r[kind]=i;M33.ts[ck+kind]={i:i};m33Save();}
+
+/* 1) la vidéo de fond de la fiche (et toutes les fiches qui demandent une bande-annonce) change à chaque ouverture */
+(function(){var o=fetchTrailerKey;fetchTrailerKey=function(item){
+  if(!item||!item.tmdbId||item.season)return o.apply(this,arguments); // notification d'une saison précise : on garde la vidéo de CETTE saison
+  var a=arguments,self=this,keep=m33Keep(item);
+  return m33Load(item).then(function(M){if(!M||!M.v.length)return o.apply(self,a);var i=m33Next(m33Ck(item),'v',M.v.length,keep);return M.v[i].key;}).catch(function(){return o.apply(self,a);});
+};})();
+
+/* 2) la fenêtre « Bande-annonce » : un extrait différent à chaque fois + boutons ⏮ ⏭ pour parcourir les autres */
+(function(){var oT=openTrailer;openTrailer=function(item){
+  if(!item||!item.tmdbId||item.season)return oT.apply(this,arguments);
+  try{sfx.pop();}catch(_){}
+  var frame=document.getElementById('trailer-frame'),cap=document.getElementById('trailer-caption'),isLocal=location.protocol==='file:',tok=++M33.tok,playing=false;
+  function bg(u){return u?'background-image:linear-gradient(rgba(13,10,22,.35),rgba(13,10,22,.7)),url('+u+');':'';}
+  var old=document.getElementById('m33-tbar');if(old)old.remove();
+  cap.textContent=item.title+(item.year?' ('+item.year+')':'');curTrailerKey=null;
+  frame.innerHTML='<div class="trailer-poster" style="'+bg(item.poster)+'"><div class="trailer-hint">🎬 Recherche des extraits…</div></div>';
+  trailerOv.classList.add('show');
+  m33Load(item).then(function(M){
+    if(tok!==M33.tok||!trailerOv.classList.contains('show'))return;
+    if(!M||!M.v.length){M33.tok++;return oT.call(null,Object.assign({},item,{_m33:1}));}
+    var ck=m33Ck(item),n=M.v.length,i=m33Next(ck,'v',n,false),pi=M.po.length?m33Next(ck,'p',M.po.length,false):0;
+    var bar=document.createElement('div');bar.id='m33-tbar';bar.className='m33-tbar';
+    bar.innerHTML=(n>1?'<button type="button" data-d="-1" aria-label="Extrait précédent">⏮</button>':'')+'<span class="m33-t-l"></span>'+(n>1?'<button type="button" data-d="1">⏭ Autre extrait</button>':'');
+    cap.parentNode.insertBefore(bar,cap.nextSibling);
+    function embed(key){playing=true;frame.innerHTML='<iframe src="https://www.youtube.com/embed/'+key+'?autoplay=1&rel=0&playsinline=1&hl=fr&cc_lang_pref=fr&origin='+encodeURIComponent(location.origin)+'" title="Bande-annonce" frameborder="0" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe>';}
+    function show(autoplay){var v=M.v[i],poster=M.po.length?M.po[pi%M.po.length].u:item.poster,lbl=(M33_L[v.type]||'Vidéo')+(v._s?' · saison '+v._s:'')+(v.iso_639_1==='fr'?' · FR':'');
+      curTrailerKey=v.key;bar.querySelector('.m33-t-l').textContent='🎞️ '+(i+1)+'/'+n+' · '+lbl;
+      if(autoplay&&!isLocal){embed(v.key);return;}
+      playing=false;
+      if(isLocal){frame.innerHTML='<div class="trailer-poster" style="'+bg(poster)+'"><a class="trailer-play-btn" href="https://www.youtube.com/watch?v='+v.key+'" target="_blank" rel="noopener" aria-label="Lancer"><span>▶</span></a><div class="trailer-hint">▶ Ouvrir sur YouTube ↗</div></div>';return;}
+      frame.innerHTML='<div class="trailer-poster" style="'+bg(poster)+'"><button class="trailer-play-btn" id="trailer-play" aria-label="Lancer"><span>▶</span></button><div class="trailer-hint">▶ '+esc(lbl)+'</div></div>';
+      document.getElementById('trailer-play').addEventListener('click',function(){embed(v.key);});}
+    bar.addEventListener('click',function(e){var b=e.target.closest('[data-d]');if(!b)return;e.stopPropagation();var d=+b.dataset.d;
+      i=(i+d+n)%n;if(M.po.length)pi=(pi+1)%M.po.length;m33Set(ck,'v',i);if(M.po.length)m33Set(ck,'p',pi);show(playing);});
+    show(false);
+  });
+};})();
+/* la barre disparaît quand la fenêtre se ferme (elle ne sert que pour ces extraits) */
+(function(){var ov=document.getElementById('trailer-overlay');if(!ov||!window.MutationObserver)return;
+  new MutationObserver(function(){if(!ov.classList.contains('show')){var b=document.getElementById('m33-tbar');if(b)b.remove();M33.tok++;}}).observe(ov,{attributes:true,attributeFilter:['class']});})();
+
+/* 3) l'image du haut de la fiche change à chaque ouverture + boutons pour parcourir les images et les extraits */
+function m33HeroSet(M,ck,i,it){var img=document.getElementById('modal-hero-img');if(!img||!M.bd.length)return;
+  img.src=M.bd[i].u;img.style.visibility='visible';var l=document.getElementById('m33-hbtn');if(l)l.textContent='🖼️ '+(i+1)+'/'+M.bd.length;}
+(function(){var oH=loadHeroBackdrop;loadHeroBackdrop=function(item){
+  if(!item||!item.tmdbId)return oH.apply(this,arguments);
+  var keep=m33Keep(item);
+  m33Load(item).then(function(M){
+    if(!M||!M.bd.length||_modalOpenId!==item.id)return oH(item);
+    var ck=m33Ck(item);m33HeroSet(M,ck,m33Next(ck,'b',M.bd.length,keep),item);
+  }).catch(function(){try{oH(item);}catch(_){}});
+};})();
+(function(){var oM=openModal;openModal=function(id){var r=oM.apply(this,arguments);
+  try{var it=items.find(function(x){return x.id===id;});if(it&&it.tmdbId&&isHosted()){m33Load(it).then(function(M){
+    var h=document.getElementById('modal-hero');if(!M||!h||_modalOpenId!==id||document.getElementById('m33-hero'))return;
+    var ck=m33Ck(it),box=document.createElement('div');box.id='m33-hero';box.className='m33-hero';
+    box.innerHTML=(M.bd.length>1?'<button type="button" id="m33-hbtn" data-a="img">🖼️ …</button>':'')+(M.v.length>1?'<button type="button" data-a="vid">🎞️ Autre extrait</button>':'');
+    if(!box.childNodes.length)return;h.appendChild(box);
+    var cur=M.bd.length?(M33.rot[ck]&&typeof M33.rot[ck].b==='number'?M33.rot[ck].b:0):0;var hb=document.getElementById('m33-hbtn');if(hb)hb.textContent='🖼️ '+(cur+1)+'/'+M.bd.length;
+    box.addEventListener('click',function(e){var b=e.target.closest('[data-a]');if(!b)return;e.stopPropagation();e.preventDefault();
+      if(b.dataset.a==='img'){var j=((M33.rot[ck]&&M33.rot[ck].b)||0)+1;j%=M.bd.length;m33Set(ck,'b',j);m33HeroSet(M,ck,j,it);return;}
+      var k=m33Next(ck,'v',M.v.length,false),key=M.v[k].key;
+      try{if(modalPlayer&&modalPlayer.loadVideoById){modalPlayer.loadVideoById({videoId:key,startSeconds:5});var w=document.getElementById('modal-video-wrap');if(w)w.classList.remove('playing');if(w){w._shown=false;}}else openTrailer(it);}catch(_){openTrailer(it);}});
+  });}}catch(e){try{console.warn('m33',e);}catch(_){}}
+  return r;};})();
+(function(){var st=document.createElement('style');st.textContent=
+ '.m33-tbar{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:0 14px 12px;color:#fff;font-family:"Fredoka",sans-serif}'
+ +'.m33-tbar button{border:none;border-radius:999px;padding:8px 14px;background:rgba(255,255,255,.16);color:#fff;font-weight:700;font-size:.8rem;cursor:pointer}.m33-tbar button:hover{background:rgba(255,255,255,.3)}'
+ +'.m33-t-l{flex:1;text-align:center;font-size:.78rem;opacity:.85;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}'
+ +'.m33-hero{position:absolute;left:12px;bottom:12px;z-index:5;display:flex;gap:6px}.m33-hero button{border:none;border-radius:999px;padding:7px 12px;background:rgba(0,0,0,.55);color:#fff;font-weight:700;font-size:.74rem;cursor:pointer;-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px)}.m33-hero button:hover{background:rgba(0,0,0,.82)}';
+ document.head.appendChild(st);})();
+
+/* ====== V33 · Premium : la série choisie RESTE (id verrouillé + affiche + copie de secours admin) ====== */
+var V33={pushed:{},pc:{}};
+function v33Bak(){return v29json('cinePremBak33',{});}
+function v33BakPut(id,v){try{var b=v33Bak();b[id]=v;localStorage.setItem('cinePremBak33',JSON.stringify(b));}catch(e){}}
+/* Si le serveur a perdu / pas encore reçu le choix de l'admin (réseau, règles, autre appareil plus ancien),
+   on remet SA copie la plus récente dans l'appli et on la renvoie en ligne une seule fois. */
+window.addEventListener('cine-config',function(){
+  try{if(!v29IsAdmin())return;var b=v33Bak();
+    Object.keys(b).forEach(function(id){var loc=b[id];if(!loc||!loc.tv)return;var rem=(_premCfg&&_premCfg[id])||null;
+      if(rem&&rem.tv&&(rem.upd||0)>=(loc.upd||0))return;
+      _premCfg=_premCfg||{};_premCfg[id]=Object.assign({},rem||{},loc);_premRes={};
+      if(!V33.pushed[id]&&window.CineConfig&&window.CineConfig.setPremium){V33.pushed[id]=1;window.CineConfig.setPremium(id,loc).catch(function(){V33.pushed[id]=0;});}});
+  }catch(e){try{console.warn('v33 bak',e);}catch(_){}}
+});
+/* affiches dans la liste des mois (même celles qu'on n'a pas encore ouvertes) */
+function v33Poster(id){
+  if(V33.pc[id])return V33.pc[id];
+  var c=v29Cfg(id),s=v29Static(id),tv=c.tv||s.tv,q=c.label||c.q||s.label||s.q||'';
+  var p=tv?ivJson('https://api.themoviedb.org/3/tv/'+tv+'?api_key='+TMDB+'&language=fr-FR').then(function(x){return x&&x.poster_path||'';})
+    :(q?ivJson('https://api.themoviedb.org/3/search/tv?api_key='+TMDB+'&language=fr-FR&query='+encodeURIComponent(q)).then(function(r){var l=(r&&r.results)||[],n=ivNorm(q),b=l.find(function(x){return ivNorm(x.name)===n||ivNorm(x.original_name)===n;})||l[0];return b&&b.poster_path||'';}):Promise.resolve(''));
+  return V33.pc[id]=p.catch(function(){return '';});
+}
+function v33PmFill(root){
+  root.querySelectorAll('[data-pmp]').forEach(function(e){if(e.style.backgroundImage)return;
+    v33Poster(e.dataset.pmp).then(function(p){if(p&&document.body.contains(e)){e.style.backgroundImage='url('+v29TmdbImg(p,'w92')+')';e.textContent='';}});});
+}
+(function(){var st=document.createElement('style');st.textContent=
+ '.v29-cur{margin:4px 0 10px}.v29-cur-e{padding:12px;border-radius:12px;background:rgba(127,127,127,.12);font-size:.82rem;opacity:.85}'
+ +'.v29-cur-c{display:flex;gap:12px;padding:10px;border-radius:16px;background:linear-gradient(135deg,rgba(225,29,72,.14),rgba(127,127,127,.12));border:2px solid var(--raspberry,#e11d48)}'
+ +'.v29-cur-c img,.v29-cur-ph{width:74px;height:110px;flex:none;border-radius:10px;object-fit:cover;background:#222;box-shadow:0 6px 16px rgba(0,0,0,.3)}.v29-cur-ph{display:flex;align-items:center;justify-content:center;font-size:1.6rem}'
+ +'.v29-cur-i{display:flex;flex-direction:column;gap:3px;min-width:0}.v29-cur-i b{font-size:1rem}.v29-cur-i small{opacity:.7}.v29-cur-i p{margin:2px 0;font-size:.74rem;opacity:.8;line-height:1.3}'
+ +'.v29-cur-ok{font-size:.72rem;font-weight:800;color:#16a34a}.v29-cur-ok.w{color:#d97706}.v29-r.on{outline:2px solid var(--raspberry,#e11d48)}'
+ +'.v29-r small{display:block;max-width:100%}';
+ document.head.appendChild(st);})();
+
+/* ====== V33 · « Pour toi » : un GENRE DE LA SEMAINE — change chaque lundi, séries et films en alternance ====== */
+var G33=[
+  {n:'Drame',e:'🎭',m:'18',t:'18'},
+  {n:'Comédie',e:'😂',m:'35',t:'35'},
+  {n:'Action & aventure',e:'💥',m:'28|12',t:'10759'},
+  {n:'Policier & mystère',e:'🔍',m:'80|9648',t:'80|9648'},
+  {n:'SF & fantastique',e:'🚀',m:'878|14',t:'10765'},
+  {n:'Frissons & horreur',e:'😱',m:'27|53',t:'9648',tk:'horror'},
+  {n:'Romance',e:'💞',m:'10749',t:'18',tk:'romance'},
+  {n:'Animation',e:'🎨',m:'16',t:'16'},
+  {n:'Famille',e:'👨‍👩‍👧',m:'10751',t:'10751'},
+  {n:'Guerre & histoire',e:'⚔️',m:'10752|36',t:'10768'},
+  {n:'Documentaire',e:'🎥',m:'99',t:'99'},
+  {n:'Fantasy',e:'🧙',m:'14',t:'10765'}
+];
+/* numéro de semaine (lundi → dimanche, heure locale) */
+function g33Week(){var d=new Date();d.setHours(0,0,0,0);var days=Math.round((d.getTime()-d.getTimezoneOffset()*6e4)/864e5);return Math.floor((days-4)/7);}
+function g33Slim(r,mt){return {id:r.id,title:r.title,name:r.name,backdrop_path:r.backdrop_path,poster_path:r.poster_path,overview:r.overview||'',vote_average:r.vote_average||0,release_date:r.release_date||'',first_air_date:r.first_air_date||'',media_type:mt};}
+function g33Kw(word){return ivJson('https://api.themoviedb.org/3/search/keyword?api_key='+TMDB+'&query='+encodeURIComponent(word)).then(function(d){var r=(d&&d.results)||[];return r[0]?r[0].id:0;}).catch(function(){return 0;});}
+function g33Data(){
+  var w=g33Week(),g=G33[((w%G33.length)+G33.length)%G33.length],c=null;
+  try{c=JSON.parse(localStorage.getItem('cineG33')||'null');}catch(_){}
+  if(c&&c.w===w&&c.tv&&c.mv&&(c.tv.length||c.mv.length))return Promise.resolve({w:w,g:g,tv:c.tv,mv:c.mv});
+  var pg=1+(Math.floor(w/G33.length)%3);
+  function q(mt,gen,kw){return ivJson('https://api.themoviedb.org/3/discover/'+mt+'?api_key='+TMDB+'&language=fr-FR&include_adult=false&sort_by=popularity.desc&vote_count.gte='+(mt==='tv'?80:200)+'&vote_average.gte=6.3&with_genres='+encodeURIComponent(gen)+(kw?'&with_keywords='+kw:'')+'&page='+pg)
+    .then(function(d){return ((d&&d.results)||[]).filter(function(r){return r.backdrop_path;}).slice(0,24).map(function(r){return g33Slim(r,mt);});}).catch(function(){return [];});}
+  var kwP=g.tk?g33Kw(g.tk):Promise.resolve(0);
+  return kwP.then(function(kw){return Promise.all([q('tv',g.t,kw),q('movie',g.m,0)]);}).then(function(r){
+    if(g.tk&&!r[0].length)return q('tv',g.t,0).then(function(l){return [l,r[1]];});return r;}).then(function(r){
+    try{localStorage.setItem('cineG33',JSON.stringify({w:w,tv:r[0],mv:r[1]}));}catch(_){}
+    return {w:w,g:g,tv:r[0],mv:r[1]};});
+}
+function g33Html(D){
+  var owned=getOwnedCatKeys(),tv=D.tv.filter(function(r){return !owned['tv_'+r.id];}).slice(0,18),mv=D.mv.filter(function(r){return !owned['movie_'+r.id];}).slice(0,18);
+  var seriesFirst=(D.w%2===0),lab=D.g.e+' '+D.g.n;
+  var rs=tv.length?fyRow('📺 Séries · '+lab,tv,'tv'):'',rf=mv.length?fyRow('🎬 Films · '+lab,mv,'movie'):'';
+  tv.forEach(function(r){_fyIndex['tv_'+r.id]=Object.assign({},r);});mv.forEach(function(r){_fyIndex['movie_'+r.id]=Object.assign({},r);});
+  if(!rs&&!rf)return '';
+  return '<div class="g33-h">🗓️ <b>Genre de la semaine : '+lab+'</b><small>change chaque lundi · cette semaine on commence par les '+(seriesFirst?'séries':'films')+'</small></div>'+(seriesFirst?rs+rf:rf+rs);
+}
+function g33Inject(){
+  var tries=0,t=setInterval(function(){tries++;var e=document.getElementById('foryou-body');if(!e||tries>50){clearInterval(t);return;}
+    if(e.querySelector('.trend-loading'))return;clearInterval(t);if(e.querySelector('#g33-rows'))return;
+    g33Data().then(function(D){var e2=document.getElementById('foryou-body');if(!e2||e2.querySelector('#g33-rows'))return;
+      var h=g33Html(D);if(!h)return;var box=document.createElement('div');box.id='g33-rows';box.innerHTML=h;
+      var cont=[].slice.call(e2.querySelectorAll('.fy-row')).find(function(r){return /Reprendre/.test((r.textContent||'').slice(0,24));}),anchor=cont||e2.querySelector('.fy-hero');
+      if(anchor&&anchor.parentNode)anchor.parentNode.insertBefore(box,anchor.nextSibling);else e2.insertBefore(box,e2.firstChild);
+      try{fyBind(e2);}catch(_){}
+    }).catch(function(){});},300);
+}
+(function(){var o=renderForYou;renderForYou=function(){var r=o.apply(this,arguments);try{g33Inject();}catch(e){}return r;};})();
+(function(){var st=document.createElement('style');st.textContent='.g33-h{display:flex;flex-direction:column;gap:2px;margin:18px 0 -4px;padding:10px 14px;border-radius:14px;background:linear-gradient(90deg,rgba(255,77,109,.16),rgba(91,58,140,.12));font-size:.95rem}.g33-h small{opacity:.7;font-size:.72rem}';document.head.appendChild(st);})();
 
 /* ==V29-END== */
 
