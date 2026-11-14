@@ -13,3 +13,5 @@ Les personnages du jeu sont des créations originales (couleurs, accessoires) co
 - Voix des persos : générées en direct dans le navigateur (synthèse de formants), aucune voix enregistrée ni IA
 
 Persos v19 (Inspectrice Brume, Doc Urgence, Capitaine Orbite, Rocco le Rescapé, Prêtresse Céleste, La Furtive, Jessy Paillettes, Ulf Brisetempête, Les Jumelles Pep's, Shérif Poussière, Mécha Volt, Madame Lune) : persos originaux inventés pour Ciné Clash, sur la base KayKit (CC0), accessoires 3D maison, portraits rendus dans Blender (Cycles).
+- Animations des persos « kk/ » (kk_a2.glb, kk_ax.glb : démarches, attaques, sorts, danse, interactions…) : pack KayKit Character Animations 1.1 de Kay Lousberg (www.kaylousberg.com) — licence CC0 (domaine public), réorganisé en deux fichiers et fondu/enchaîné par le contrôleur d'animation maison de Ciné Clash
+- Scénettes des petits personnages 3D (accessoires, particules, lumières) : créées sur mesure en three.js, sans ressource externe
