@@ -28402,6 +28402,58 @@ if(LOOK38)(function(){
   var st=document.createElement('style');st.id='v50-css';st.textContent=C;document.head.appendChild(st);
 })();
 
+
+/* ====== V51 — bandeau « Tout ce que t'as vu » seulement sur la Collection, légendes des compteurs réparées,
+   RADAR À RUMEURS dans les Attentes (rumeurs, théories et infos sur ce que tu attends, avec un niveau de fiabilité) ====== */
+(function(){
+  function $$(s,r){return [].slice.call((r||document).querySelectorAll(s));}
+  var C=''
+  /* le grand bandeau n'apparaît que sur la Collection */
+  +'body:not(.v-library) main>.hero{display:none!important}'
+  /* le studio de bandes-annonces cachait toutes les « .lbl » de l'appli : les légendes des compteurs reviennent */
+  +'.stat-pill .lbl{opacity:1!important;animation:none!important}'
+  /* radar */
+  +'.rr51{margin:6px 0 20px;padding:16px;border-radius:22px;background:linear-gradient(165deg,rgba(40,28,68,.9),rgba(18,12,30,.9));box-shadow:0 0 0 1px rgba(255,255,255,.07),0 22px 44px -26px #000;color:#f4effc}'
+  +'.rr51-h{display:flex;align-items:baseline;justify-content:space-between;gap:8px;flex-wrap:wrap}.rr51-h h3{font:700 1.25rem Fredoka,sans-serif;margin:0}.rr51-h small{color:#a99cc7;font-size:.76rem}'
+  +'.rr51-lg{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0 10px}.rr51-lg span{font-size:.7rem;font-weight:700;padding:3px 9px;border-radius:99px}'
+  +'.rr51-g{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px}'
+  +'.rr51-c{display:grid;grid-template-columns:70px 1fr;gap:12px;padding:12px;border-radius:16px;background:rgba(255,255,255,.04);box-shadow:inset 0 0 0 1px rgba(255,255,255,.06)}'
+  +'.rr51-c>img{width:70px;height:105px;object-fit:cover;border-radius:10px;box-shadow:0 10px 18px -10px #000}'
+  +'.rr51-c b.t{display:block;font:700 1rem/1.2 Fredoka,sans-serif;margin-bottom:6px}'
+  +'.rr51-i{display:block;text-decoration:none;color:#ddd3f2;font-size:.8rem;line-height:1.35;padding:6px 0;border-top:1px solid rgba(255,255,255,.06)}.rr51-i:first-of-type{border-top:0}'
+  +'.rr51-i em{font-style:normal;font-size:.62rem;font-weight:800;padding:2px 7px;border-radius:99px;margin-right:6px;white-space:nowrap}'
+  +'.rr51-i small{display:block;color:#8f84ad;font-size:.68rem;margin-top:2px}'
+  +'.rr51-i.spo span{filter:blur(6px)}.rr51-i.spo:hover span{filter:none}'
+  +'.f-ok{background:#2f9e44;color:#fff}.f-pr{background:#f59f00;color:#2b1a00}.f-no{background:#e03131;color:#fff}.f-in{background:#495057;color:#fff}.f-sp{background:#7048e8;color:#fff}'
+  +'.rr51-e{color:#a99cc7;font-size:.86rem}';
+  var st=document.createElement('style');st.id='v51-css';st.textContent=C;document.head.appendChild(st);
+
+  /* ---------- radar à rumeurs ---------- */
+  var NEWS=null,np=null;
+  function news(){if(NEWS)return Promise.resolve(NEWS);if(np)return np;var d=new Date(),h=''+d.getFullYear()+d.getMonth()+d.getDate()+d.getHours();
+    return np=fetch('news.json?h='+h,{cache:'no-cache'}).then(function(r){return r.ok?r.json():null;}).then(function(j){NEWS=(j&&j.items)||[];return NEWS;}).catch(function(){np=null;return [];});}
+  function norm(s){return ' '+String(s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]+/g,' ').trim()+' ';}
+  /* sources reconnues pour leurs exclusivités sérieuses */
+  var TRUST=/deadline|variety|hollywood reporter|allocin|ecran large|premi[eè]re|the wrap|empire|ign/i;
+  function rel(x){var k=x.k||[];if(k.indexOf('officiel')>=0)return ['✅ Confirmé','f-ok',3];if(k.indexOf('rumeur')>=0)return TRUST.test(x.s)?['🟡 Probable','f-pr',2]:['🔴 Bidon ?','f-no',1];return ['ℹ️ Info','f-in',0];}
+  function render(v){
+    var box=v.querySelector('#rr51');if(!box){box=document.createElement('section');box.id='rr51';box.className='rr51';var ref=v.querySelector('.att18')||v.querySelector('.add-card')||v.querySelector('.wish-sort-bar');if(ref)ref.parentNode.insertBefore(box,ref);else v.appendChild(box);}
+    box.innerHTML='<div class="rr51-h"><h3>🕵️ Radar à rumeurs</h3><small>ce qui se dit sur tes attentes · tous les sites · mis à jour toutes les heures</small></div><div class="rr51-e">Je fouille les actus…</div>';
+    news().then(function(N){
+      var W=(wishlist||[]).filter(function(w){return w&&w.title&&norm(w.title).trim().length>=4;}),cards=[];
+      W.forEach(function(w){var t=norm(w.title),hits=N.filter(function(x){return norm(x.t+' '+(x.d||'')).indexOf(t)>=0;}).slice(0,4);if(hits.length)cards.push({w:w,h:hits});});
+      cards.sort(function(a,b){return b.h.length-a.h.length;});
+      box.innerHTML='<div class="rr51-h"><h3>🕵️ Radar à rumeurs</h3><small>ce qui se dit sur tes attentes · '+N.length+' articles passés au crible</small></div>'
+        +'<div class="rr51-lg"><span class="f-ok">✅ Confirmé officiellement</span><span class="f-pr">🟡 Probable (source sérieuse)</span><span class="f-no">🔴 Bidon ? (à vérifier)</span><span class="f-sp">⚠️ Spoiler (survole pour lire)</span></div>'
+        +(cards.length?'<div class="rr51-g">'+cards.slice(0,12).map(function(c){return '<div class="rr51-c">'+(c.w.poster?'<img src="'+esc(c.w.poster)+'" alt="">':'<span></span>')+'<div><b class="t">'+esc(c.w.title)+'</b>'
+          +c.h.map(function(x){var r=rel(x),sp=(x.k||[]).indexOf('spoiler')>=0;return '<a class="rr51-i'+(sp?' spo':'')+'" href="'+esc(x.u||'#')+'" target="_blank" rel="noopener"><em class="'+r[1]+'">'+r[0]+'</em>'+(sp?'<em class="f-sp">⚠️ Spoiler</em>':'')+'<span>'+esc(x.t)+'</span><small>'+esc(x.s)+' · '+feedAgo(x.ts)+'</small></a>';}).join('')+'</div></div>';}).join('')+'</div>'
+          :'<div class="rr51-e">Rien de neuf sur tes attentes dans les actus pour l\'instant. Je repasse toutes les heures 👀</div>');
+    });
+  }
+  /* la page Attentes est redessinée par l'appli : on vérifie simplement si le radar y est */
+  setInterval(function(){if(document.hidden)return;var v=document.getElementById('view-attentes');if(v&&v.style.display!=='none'&&v.querySelector('.section-title')&&!v.querySelector('#rr51'))render(v);},800);
+})();
+
 /* ==V29-END== */
 
 
