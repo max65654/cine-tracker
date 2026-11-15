@@ -132,14 +132,31 @@ async function netflix() {
   console.log(`🔴 Netflix France semaine ${w0}: ${out.films.length} films, ${out.tv.length} séries`);
   return out;
 }
-const PROVIDERS = [{ k: 'prime', n: 'Prime Video', id: 119 }, { k: 'disney', n: 'Disney+', id: 337 }, { k: 'canal', n: 'Canal+', id: 381 }, { k: 'max', n: 'Max', id: 1899 }, { k: 'apple', n: 'Apple TV+', id: 350 }, { k: 'paramount', n: 'Paramount+', id: 531 }];
+const PROVIDERS = [{ k: 'netflix', n: 'Netflix', id: 8 }, { k: 'prime', n: 'Prime Video', id: 119 }, { k: 'disney', n: 'Disney+', id: 337 }, { k: 'canal', n: 'Canal+', id: 381 }, { k: 'max', n: 'Max', id: 1899 }, { k: 'apple', n: 'Apple TV+', id: 350 }, { k: 'paramount', n: 'Paramount+', id: 531 }];
+// Tendances DU JOUR par plateforme : les titres les plus regardés aujourd'hui (TMDB, mis à jour en continu),
+// rangés par plateforme selon où ils sont disponibles en abonnement EN FRANCE. Complété par la popularité de la plateforme si besoin.
 async function providers() {
-  const out = {};
+  const out = {}; PROVIDERS.forEach(p => { out[p.k] = { n: p.n, films: [], tv: [] }; });
+  const byId = Object.fromEntries(PROVIDERS.map(p => [p.id, p.k]));
+  for (const [mt, cat] of [['movie', 'films'], ['tv', 'tv']]) {
+    const seen = new Set(), trend = [];
+    for (let pg = 1; pg <= (mt === 'movie' ? 12 : 8); pg++) { const d = await tmdb(`/trending/${mt}/day`, '&page=' + pg); ((d && d.results) || []).forEach(r => { if (!seen.has(r.id)) { seen.add(r.id); trend.push(r); } }); }
+    for (const r of trend) {
+      if (PROVIDERS.every(p => out[p.k][cat].length >= 10)) break;
+      const w = await get(`https://api.themoviedb.org/3/${mt}/${r.id}/watch/providers?api_key=${TMDB}`, 'json'); await sleep(35);
+      const fr = (w && w.results && w.results.FR && w.results.FR.flatrate) || [];
+      for (const f of fr) { const k = byId[f.provider_id]; if (k && out[k][cat].length < 10 && !out[k][cat].some(x => x.id === r.id)) out[k][cat].push({ ...slim(r, mt), day: 1 }); }
+    }
+  }
+  // si une plateforme a moins de 10 titres du jour, on complète avec ses titres les plus populaires
   for (const p of PROVIDERS) {
-    const q = `&watch_region=FR&with_watch_providers=${p.id}&with_watch_monetization_types=flatrate&sort_by=popularity.desc`;
-    const [m, t] = await Promise.all([tmdb('/discover/movie', q + '&vote_count.gte=20'), tmdb('/discover/tv', q + '&vote_count.gte=10')]);
-    out[p.k] = { n: p.n, films: ((m && m.results) || []).slice(0, 10).map(r => slim(r, 'movie')), tv: ((t && t.results) || []).slice(0, 10).map(r => slim(r, 'tv')) };
-    console.log(`📺 ${p.n}: ${out[p.k].films.length}+${out[p.k].tv.length}`);
+    for (const [mt, cat] of [['movie', 'films'], ['tv', 'tv']]) {
+      if (out[p.k][cat].length >= 10) continue;
+      const q = `&watch_region=FR&with_watch_providers=${p.id}&with_watch_monetization_types=flatrate&sort_by=popularity.desc${mt === 'movie' ? '&vote_count.gte=20' : '&vote_count.gte=10'}`;
+      const d = await tmdb(`/discover/${mt}`, q);
+      for (const r of ((d && d.results) || [])) { if (out[p.k][cat].length >= 10) break; if (!out[p.k][cat].some(x => x.id === r.id)) out[p.k][cat].push(slim(r, mt)); }
+    }
+    console.log(`📺 ${p.n}: ${out[p.k].films.filter(x => x.day).length}/10 films du jour, ${out[p.k].tv.filter(x => x.day).length}/10 séries du jour`);
   }
   return out;
 }
