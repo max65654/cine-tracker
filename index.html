@@ -28049,6 +28049,126 @@ if(LOOK38)(function(){
   var p=document.getElementById('view-passport');if(p&&p.style.display!=='none'&&p.querySelector('.pp-hero')&&!p.querySelector('.pp47')&&window.__pp47x)window.__pp47x(p);
   var m=document.getElementById('view-mur');if(m&&m.style.display!=='none'&&m.querySelector('.v29-mur')&&!m.querySelector('.mp47')&&window.__mp47x)window.__mp47x(m);},700);})();
 
+
+/* ====== V48 — PAGE STREMIO : Stremio comme intégré au tracker (reprendre, bibliothèque, tes addons et leurs catalogues, recherche dans tous les addons)
+   + correctif : l'aperçu d'un titre s'ouvre maintenant pour n'importe quel titre (tops, actus, séries d'un univers…) ====== */
+(function(){
+  function $$(s,r){return [].slice.call((r||document).querySelectorAll(s));}
+
+  /* ---------- correctif aperçu : on va chercher le titre sur TMDB s'il n'est pas déjà connu ---------- */
+  try{var oPV=fyPreview;fyPreview=function(k){
+    if(!k)return;if(_fyIndex[k])return oPV.apply(this,arguments);
+    var p=String(k).split('_'),mt=p[0]==='tv'?'tv':'movie',id=p[1];if(!id)return;
+    ivJson('https://api.themoviedb.org/3/'+mt+'/'+id+'?api_key='+TMDB+'&language=fr-FR').then(function(d){if(!d||!d.id)return toast('😕 Titre introuvable');_fyIndex[k]=Object.assign({media_type:mt},d);oPV(k);});
+  };}catch(_){}
+  /* un identifiant IMDb (tt…) → titre TMDB, puis aperçu */
+  var TT={};
+  function tt2k(tt,type){if(TT[tt])return Promise.resolve(TT[tt]);try{var m=STR16T[tt];if(m&&m[1])return Promise.resolve(TT[tt]=(m[0]==='tv'?'tv':'movie')+'_'+m[1]);}catch(_){}
+    return ivJson('https://api.themoviedb.org/3/find/'+tt+'?api_key='+TMDB+'&external_source=imdb_id&language=fr-FR').then(function(d){var r=d&&((d.movie_results||[])[0]||(d.tv_results||[])[0]);if(!r)return null;var mt=(d.tv_results||[]).indexOf(r)>=0?'tv':'movie';var k=mt+'_'+r.id;_fyIndex[k]=Object.assign({media_type:mt},r);return TT[tt]=k;});}
+
+  /* ---------- addons ---------- */
+  var CINEMETA={transportUrl:'https://v3-cinemeta.strem.io/manifest.json',manifest:{id:'com.linvo.cinemeta',name:'Cinemeta',logo:'https://www.stremio.com/website/stremio-logo-small.png',description:'Les catalogues officiels de Stremio (films et séries populaires).',catalogs:[{type:'movie',id:'top',name:'Films populaires',extra:[{name:'search'}]},{type:'series',id:'top',name:'Séries populaires',extra:[{name:'search'}]},{type:'movie',id:'imdbRating',name:'Films les mieux notés'},{type:'series',id:'imdbRating',name:'Séries les mieux notées'}],types:['movie','series']}};
+  var ADD=null,ADDAt=0;
+  function addons(){if(ADD&&Date.now()-ADDAt<300000)return Promise.resolve(ADD);
+    var p=(typeof str16On==='function'&&str16On())?str16Authed('addonCollectionGet',{type:'AddonCollectionGet',update:true}).then(function(r){return (r&&r.addons)||[];}).catch(function(){return [];}):Promise.resolve([]);
+    return p.then(function(l){l=l.filter(function(a){return a&&a.manifest&&a.transportUrl&&/^https?:/.test(a.transportUrl);});if(!l.some(function(a){return /cinemeta/.test(a.transportUrl);}))l.unshift(CINEMETA);ADD=l;ADDAt=Date.now();return l;});}
+  function base(a){return String(a.transportUrl).replace(/\/manifest\.json(\?.*)?$/,'');}
+  function cats(a){return ((a.manifest&&a.manifest.catalogs)||[]).filter(function(c){return (c.type==='movie'||c.type==='series'||c.type==='anime'||c.type==='tv')&&!(c.extra||[]).some(function(e){return e.isRequired;})&&!(c.extraRequired||[]).length;});}
+  function searchable(a){return ((a.manifest&&a.manifest.catalogs)||[]).filter(function(c){return (c.type==='movie'||c.type==='series')&&((c.extra||[]).some(function(e){return e.name==='search';})||(c.extraSupported||[]).indexOf('search')>=0);});}
+  var CC={};
+  function catalog(a,c,extra){var u=base(a)+'/catalog/'+c.type+'/'+encodeURIComponent(c.id)+(extra?'/'+extra:'')+'.json';if(CC[u])return CC[u];
+    return CC[u]=fetch(u).then(function(r){return r.ok?r.json():null;}).then(function(j){return ((j&&j.metas)||[]).slice(0,40);}).catch(function(){delete CC[u];return [];});}
+  function stremioUrl(type,id){var t=type==='tv'?'series':type;var p='detail/'+t+'/'+encodeURIComponent(id)+(t==='movie'?'/'+encodeURIComponent(id):'');return {app:'stremio://'+p,web:'https://web.stremio.com/#/'+p};}
+  function openIn(type,id){var U=stremioUrl(type,id);try{location.href=U.app;}catch(_){}setTimeout(function(){if(!document.hidden)window.open(U.web,'_blank','noopener');},1400);}
+  function posterOf(m){var p=m.poster||'';return /^https?:/.test(p)?p:'';}
+  function ownedTT(tt){try{var m=STR16T[tt];if(!m||!m[1])return null;return items.find(function(i){return +i.tmdbId===+m[1]&&(i.tmdbType==='tv'?'tv':'movie')===(m[0]==='tv'?'tv':'movie');});}catch(_){return null;}}
+  function card(m,opt){opt=opt||{};var p=posterOf(m),pc=opt.pc,own=/^tt\d+/.test(m.id)?ownedTT(m.id):null;
+    return '<button type="button" class="sm48" data-id="'+esc(m.id)+'" data-t="'+esc(m.type)+'">'
+      +'<span class="sm48-p">'+(p?'<img src="'+esc(p)+'" alt="" loading="lazy" referrerpolicy="no-referrer">':'<i>🎬</i>')+(pc!=null?'<b class="sm48-pg"><i style="width:'+pc+'%"></i></b>':'')+(own?'<em>✓ '+(own.status==='termine'?'Vu':'Suivi')+'</em>':'')+'</span>'
+      +'<span class="sm48-t">'+esc(m.name||'')+'</span>'+(opt.sub?'<small>'+esc(opt.sub)+'</small>':'')+'</button>';}
+
+  /* ---------- la page ---------- */
+  var ST={tab:'home',q:''};
+  function render(v){
+    var on=typeof str16On==='function'&&str16On(),email=on&&STR16.auth&&STR16.auth.e;
+    v.innerHTML='<div class="section-title"><h2>🟣 Stremio</h2></div>'
+      +'<div class="sp48-hero"><div class="sp48-logo">S</div><div class="sp48-hi"><b>Stremio, dans ton tracker</b><small>'+(on?'Connecté'+(email?' · '+esc(email):''):'Pas encore connecté — tu vois quand même les catalogues officiels')+'</small></div>'
+      +'<div class="sp48-btns"><button type="button" data-a="open">▶ Ouvrir Stremio</button>'+(on?'<button type="button" data-a="sync">🔄 Synchroniser</button>':'')+'<button type="button" data-a="acc">'+(on?'⚙️ Compte':'🔗 Connecter mon compte')+'</button></div></div>'
+      +'<div class="sp48-s"><input type="search" class="v29-in sp48-q" placeholder="🔍 Chercher dans tous tes addons Stremio…" value="'+esc(ST.q)+'"></div><div id="sp48-res"></div>'
+      +'<div class="sp48-tabs">'+[['home','🏠 Accueil'],['lib','📚 Bibliothèque'],['add','🧩 Mes addons']].map(function(t){return '<button type="button" data-tab="'+t[0]+'" class="'+(ST.tab===t[0]?'on':'')+'">'+t[1]+'</button>';}).join('')+'</div>'
+      +'<div id="sp48-body"></div>';
+    v.querySelector('.sp48-hero').addEventListener('click',function(e){var b=e.target.closest('[data-a]');if(!b)return;var a=b.dataset.a;
+      if(a==='open'){try{location.href='stremio://';}catch(_){}setTimeout(function(){if(!document.hidden)window.open('https://web.stremio.com/','_blank','noopener');},1400);}
+      if(a==='sync'){try{STR16.libAt=0;str16Auto();toast('🔄 Synchronisation Stremio lancée');}catch(_){}}
+      if(a==='acc'){try{str16Open();}catch(_){toast('Utilise le bouton 🟣 Stremio dans « Sauvegarde & imports »');}}});
+    v.querySelector('.sp48-tabs').addEventListener('click',function(e){var b=e.target.closest('[data-tab]');if(!b)return;ST.tab=b.dataset.tab;$$('.sp48-tabs button',v).forEach(function(x){x.classList.toggle('on',x===b);});body(v);});
+    var q=v.querySelector('.sp48-q'),qt=0;q.addEventListener('input',function(){clearTimeout(qt);qt=setTimeout(function(){ST.q=q.value.trim();search(v);},350);});
+    v.addEventListener('click',function(e){var c=e.target.closest('.sm48');if(!c)return;var id=c.dataset.id,t=c.dataset.t;
+      if(/^tt\d+/.test(id)){tt2k(id,t).then(function(k){if(k)fyPreview(k);else openIn(t,id);});}else openIn(t,id);});
+    body(v);if(ST.q)search(v);
+  }
+  function rowHtml(title,inner,sub){return '<section class="sp48-row"><div class="sp48-rh">'+title+(sub?' <small>'+sub+'</small>':'')+'</div><div class="sp48-tr">'+inner+'</div></section>';}
+  function body(v,only){
+    var b=v.querySelector('#sp48-body');if(!b)return;var on=typeof str16On==='function'&&str16On();
+    if(ST.tab==='lib'){
+      if(!on){b.innerHTML='<div class="sp48-empty">🔗 Connecte ton compte Stremio pour voir ta bibliothèque ici.</div>';return;}
+      b.innerHTML='<div class="sp48-empty">Chargement de ta bibliothèque…</div>';
+      str16Lib(60000).then(function(m){var L=Object.keys(m).map(function(k){return m[k];}).filter(function(x){return x&&!x.removed&&(x.type==='movie'||x.type==='series');}).sort(function(a,c){return String(c._mtime||'').localeCompare(String(a._mtime||''));});
+        var F=L.filter(function(x){return x.type==='movie';}),S=L.filter(function(x){return x.type==='series';});
+        b.innerHTML=(S.length?'<div class="sp48-rh">📺 Séries <small>'+S.length+'</small></div><div class="sp48-grid">'+S.map(function(x){return card({id:x._id,type:x.type,name:x.name,poster:x.poster});}).join('')+'</div>':'')
+          +(F.length?'<div class="sp48-rh">🎬 Films <small>'+F.length+'</small></div><div class="sp48-grid">'+F.map(function(x){return card({id:x._id,type:x.type,name:x.name,poster:x.poster});}).join('')+'</div>':'')
+          ||'<div class="sp48-empty">Ta bibliothèque Stremio est vide.</div>';}).catch(function(){b.innerHTML='<div class="sp48-empty">😕 Impossible de lire ta bibliothèque Stremio.</div>';});
+      return;}
+    if(ST.tab==='add'){
+      b.innerHTML='<div class="sp48-empty">Chargement de tes addons…</div>';
+      addons().then(function(L){b.innerHTML='<div class="sp48-ad">'+L.map(function(a,i){var m=a.manifest||{},cs=cats(a);return '<div class="sp48-a"><div class="sp48-ai">'+(m.logo?'<img src="'+esc(m.logo)+'" alt="" onerror="this.replaceWith(document.createTextNode(\'🧩\'))">':'🧩')+'</div><div class="sp48-ab"><b>'+esc(m.name||'Addon')+'</b><small>'+esc((m.description||'').slice(0,140))+'</small><span>'+(m.types||[]).map(function(t){return '<i>'+esc(t)+'</i>';}).join('')+(cs.length?'<i>'+cs.length+' catalogue'+(cs.length>1?'s':'')+'</i>':'')+'</span></div>'+(cs.length?'<button type="button" data-ai="'+i+'">Voir</button>':'')+'</div>';}).join('')+'</div>'+(on?'':'<div class="sp48-empty">🔗 Connecte ton compte Stremio pour retrouver ici TOUS tes addons installés.</div>');
+        b.querySelectorAll('[data-ai]').forEach(function(x){x.onclick=function(){var a=L[+x.dataset.ai];ST.tab='home';$$('.sp48-tabs button',v).forEach(function(t){t.classList.toggle('on',t.dataset.tab==='home');});body(v,a);};});});
+      return;}
+    /* accueil : reprendre + catalogues de tous les addons */
+    var h='';
+    if(on){try{var cw=str19Cw();if(cw.length)h+=rowHtml('▶️ Reprendre là où tu t\'es arrêté',cw.map(function(x){var s=x.state||{},pc=s.duration?Math.min(100,Math.round((s.timeOffset||0)/s.duration*100)):0,mv=String(s.video_id||'').match(/:(\d+):(\d+)$/);return card({id:x._id,type:x.type,name:x.name,poster:x.poster},{pc:pc,sub:mv?'S'+mv[1]+' · ép. '+mv[2]:pc+' %'});}).join(''));}catch(_){}}
+    b.innerHTML=h+'<div id="sp48-cats"><div class="sp48-empty">Chargement des catalogues de tes addons…</div></div>';
+    addons().then(function(L){if(only)L=[only];var box=b.querySelector('#sp48-cats');if(!box)return;var rows=[];L.forEach(function(a){cats(a).slice(0,8).forEach(function(c){rows.push({a:a,c:c});});});rows=rows.slice(0,24);
+      box.innerHTML=rows.map(function(r,i){return '<section class="sp48-row" data-ri="'+i+'"><div class="sp48-rh">'+esc(r.c.name||r.c.id)+' <small>'+esc((r.a.manifest&&r.a.manifest.name)||'')+' · '+(r.c.type==='movie'?'Films':r.c.type==='series'?'Séries':esc(r.c.type))+'</small></div><div class="sp48-tr"><span class="sp48-wait">…</span></div></section>';}).join('')||'<div class="sp48-empty">Aucun catalogue.</div>';
+      /* chaque rangée se remplit quand elle arrive à l'écran */
+      var io=new IntersectionObserver(function(es){es.forEach(function(e){if(!e.isIntersecting)return;io.unobserve(e.target);var r=rows[+e.target.dataset.ri],tr=e.target.querySelector('.sp48-tr');
+        catalog(r.a,r.c).then(function(ms){tr.innerHTML=ms.length?ms.map(function(m){return card(m);}).join(''):'<span class="sp48-wait">Rien dans ce catalogue.</span>';});});},{rootMargin:'300px'});
+      $$('.sp48-row[data-ri]',box).forEach(function(s){io.observe(s);});});
+  }
+  function search(v){
+    var res=v.querySelector('#sp48-res');if(!res)return;var q=ST.q;if(q.length<2){res.innerHTML='';return;}
+    res.innerHTML='<div class="sp48-empty">Recherche dans tes addons…</div>';
+    addons().then(function(L){var jobs=[];L.forEach(function(a){searchable(a).forEach(function(c){jobs.push(catalog(a,c,'search='+encodeURIComponent(q)).then(function(ms){return {a:a,c:c,ms:ms};}));});});
+      return Promise.all(jobs);}).then(function(R){if(ST.q!==q)return;var seen={},out='';
+      R.forEach(function(r){var ms=r.ms.filter(function(m){if(seen[m.id])return false;seen[m.id]=1;return true;});if(ms.length)out+=rowHtml('🔍 '+esc((r.a.manifest&&r.a.manifest.name)||'')+' · '+(r.c.type==='movie'?'Films':'Séries'),ms.map(function(m){return card(m);}).join(''));});
+      res.innerHTML=out||'<div class="sp48-empty">Aucun résultat pour « '+esc(q)+' ».</div>';});
+  }
+  try{cinePage('stremio','🟣 Stremio','attentes',render);}catch(e){console.warn('sp48',e);}
+
+  var css=''
+  +'.sp48-hero{display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:18px;border-radius:22px;background:radial-gradient(120% 140% at 0% 0%,#8a5cf6,#3b1f8e 55%,#1a0f3d);color:#fff;box-shadow:0 24px 50px -26px #2b1366;margin-bottom:14px}'
+  +'.sp48-logo{width:54px;height:54px;border-radius:16px;background:linear-gradient(135deg,#a77bff,#6d3cf0);display:flex;align-items:center;justify-content:center;font:900 1.8rem Fredoka,sans-serif;box-shadow:inset 0 2px 0 rgba(255,255,255,.4),0 8px 18px -6px #000}'
+  +'.sp48-hi{flex:1;min-width:180px}.sp48-hi b{display:block;font:700 1.2rem Fredoka,sans-serif}.sp48-hi small{opacity:.8}'
+  +'.sp48-btns{display:flex;gap:8px;flex-wrap:wrap}.sp48-btns button{border:0;border-radius:12px;padding:9px 14px;font-weight:700;cursor:pointer;background:rgba(255,255,255,.16);color:#fff}.sp48-btns button:first-child{background:#fff;color:#4a23b8}'
+  +'.sp48-s{margin-bottom:10px}.sp48-q{width:100%}'
+  +'.sp48-tabs{display:flex;gap:6px;margin:6px 0 12px}.sp48-tabs button{border:0;border-radius:99px;padding:8px 14px;font-weight:700;background:rgba(255,255,255,.06);color:var(--ink);cursor:pointer}.sp48-tabs button.on{background:linear-gradient(135deg,#8a5cf6,#5b2bd6);color:#fff}'
+  +'.sp48-row{margin:14px 0}.sp48-rh{font:700 1.05rem Fredoka,sans-serif;margin:10px 0 8px}.sp48-rh small{font:500 .74rem Inter;color:var(--muted);margin-left:4px}'
+  +'.sp48-tr{display:flex;gap:10px;overflow-x:auto;padding:4px 2px 10px;min-height:60px}.sp48-wait,.sp48-empty{color:var(--muted);font-size:.86rem;padding:10px}'
+  +'.sp48-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(118px,1fr));gap:12px}'
+  +'.sm48{flex:none;width:122px;border:0;background:none;color:var(--ink);text-align:left;cursor:pointer;padding:0}.sp48-grid .sm48{width:auto}'
+  +'.sm48-p{position:relative;display:block;aspect-ratio:2/3;border-radius:12px;overflow:hidden;background:#1d1636;box-shadow:0 12px 22px -14px #000;transition:transform .25s cubic-bezier(.3,1.4,.5,1)}.sm48:hover .sm48-p{transform:translateY(-5px) scale(1.04)}'
+  +'.sm48-p img{width:100%;height:100%;object-fit:cover;display:block}.sm48-p>i{display:flex;height:100%;align-items:center;justify-content:center;font-size:2rem}'
+  +'.sm48-pg{position:absolute;left:6px;right:6px;bottom:6px;height:5px;border-radius:99px;background:rgba(0,0,0,.55);overflow:hidden}.sm48-pg i{display:block;height:100%;background:#a77bff}'
+  +'.sm48-p em{position:absolute;left:6px;top:6px;font:700 .62rem Inter;font-style:normal;background:rgba(6,214,160,.92);color:#04261b;padding:3px 6px;border-radius:6px}'
+  +'.sm48-t{display:block;font:700 .82rem/1.2 Fredoka,sans-serif;margin-top:6px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}.sm48 small{color:var(--muted);font-size:.7rem}'
+  +'.sp48-ad{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:10px}'
+  +'.sp48-a{display:flex;gap:12px;align-items:center;padding:12px;border-radius:16px;background:var(--card-bg);box-shadow:inset 0 0 0 1px rgba(255,255,255,.06)}'
+  +'.sp48-ai{width:46px;height:46px;flex:none;border-radius:12px;background:#2b1f52;display:flex;align-items:center;justify-content:center;overflow:hidden;font-size:1.4rem}.sp48-ai img{width:100%;height:100%;object-fit:contain}'
+  +'.sp48-ab{flex:1;min-width:0}.sp48-ab b{display:block;font:700 .95rem Fredoka,sans-serif}.sp48-ab small{display:block;color:var(--muted);font-size:.74rem;line-height:1.35}.sp48-ab span{display:flex;gap:4px;flex-wrap:wrap;margin-top:4px}.sp48-ab i{font-style:normal;font-size:.64rem;font-weight:700;background:rgba(138,92,246,.25);padding:2px 7px;border-radius:99px}'
+  +'.sp48-a>button{border:0;border-radius:10px;padding:7px 12px;font-weight:700;background:linear-gradient(135deg,#8a5cf6,#5b2bd6);color:#fff;cursor:pointer}';
+  var st=document.createElement('style');st.id='v48-css';st.textContent=css;document.head.appendChild(st);
+})();
+
 /* ==V29-END== */
 
 
