@@ -28143,7 +28143,7 @@ if(LOOK38)(function(){
       R.forEach(function(r){var ms=r.ms.filter(function(m){if(seen[m.id])return false;seen[m.id]=1;return true;});if(ms.length)out+=rowHtml('🔍 '+esc((r.a.manifest&&r.a.manifest.name)||'')+' · '+(r.c.type==='movie'?'Films':'Séries'),ms.map(function(m){return card(m);}).join(''));});
       res.innerHTML=out||'<div class="sp48-empty">Aucun résultat pour « '+esc(q)+' ».</div>';});
   }
-  try{cinePage('stremio','🟣 Stremio','attentes',render);}catch(e){console.warn('sp48',e);}
+  /* page Stremio retirée à ta demande (lire les vidéos des addons dans le tracker n'est pas possible) — seul le correctif d'aperçu ci-dessus reste actif */
 
   var css=''
   +'.sp48-hero{display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:18px;border-radius:22px;background:radial-gradient(120% 140% at 0% 0%,#8a5cf6,#3b1f8e 55%,#1a0f3d);color:#fff;box-shadow:0 24px 50px -26px #2b1366;margin-bottom:14px}'
@@ -28261,6 +28261,145 @@ if(LOOK38)(function(){
 ;
   /* on ne surveille que la zone des jeux (pas toute l'appli) */
   setInterval(function(){var g=document.getElementById('game-stage');if(g&&!g._o49){g._o49=1;gmo.observe(g,{subtree:true,attributes:true,attributeFilter:['class']});}},1000);
+})();
+
+
+/* ====== V50 — SOUVENIRS en polaroïds, CINÉ-PSY (ton profil de spectateur, tes contradictions, de quoi sortir de ta zone de confort)
+   et LA PURGE DES NOTES (tout re-noter à l'aveugle, puis voir ce qui a vieilli) ====== */
+(function(){
+  var de=document.documentElement;de.classList.add('look50');
+  function $$(s,r){return [].slice.call((r||document).querySelectorAll(s));}
+  var GN={28:'Action',12:'Aventure',16:'Animation',35:'Comédie',80:'Policier',99:'Documentaire',18:'Drame',10751:'Familial',14:'Fantastique',36:'Histoire',27:'Horreur',10402:'Musique',9648:'Mystère',10749:'Romance',878:'Science-fiction',53:'Thriller',10752:'Guerre',37:'Western',10759:'Action & aventure',10762:'Jeunesse',10764:'Téléréalité',10765:'SF & fantastique',10766:'Feuilleton',10768:'Guerre & politique'};
+  var GMAP={10759:28,10765:878,10768:10752,10762:10751};
+  function gOf(i){var s={};(i.genreIds||[]).forEach(function(g){g=GMAP[g]||g;if(GN[g])s[g]=1;});return Object.keys(s).map(Number);}
+  function seen(){return (items||[]).filter(function(i){return !i.locked&&(i.status==='termine'||i.status==='en_cours');});}
+  function avg(a){return a.length?a.reduce(function(x,y){return x+y;},0)/a.length:0;}
+  function f1(n){return (Math.round(n*10)/10).toString().replace('.',',');}
+
+  /* ======================= CINÉ-PSY ======================= */
+  function analyse(){
+    var S=seen(),R=S.filter(function(i){return +i.rating>0;}),G={},dec={},dirs={},act={},tmdbGap=[];
+    S.forEach(function(i){gOf(i).forEach(function(g){var e=G[g]=G[g]||{n:0,r:[]};e.n++;if(+i.rating>0)e.r.push(+i.rating);});
+      var y=+i.year;if(y>1900){var d=Math.floor(y/10)*10;dec[d]=(dec[d]||0)+1;}
+      String(i.director||'').split(/,\s*/).forEach(function(n){n=n.trim();if(n)dirs[n]=(dirs[n]||0)+1;});
+      String(i.cast||'').split(/,\s*/).slice(0,4).forEach(function(n){n=n.trim();if(n)act[n]=(act[n]||0)+1;});
+      if(+i.rating>0&&+i.tmdbRating>0)tmdbGap.push(+i.rating*2-(+i.tmdbRating));});
+    var gk=Object.keys(G).map(Number).sort(function(a,b){return G[b].n-G[a].n;}),tot=S.length||1;
+    var top=gk[0],second=gk[1],films=S.filter(function(i){return i.type==='film';}).length,series=S.length-films;
+    var harsh=avg(tmdbGap),mean=avg(R.map(function(i){return +i.rating;}));
+    var decK=Object.keys(dec).map(Number).sort(function(a,b){return dec[b]-dec[a];}),fav=decK[0];
+    var topDir=Object.keys(dirs).sort(function(a,b){return dirs[b]-dirs[a];}).filter(function(n){return dirs[n]>=2;}).slice(0,3);
+    var topAct=Object.keys(act).sort(function(a,b){return act[b]-act[a];}).filter(function(n){return act[n]>=3;}).slice(0,3);
+    /* contradictions : genres très bien notés mais peu regardés, et l'inverse */
+    var contra=[];
+    gk.forEach(function(g){var e=G[g],m=avg(e.r);if(e.r.length>=2&&m>=mean+.4&&e.n/tot<.12)contra.push('Tu mets en moyenne <b>'+f1(m)+'/5</b> au genre <b>'+GN[g]+'</b>… mais il ne représente que <b>'+Math.round(e.n/tot*100)+' %</b> de ce que tu regardes.');
+      if(e.r.length>=3&&m<=mean-.4&&e.n/tot>=.18)contra.push('Le genre <b>'+GN[g]+'</b> est l\'un de ceux que tu regardes le plus (<b>'+e.n+'</b> titres)… alors que tu ne lui mets que <b>'+f1(m)+'/5</b> en moyenne.');});
+    if(Math.abs(harsh)>=.8)contra.push(harsh<0?'Tu es plus <b>sévère</b> que le public : en moyenne <b>'+f1(-harsh)+' points</b> de moins que la note TMDB (sur 10).':'Tu es plus <b>généreux</b> que le public : en moyenne <b>'+f1(harsh)+' points</b> de plus que la note TMDB (sur 10).');
+    /* archétype */
+    var A={28:['L\'Adrénaliné','💥'],12:['L\'Explorateur','🗺️'],16:['Le Grand Enfant','🎨'],35:['Le Bon Public','😂'],80:['Le Détective','🕵️'],99:['Le Curieux','🔎'],18:['L\'Âme sensible','🎭'],10751:['Le Cocooneur','🛋️'],14:['Le Rêveur','🐉'],36:['L\'Historien','🏛️'],27:['Le Cœur bien accroché','👻'],9648:['L\'Enquêteur','🧩'],10749:['Le Romantique','💘'],878:['Le Futuriste','🚀'],53:['L\'Accro au suspense','🔪'],10752:['Le Stratège','🎖️'],37:['Le Cow-boy solitaire','🌵']};
+    var ar=A[top]||['Le Cinéphile éclectique','🎬'];
+    var adj=fav&&fav<1990?' nostalgique':fav>=2020?' branché':'';adj+=harsh<=-1?' exigeant':harsh>=1?' enthousiaste':'';
+    return {S:S,G:G,gk:gk,tot:tot,top:top,second:second,films:films,series:series,mean:mean,harsh:harsh,fav:fav,dec:dec,topDir:topDir,topAct:topAct,contra:contra,title:ar[0]+adj,ico:ar[1]};
+  }
+  function comfortSuggest(a,box){
+    /* genres peu explorés → les films les plus acclamés de ces genres */
+    var all=[28,12,16,35,80,99,18,14,36,27,9648,10749,878,53,10752,37],low=all.filter(function(g){return !a.G[g]||a.G[g].n/a.tot<.04;}).slice(0,3);
+    if(!low.length){box.innerHTML='<p class="cp50-s">Tu as déjà tout exploré, bravo 👏</p>';return;}
+    var own={};(items||[]).forEach(function(i){own[i.tmdbId]=1;});
+    Promise.all(low.map(function(g){return ivJson('https://api.themoviedb.org/3/discover/movie?api_key='+TMDB+'&language=fr-FR&sort_by=vote_count.desc&vote_average.gte=7.6&with_genres='+g).then(function(d){return {g:g,l:((d&&d.results)||[]).filter(function(r){return r.poster_path&&!own[r.id];}).slice(0,4)};}).catch(function(){return {g:g,l:[]};});}))
+      .then(function(R){box.innerHTML=R.filter(function(x){return x.l.length;}).map(function(x){return '<div class="cp50-g"><b>'+GN[x.g]+'</b> <small>un genre que tu explores très peu</small><div class="cp50-r">'+x.l.map(function(r){return '<button type="button" data-k="movie_'+r.id+'"><img src="https://image.tmdb.org/t/p/w185'+r.poster_path+'" alt=""><span>'+esc(r.title)+'</span><small>⭐ '+(r.vote_average||0).toFixed(1)+'</small></button>';}).join('')+'</div></div>';}).join('')||'<p class="cp50-s">Pas de suggestion pour l\'instant.</p>';
+        box.querySelectorAll('[data-k]').forEach(function(b){b.onclick=function(){try{fyPreview(b.dataset.k);}catch(_){}};});});
+  }
+  function openPsy(){
+    var a=analyse();
+    var o=document.createElement('div');o.className='cp50-ov';
+    if(a.S.length<5){o.innerHTML='<div class="cp50"><button class="cp50-x">✕</button><h3>🧠 Ciné-Psy</h3><p>Il me faut au moins 5 titres vus ou en cours pour t\'analyser.</p></div>';}
+    else{
+      var bars=a.gk.slice(0,6).map(function(g){var e=a.G[g],p=Math.round(e.n/a.tot*100);return '<div class="cp50-b"><span>'+GN[g]+'</span><i><b style="width:'+p+'%"></b></i><em>'+p+' %'+(e.r.length?' · '+f1(avg(e.r))+'/5':'')+'</em></div>';}).join('');
+      var decs=Object.keys(a.dec).map(Number).sort(),dmax=Math.max.apply(null,decs.map(function(d){return a.dec[d];}).concat([1]));
+      o.innerHTML='<div class="cp50"><button class="cp50-x">✕</button><div class="cp50-h"><div class="cp50-i">'+a.ico+'</div><div><small>🧠 Ciné-Psy · ton profil de spectateur</small><h3>'+esc(a.title)+'</h3><p>'+a.S.length+' titres analysés · '+a.films+' films · '+a.series+' séries'+(a.mean?' · note moyenne <b>'+f1(a.mean)+'/5</b>':'')+'</p></div></div>'
+        +'<div class="cp50-sec"><h4>🔥 Tes obsessions</h4>'+bars+(a.topDir.length?'<p>🎬 Réalisateurs que tu suis sans le savoir : <b>'+a.topDir.map(esc).join('</b>, <b>')+'</b></p>':'')+(a.topAct.length?'<p>⭐ Acteurs qui reviennent tout le temps : <b>'+a.topAct.map(esc).join('</b>, <b>')+'</b></p>':'')+'</div>'
+        +(decs.length?'<div class="cp50-sec"><h4>🕰️ Ton époque</h4><div class="cp50-d">'+decs.map(function(d){return '<div><i style="height:'+Math.max(6,Math.round(a.dec[d]/dmax*80))+'px"></i><small>'+String(d).slice(2)+'s</small></div>';}).join('')+'</div>'+(a.fav?'<p>Ta décennie préférée : <b>les années '+String(a.fav).slice(2)+'</b>.</p>':'')+'</div>':'')
+        +'<div class="cp50-sec"><h4>🤔 Tes contradictions</h4>'+(a.contra.length?a.contra.map(function(c){return '<p class="cp50-c">'+c+'</p>';}).join(''):'<p>Aucune : tu es étonnamment cohérent 😄</p>')+'</div>'
+        +'<div class="cp50-sec"><h4>🚪 Pour sortir de ta zone de confort</h4><div class="cp50-sg"><p class="cp50-s">Je cherche…</p></div></div></div>';
+    }
+    document.body.appendChild(o);o.querySelector('.cp50-x').onclick=function(){o.remove();};o.addEventListener('click',function(e){if(e.target===o)o.remove();});
+    var sg=o.querySelector('.cp50-sg');if(sg)comfortSuggest(a,sg);
+  }
+  window.CinePsy50=openPsy;
+
+  /* ======================= LA PURGE DES NOTES ======================= */
+  function openPurge(){
+    var pool=(items||[]).filter(function(i){return !i.locked&&i.status==='termine'&&+i.rating>0;});
+    if(pool.length<5)return toast('♻️ Il faut au moins 5 titres notés pour la purge');
+    for(var k=pool.length-1;k>0;k--){var j=Math.floor(Math.random()*(k+1)),t=pool[k];pool[k]=pool[j];pool[j]=t;}
+    var L=pool.slice(0,20),res=[],idx=0;
+    var o=document.createElement('div');o.className='cp50-ov';document.body.appendChild(o);
+    function close(){o.remove();}
+    function step(){
+      if(idx>=L.length)return done();var it=L[idx];
+      o.innerHTML='<div class="cp50 pg50"><button class="cp50-x">✕</button><small class="pg50-n">♻️ La Purge des notes · '+(idx+1)+' / '+L.length+'</small>'
+        +'<div class="pg50-p">'+(it.poster?'<img src="'+esc(it.poster)+'" alt="">':'<span>🎬</span>')+'</div><h3>'+esc(it.title)+'</h3><p class="cp50-s">'+(it.year||'')+' · '+(it.type==='serie'?'Série':'Film')+' — ton ancienne note est cachée : note-le comme si c\'était aujourd\'hui</p>'
+        +'<div class="pg50-st">'+[1,2,3,4,5,6,7,8,9,10].map(function(n){return '<button type="button" data-v="'+(n/2)+'">'+(n%2?'½':'★')+'</button>';}).join('')+'</div><div class="pg50-v">—</div>'
+        +'<div class="pg50-b"><button type="button" data-skip="1">Je ne me souviens plus</button></div></div>';
+      o.querySelector('.cp50-x').onclick=close;
+      var st=o.querySelectorAll('.pg50-st button'),vv=o.querySelector('.pg50-v');
+      st.forEach(function(b){b.onmouseenter=function(){var v=+b.dataset.v;st.forEach(function(x){x.classList.toggle('on',+x.dataset.v<=v);});vv.textContent=String(v).replace('.',',')+' / 5';};
+        b.onclick=function(){res.push({it:it,old:+it.rating,nw:+b.dataset.v});idx++;setTimeout(step,180);};});
+      o.querySelector('[data-skip]').onclick=function(){idx++;step();};
+    }
+    function done(){
+      if(!res.length){close();return;}
+      var ch=res.map(function(r){r.d=r.nw-r.old;return r;}),down=ch.filter(function(r){return r.d<=-1;}).sort(function(a,b){return a.d-b.d;}),up=ch.filter(function(r){return r.d>=1;}).sort(function(a,b){return b.d-a.d;}),same=ch.filter(function(r){return Math.abs(r.d)<.5;}).length;
+      function row(r){return '<div class="pg50-r">'+(r.it.poster?'<img src="'+esc(r.it.poster)+'" alt="">':'')+'<span>'+esc(r.it.title)+'</span><b>'+String(r.old).replace('.',',')+' → '+String(r.nw).replace('.',',')+'</b><em class="'+(r.d<0?'dn':'up')+'">'+(r.d>0?'+':'')+String(r.d).replace('.',',')+'</em></div>';}
+      o.innerHTML='<div class="cp50"><button class="cp50-x">✕</button><h3>♻️ Résultat de la purge</h3><p>'+res.length+' titres re-notés à l\'aveugle · <b>'+same+'</b> gardent la même note.</p>'
+        +(down.length?'<div class="cp50-sec"><h4>📉 Ce qui a vieilli</h4>'+down.map(row).join('')+'</div>':'')+(up.length?'<div class="cp50-sec"><h4>📈 Ce qui s\'est bonifié</h4>'+up.map(row).join('')+'</div>':'')
+        +'<div class="pg50-b"><button type="button" class="ok" data-apply="1">✅ Garder mes nouvelles notes</button><button type="button" data-keep="1">Garder les anciennes</button></div></div>';
+      o.querySelector('.cp50-x').onclick=close;o.querySelector('[data-keep]').onclick=close;
+      o.querySelector('[data-apply]').onclick=function(){res.forEach(function(r){r.it.rating=r.nw;});try{sv();renderAll();}catch(_){}try{localStorage.setItem('cinePurge50',JSON.stringify({d:todayStr(),n:res.length}));}catch(_){}toast('♻️ '+res.length+' notes mises à jour');close();};
+    }
+    step();
+  }
+  window.CinePurge50=openPurge;
+
+  /* boutons dans le grand bandeau d'accueil */
+  (function(){var h=document.querySelector('.hero');if(!h||h.querySelector('.lb50'))return;var d=document.createElement('div');d.className='lb50';
+    d.innerHTML='<button type="button" data-l="psy">🧠 Mon profil Ciné-Psy</button><button type="button" data-l="purge">♻️ La Purge des notes</button>';
+    var sb=h.querySelector('.stats-bar');if(sb)sb.insertAdjacentElement('afterend',d);else h.appendChild(d);
+    d.addEventListener('click',function(e){var b=e.target.closest('[data-l]');if(!b)return;if(b.dataset.l==='psy')openPsy();else openPurge();});})();
+
+  var C=''
+  /* souvenirs en polaroïds */
+  +'html.look50 #throwback{background:linear-gradient(160deg,rgba(60,40,28,.55),rgba(25,16,12,.6))!important;border-radius:20px!important;padding:14px 16px!important;box-shadow:0 0 0 1px rgba(255,220,170,.12),0 18px 36px -22px #000!important}'
+  +'html.look50 .tb-head{color:#ffe2b3!important;font-size:1.1rem!important;letter-spacing:.02em}'
+  +'html.look50 .tb-when{display:inline-block;background:#ffe2b3;color:#3a2412!important;font:700 .76rem Fredoka,sans-serif;padding:4px 12px;border-radius:99px;margin:10px 0 8px!important;transform:rotate(-1.5deg);box-shadow:0 3px 0 rgba(0,0,0,.25)}'
+  +'html.look50 .tb-items{gap:16px!important;padding:8px 4px 12px!important}'
+  +'html.look50 .tb-card{width:104px!important;background:#fffaf0;padding:7px 7px 10px;border-radius:4px;color:#3a2412!important;box-shadow:0 12px 20px -10px rgba(0,0,0,.7);transform:rotate(var(--tr,-3deg));transition:transform .3s cubic-bezier(.3,1.4,.5,1);position:relative}'
+  +'html.look50 .tb-card:nth-child(2n){--tr:2.5deg}html.look50 .tb-card:nth-child(3n){--tr:-1.5deg}'
+  +'html.look50 .tb-card::before{content:"";position:absolute;left:50%;top:-8px;width:42px;height:14px;margin-left:-21px;background:rgba(255,236,170,.75);transform:rotate(-4deg);box-shadow:0 1px 2px rgba(0,0,0,.2)}'
+  +'html.look50 .tb-card:hover{transform:rotate(0) scale(1.08);z-index:2}'
+  +'html.look50 .tb-card img,html.look50 .tb-np{width:90px!important;height:128px!important;border-radius:2px!important;object-fit:cover;filter:sepia(.25) saturate(1.1)}'
+  +'html.look50 .tb-card span{display:block;font:600 .7rem/1.25 "Fredoka",sans-serif;margin-top:6px;color:#3a2412!important}'
+  /* boutons du bandeau */
+  +'.lb50{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:10px 0 2px}.lb50 button{border:1.5px solid rgba(255,255,255,.2);background:rgba(0,0,0,.35);color:#fff;border-radius:99px;padding:7px 14px;font-weight:700;font-size:.82rem;cursor:pointer;transition:transform .15s,background .2s}.lb50 button:hover{transform:translateY(-2px);background:rgba(0,0,0,.5)}'
+  /* fenêtres Ciné-Psy et Purge */
+  +'.cp50-ov{position:fixed;inset:0;z-index:10040;background:rgba(5,3,10,.72);display:flex;align-items:center;justify-content:center;padding:14px}'
+  +'.cp50{position:relative;width:min(640px,100%);max-height:calc(100vh - 28px);overflow:auto;background:linear-gradient(165deg,#1d1532,#110c1d);color:#f4effc;border-radius:24px;padding:20px;box-shadow:0 0 0 1px rgba(255,255,255,.08),0 40px 80px -30px #000,0 0 60px -30px var(--p1,#ff4d8d);animation:cp50 .45s cubic-bezier(.2,1.2,.35,1)}'
+  +'@keyframes cp50{from{opacity:0;transform:translateY(20px) scale(.95)}}'
+  +'.cp50-x{position:absolute;right:12px;top:12px;border:0;background:rgba(255,255,255,.1);color:#fff;border-radius:99px;width:32px;height:32px;cursor:pointer}'
+  +'.cp50-h{display:flex;gap:14px;align-items:center;margin-bottom:8px}.cp50-i{flex:none;width:72px;height:72px;border-radius:22px;display:flex;align-items:center;justify-content:center;font-size:2.4rem;background:linear-gradient(135deg,var(--p1,#ff4d8d),var(--p2,#8b5cf6));box-shadow:0 12px 24px -10px var(--p1,#ff4d8d)}'
+  +'.cp50-h small{color:#c9b8ff;font-weight:700;font-size:.72rem;letter-spacing:.04em}.cp50 h3{font:700 1.5rem/1.15 Fredoka,sans-serif;margin:2px 0 4px}.cp50 p{font-size:.86rem;line-height:1.45;color:#ddd3f2;margin:6px 0}'
+  +'.cp50-sec{margin-top:16px;padding-top:12px;border-top:1px solid rgba(255,255,255,.08)}.cp50-sec h4{font:700 1rem Fredoka,sans-serif;margin:0 0 8px}'
+  +'.cp50-b{display:grid;grid-template-columns:120px 1fr auto;gap:8px;align-items:center;margin:5px 0;font-size:.8rem}.cp50-b i{height:10px;border-radius:99px;background:rgba(255,255,255,.08);overflow:hidden}.cp50-b i b{display:block;height:100%;background:linear-gradient(90deg,var(--p1,#ff4d8d),var(--p3,#ffd23f));border-radius:99px}.cp50-b em{font-style:normal;color:#c9b8ff;font-size:.74rem}'
+  +'.cp50-d{display:flex;gap:6px;align-items:flex-end;height:100px}.cp50-d div{display:flex;flex-direction:column;align-items:center;gap:4px;flex:1}.cp50-d i{width:100%;max-width:26px;border-radius:6px 6px 2px 2px;background:linear-gradient(180deg,var(--p3,#ffd23f),var(--p1,#ff4d8d))}.cp50-d small{font-size:.66rem;color:#c9b8ff}'
+  +'.cp50-c{background:rgba(255,255,255,.05);border-left:3px solid var(--p1,#ff4d8d);padding:8px 10px;border-radius:8px}'
+  +'.cp50-g{margin:8px 0}.cp50-g small{color:#a99cc7;font-size:.72rem}.cp50-r{display:flex;gap:10px;overflow-x:auto;padding:6px 0}.cp50-r button{flex:none;width:96px;border:0;background:none;color:#fff;text-align:left;cursor:pointer;padding:0}.cp50-r img{width:96px;height:144px;object-fit:cover;border-radius:10px;box-shadow:0 10px 18px -10px #000}.cp50-r span{display:block;font:600 .74rem/1.2 Fredoka,sans-serif;margin-top:4px}.cp50-r small{color:#ffd23f;font-size:.7rem}.cp50-s{color:#a99cc7!important}'
+  +'.pg50{text-align:center}.pg50-n{color:#c9b8ff;font-weight:700;font-size:.75rem}.pg50-p{margin:12px auto 8px;width:150px;aspect-ratio:2/3;border-radius:14px;overflow:hidden;box-shadow:0 18px 30px -14px #000}.pg50-p img{width:100%;height:100%;object-fit:cover}'
+  +'.pg50-st{display:flex;justify-content:center;gap:2px;margin:12px 0 4px}.pg50-st button{border:0;background:rgba(255,255,255,.08);color:rgba(255,255,255,.35);font-size:1.3rem;width:32px;height:40px;border-radius:8px;cursor:pointer;transition:transform .1s}.pg50-st button.on{color:#ffd23f;background:rgba(255,210,63,.15)}.pg50-st button:hover{transform:scale(1.15)}'
+  +'.pg50-v{font:800 1.2rem Fredoka,sans-serif;color:#ffd23f;min-height:1.4em}'
+  +'.pg50-b{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:14px}.pg50-b button{border:1px solid rgba(255,255,255,.16);background:rgba(255,255,255,.06);color:#fff;border-radius:12px;padding:10px 14px;font-weight:700;cursor:pointer}.pg50-b .ok{background:linear-gradient(135deg,var(--p1,#ff4d8d),var(--p2,#8b5cf6));border:0}'
+  +'.pg50-r{display:grid;grid-template-columns:auto 1fr auto auto;gap:10px;align-items:center;padding:6px 0;text-align:left}.pg50-r img{width:34px;height:51px;object-fit:cover;border-radius:6px}.pg50-r span{font-size:.86rem}.pg50-r b{font:700 .9rem Fredoka,sans-serif}.pg50-r em{font-style:normal;font-weight:800;padding:2px 8px;border-radius:99px}.pg50-r em.dn{background:#e03131}.pg50-r em.up{background:#2f9e44}';
+  var st=document.createElement('style');st.id='v50-css';st.textContent=C;document.head.appendChild(st);
 })();
 
 /* ==V29-END== */
