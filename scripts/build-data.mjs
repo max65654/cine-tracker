@@ -1,0 +1,202 @@
+// Mon Ciné Tracker — robot de données (lancé par GitHub Actions toutes les 3 h)
+// Produit à la racine du site :
+//   news.json         → actus de nombreux sites, traduites en français, étiquetées (officiel / rumeur / spoiler / bande-annonce / box-office)
+//   tops.json         → Top 10 officiel Netflix France + tendances par plateforme, box-office mondial, Stremio, avec l'évolution des places
+//   tops-history.json → mémoire des classements (pour calculer « +3 places », « 12 jours dans le top »)
+// Node 20+ (fetch intégré), aucune dépendance.
+import { readFile, writeFile } from 'node:fs/promises';
+
+const TMDB = process.env.TMDB_KEY || '7b414afa4f9c5e683e830f4ed503579f';
+const UA = 'Mozilla/5.0 (compatible; CineTrackerBot/1.0; +https://github.com/max65654/cine-tracker)';
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const today = new Date().toISOString().slice(0, 10);
+
+async function get(url, type = 'text', tries = 2, ms = 30000) {
+  for (let i = 0; i < tries; i++) {
+    try {
+      const r = await fetch(url, { headers: { 'User-Agent': UA, 'Accept-Language': 'fr-FR,fr;q=0.9,en;q=0.8' }, signal: AbortSignal.timeout(ms) });
+      if (!r.ok) throw new Error(r.status + ' ' + url);
+      return type === 'json' ? await r.json() : await r.text();
+    } catch (e) { if (i === tries - 1) { console.warn('⚠️', String(e.message || e).slice(0, 160)); return null; } await sleep(1500); }
+  }
+}
+const tmdb = (path, q = '') => get(`https://api.themoviedb.org/3${path}?api_key=${TMDB}&language=fr-FR${q}`, 'json');
+
+/* ======================= ACTUS ======================= */
+const SOURCES = [
+  { n: 'AlloCiné', u: 'https://www.allocine.fr/rss/news.xml', l: 'fr' },
+  { n: 'AlloCiné Séries', u: 'https://www.allocine.fr/rss/news-series.xml', l: 'fr' },
+  { n: 'Écran Large', u: 'https://www.ecranlarge.com/rss', l: 'fr' },
+  { n: 'CinéSérie', u: 'https://www.cineserie.com/feed/', l: 'fr' },
+  { n: 'Serieously', u: 'https://www.serieously.com/feed/', l: 'fr' },
+  { n: 'CinéChronicle', u: 'https://www.cinechronicle.com/feed/', l: 'fr' },
+  { n: 'Deadline', u: 'https://deadline.com/feed/', l: 'en' },
+  { n: 'Variety', u: 'https://variety.com/feed/', l: 'en' },
+  { n: 'The Hollywood Reporter', u: 'https://www.hollywoodreporter.com/feed/', l: 'en' },
+  { n: 'Screen Rant', u: 'https://screenrant.com/feed/', l: 'en' },
+  { n: 'Collider', u: 'https://collider.com/feed/', l: 'en' },
+  { n: 'Google Actu Séries', u: 'https://news.google.com/rss/search?q=s%C3%A9rie+saison+OR+netflix+OR+%22prime+video%22+OR+disney%2B&hl=fr&gl=FR&ceid=FR:fr', l: 'fr', gn: 1 },
+  { n: 'Google Actu Cinéma', u: 'https://news.google.com/rss/search?q=film+cin%C3%A9ma+sortie+OR+bande-annonce&hl=fr&gl=FR&ceid=FR:fr', l: 'fr', gn: 1 }
+];
+const decode = s => String(s || '').replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, '$1')
+  .replace(/&#(\d+);/g, (_, n) => String.fromCodePoint(+n)).replace(/&#x([0-9a-f]+);/gi, (_, n) => String.fromCodePoint(parseInt(n, 16)))
+  .replace(/&quot;/g, '"').replace(/&apos;|&#039;/g, "'").replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&');
+const strip = s => decode(s).replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+const tag = (x, t) => { const m = x.match(new RegExp(`<${t}[^>]*>([\\s\\S]*?)</${t}>`, 'i')); return m ? m[1] : ''; };
+function parseRss(xml, src) {
+  const out = [];
+  for (const m of xml.matchAll(/<item[\s>][\s\S]*?<\/item>/gi)) {
+    const x = m[0];
+    let t = strip(tag(x, 'title')), link = strip(tag(x, 'link')) || (x.match(/<guid[^>]*>(https?:[^<]+)<\/guid>/i) || [])[1] || '';
+    let s = src.n;
+    if (src.gn) { const mm = t.match(/^(.*) - ([^-]{2,60})$/); if (mm) { t = mm[1]; s = mm[2]; } }
+    const raw = decode(tag(x, 'description') || tag(x, 'content:encoded'));
+    let img = (x.match(/<media:(?:content|thumbnail)[^>]+url="([^"]+)"/i) || [])[1] || (x.match(/<enclosure[^>]+url="([^"]+\.(?:jpe?g|png|webp)[^"]*)"/i) || [])[1] || (raw.match(/<img[^>]+src="([^"]+)"/i) || [])[1] || '';
+    const d = Date.parse(strip(tag(x, 'pubDate')) || strip(tag(x, 'dc:date'))) || Date.now();
+    let desc = strip(raw); if (src.gn || desc.startsWith(t.slice(0, 30))) desc = '';
+    if (t) out.push({ t, d: desc.slice(0, 420), u: link, i: img.replace(/&amp;/g, '&'), s, ts: d, l: src.l });
+  }
+  return out;
+}
+async function translate(text) {
+  if (!text) return text;
+  const j = await get('https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=fr&dt=t&q=' + encodeURIComponent(text.slice(0, 1800)), 'json', 2);
+  if (!j || !Array.isArray(j[0])) return text;
+  return j[0].map(p => p[0]).join('');
+}
+const RX = {
+  rumeur: /\b(rumeurs?|selon (nos|des|plusieurs) (informations|sources)|d'apr[èe]s (nos|des|plusieurs) sources|serait en (pourparlers|discussions?|n[ée]gociations?)|pourrait (revenir|rejoindre|jouer|incarner|[êe]tre annul[ée]e?)|en pourparlers|en n[ée]gociations?|insider|leak(ed)?|fuites?|reportedly|rumou?red|in (early )?talks|being eyed|is eyeing|could return|may return)\b/i,
+  officiel: /\b(officiel|officiellement|confirm[ée]|annonc[ée]|d[ée]voil[ée]|date de sortie|officially|confirmed|announced|renouvel[ée]|renewed|bande-annonce officielle|official trailer)/i,
+  spoiler: /\b(spoilers?|explication de la fin|fin expliqu[ée]e|ending explained|twist final|plot twist|cliffhanger|qui est le tueur|r[ée]v[ée]lation finale|ce qui vous attend)\b|\b(meurt|mort|tu[ée]e?|dies|killed|death)\b.{0,50}\b(saison|[ée]pisode|s[ée]rie|season|episode|finale)\b/i,
+  ba: /\b(bande[- ]annonce|teaser|trailer|premi[èe]res? images)/i,
+  bo: /\b(box[- ]office|entr[ée]es|recettes|millions de dollars|record d'audience)/i
+};
+async function buildNews() {
+  let all = [];
+  for (const s of SOURCES) {
+    const xml = await get(s.u); if (!xml) continue;
+    const l = parseRss(xml, s).slice(0, s.gn ? 25 : 18); console.log(`📰 ${s.n}: ${l.length}`); all = all.concat(l);
+  }
+  const seen = new Set(), weekAgo = Date.now() - 6 * 864e5;
+  const norm = t => t.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9 ]/g, ' ').split(/\s+/).filter(w => w.length > 2).slice(0, 7).join(' ');
+  all = all.filter(x => x.ts > weekAgo).sort((a, b) => b.ts - a.ts).filter(x => { const k = norm(x.t); if (!k || seen.has(k)) return false; seen.add(k); return true; }).slice(0, 140);
+  // traduction des articles anglais (titre + résumé), avec mémoire pour ne pas retraduire
+  let cache = {}; try { cache = JSON.parse(await readFile('news.json', 'utf8')).tr || {}; } catch (_) {}
+  const tr = {};
+  for (const x of all) {
+    if (x.l !== 'en') continue;
+    const key = x.u || x.t;
+    if (cache[key]) { Object.assign(x, cache[key]); tr[key] = cache[key]; continue; }
+    const t = await translate(x.t); await sleep(120); const d = x.d ? await translate(x.d) : ''; await sleep(120);
+    x.o = x.t; x.t = t; x.d = d; tr[key] = { t, d, o: x.o };
+  }
+  for (const x of all) {
+    const txt = (x.o || '') + ' ' + x.t + ' ' + x.d, k = [];
+    if (RX.spoiler.test(txt)) k.push('spoiler');
+    if (RX.officiel.test(txt)) k.push('officiel'); else if (RX.rumeur.test(txt)) k.push('rumeur');
+    if (RX.ba.test(txt)) k.push('ba'); if (RX.bo.test(txt)) k.push('bo');
+    x.k = k; delete x.l;
+  }
+  return { updated: new Date().toISOString(), items: all, tr };
+}
+
+/* ======================= TOPS ======================= */
+const tmdbCache = new Map();
+async function findTmdb(title, kind) { // kind : 'movie' | 'tv'
+  const k = kind + ':' + title; if (tmdbCache.has(k)) return tmdbCache.get(k);
+  const q = title.replace(/:\s*(Season|Saison|Limited Series|Partie|Part|Volume)\b.*$/i, '').trim();
+  let d = await tmdb(`/search/${kind}`, '&query=' + encodeURIComponent(q));
+  let r = d && d.results && d.results[0];
+  if (!r) { d = await tmdb('/search/multi', '&query=' + encodeURIComponent(q)); r = d && d.results && d.results.find(x => x.media_type === 'movie' || x.media_type === 'tv'); if (r) kind = r.media_type; }
+  const out = r ? { id: r.id, mt: kind, t: r.title || r.name || title, p: r.poster_path || '', b: r.backdrop_path || '' } : null;
+  tmdbCache.set(k, out); await sleep(60); return out;
+}
+const slim = (r, mt) => ({ id: r.id, mt, t: r.title || r.name, p: r.poster_path || '', b: r.backdrop_path || '' });
+
+async function netflix() {
+  const tsv = await get('https://www.netflix.com/tudum/top10/data/all-weeks-countries.tsv', 'text', 3, 180000);
+  if (!tsv) return null;
+  const rows = [];
+  for (const line of tsv.split('\n')) { if (!line.startsWith('France\t')) continue; const c = line.split('\t'); rows.push({ week: c[2], cat: c[3], rank: +c[4], title: c[5], season: c[6], weeks: +c[7] || 1 }); }
+  const weeks = [...new Set(rows.map(r => r.week))].sort().reverse(); if (!weeks.length) return null;
+  const [w0, w1] = weeks, out = { week: w0, films: [], tv: [] };
+  for (const cat of ['Films', 'TV']) {
+    const cur = rows.filter(r => r.week === w0 && r.cat === cat).sort((a, b) => a.rank - b.rank);
+    const prev = rows.filter(r => r.week === w1 && r.cat === cat);
+    for (const r of cur) {
+      const pr = prev.find(x => x.title === r.title);
+      const m = await findTmdb(r.title, cat === 'TV' ? 'tv' : 'movie');
+      (cat === 'TV' ? out.tv : out.films).push({ r: r.rank, p0: pr ? pr.rank : 0, w: r.weeks, s: r.season !== 'N/A' ? r.season : '', ...(m || { t: r.title }) });
+    }
+  }
+  console.log(`🔴 Netflix France semaine ${w0}: ${out.films.length} films, ${out.tv.length} séries`);
+  return out;
+}
+const PROVIDERS = [{ k: 'prime', n: 'Prime Video', id: 119 }, { k: 'disney', n: 'Disney+', id: 337 }, { k: 'canal', n: 'Canal+', id: 381 }, { k: 'max', n: 'Max', id: 1899 }, { k: 'apple', n: 'Apple TV+', id: 350 }, { k: 'paramount', n: 'Paramount+', id: 531 }];
+async function providers() {
+  const out = {};
+  for (const p of PROVIDERS) {
+    const q = `&watch_region=FR&with_watch_providers=${p.id}&with_watch_monetization_types=flatrate&sort_by=popularity.desc`;
+    const [m, t] = await Promise.all([tmdb('/discover/movie', q + '&vote_count.gte=20'), tmdb('/discover/tv', q + '&vote_count.gte=10')]);
+    out[p.k] = { n: p.n, films: ((m && m.results) || []).slice(0, 10).map(r => slim(r, 'movie')), tv: ((t && t.results) || []).slice(0, 10).map(r => slim(r, 'tv')) };
+    console.log(`📺 ${p.n}: ${out[p.k].films.length}+${out[p.k].tv.length}`);
+  }
+  return out;
+}
+async function boxOffice() {
+  const ids = new Map();
+  for (const pg of [1, 2, 3]) { const d = await tmdb('/movie/now_playing', '&page=' + pg); ((d && d.results) || []).forEach(r => ids.set(r.id, r)); }
+  const det = [];
+  for (const id of ids.keys()) { const d = await tmdb(`/movie/${id}`); if (d && d.revenue > 0) det.push({ ...slim(d, 'movie'), rev: d.revenue }); await sleep(40); }
+  det.sort((a, b) => b.rev - a.rev); console.log(`🎟️ Box-office: ${det.length} films avec recettes`); return det.slice(0, 10);
+}
+async function stremio() {
+  const out = {};
+  for (const [k, type, mt] of [['films', 'movie', 'movie'], ['tv', 'series', 'tv']]) {
+    const d = await get(`https://v3-cinemeta.strem.io/catalog/${type}/top.json`, 'json');
+    const metas = ((d && d.metas) || []).slice(0, 10), l = [];
+    for (const m of metas) {
+      const f = m.imdb_id || m.id; let r = null;
+      if (f && /^tt\d+/.test(f)) { const x = await tmdb(`/find/${f}`, '&external_source=imdb_id'); r = x && (x[mt + '_results'] || [])[0]; await sleep(40); }
+      l.push(r ? slim(r, mt) : { t: m.name, p: '', id: 0, mt });
+    }
+    out[k] = l;
+  }
+  console.log(`🟣 Stremio: ${out.films.length}+${out.tv.length}`); return out;
+}
+// évolution des places (pour tout sauf Netflix, qui a ses propres données officielles)
+function withHistory(tops, hist) {
+  const lists = {};
+  for (const [pk, v] of Object.entries(tops.prov || {})) { lists['prov.' + pk + '.films'] = v.films; lists['prov.' + pk + '.tv'] = v.tv; }
+  if (tops.stremio) { lists['stremio.films'] = tops.stremio.films; lists['stremio.tv'] = tops.stremio.tv; }
+  if (tops.bo) lists['bo'] = tops.bo;
+  for (const [key, list] of Object.entries(lists)) {
+    const h = hist[key] = hist[key] || {};
+    h[today] = list.map(x => x.mt + '_' + x.id);
+    const dates = Object.keys(h).sort(); const prevDate = dates.filter(d => d < today).pop();
+    list.forEach((x, i) => {
+      const id = x.mt + '_' + x.id; x.r = i + 1;
+      x.p0 = prevDate ? (h[prevDate].indexOf(id) + 1) : 0;
+      let n = 0; for (let j = dates.length - 1; j >= 0 && h[dates[j]].includes(id); j--) n++; x.dd = n; // jours d'affilée dans le top
+    });
+    for (const d of Object.keys(h)) if (d < new Date(Date.now() - 60 * 864e5).toISOString().slice(0, 10)) delete h[d];
+  }
+  return hist;
+}
+
+/* ======================= MAIN ======================= */
+const only = process.argv[2];
+if (!only || only === 'news') {
+  const news = await buildNews();
+  await writeFile('news.json', JSON.stringify(news));
+  console.log(`✅ news.json : ${news.items.length} articles`);
+}
+if (!only || only === 'tops') {
+  let hist = {}; try { hist = JSON.parse(await readFile('tops-history.json', 'utf8')); } catch (_) {}
+  const tops = { updated: new Date().toISOString(), netflix: await netflix(), prov: await providers(), bo: await boxOffice(), stremio: await stremio() };
+  if (!tops.netflix) { try { tops.netflix = JSON.parse(await readFile('tops.json', 'utf8')).netflix || null; } catch (_) {} }
+  hist = withHistory(tops, hist);
+  await writeFile('tops.json', JSON.stringify(tops));
+  await writeFile('tops-history.json', JSON.stringify(hist));
+  console.log('✅ tops.json');
+}
