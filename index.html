@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
+<link rel="preconnect" href="https://image.tmdb.org" crossorigin><link rel="preconnect" href="https://api.themoviedb.org" crossorigin><link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin><link rel="dns-prefetch" href="https://image.tmdb.org">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="format-detection" content="telephone=no">
@@ -26255,7 +26256,7 @@ if(LOOK38)(function(){
 
   /* ================= 4) RANGÉES QUI DÉFILENT : effet « coverflow » ================= */
   +'.cf38{perspective:1100px;perspective-origin:50% 45%}'
-  +'.cf38>*{rotate:0 1 0 var(--cfr,0deg);translate:0 0 var(--cfz,0px);transition:rotate .25s ease-out,translate .25s ease-out}'
+  +'.cf38>*{rotate:0 1 0 var(--cfr,0deg);translate:0 0 var(--cfz,0px)}.cf38.cfr38>*{transition:rotate .25s ease-out,translate .25s ease-out}'
 
   /* ================= 5) ARRIVÉE DES ÉLÉMENTS : un effet par page ================= */
   +'.w38{opacity:0!important}'
@@ -26462,11 +26463,11 @@ if(LOOK38)(function(){
 
   /* ---------------- 4) rangées en coverflow ---------------- */
   var CF='.fy-track,.fys-row,.ba14-row,.fr12-row';
-  function flowUpd(tr){tr._p38=0;var R=tr.getBoundingClientRect();if(!R.width)return;var cx=R.left+R.width/2,half=R.width/2,cs=tr.children;
+  function flowUpd(tr){tr._p38=0;if(!tr._r38){tr._r38=1;requestAnimationFrame(function(){requestAnimationFrame(function(){tr.classList.add('cfr38');});});}var R=tr.getBoundingClientRect();if(!R.width)return;var cx=R.left+R.width/2,half=R.width/2,cs=tr.children;
     for(var i=0;i<cs.length;i++){var c=cs[i],r=c.getBoundingClientRect();if(r.right<R.left-120||r.left>R.right+120)continue;var k=Math.max(-1,Math.min(1,((r.left+r.width/2)-cx)/half));
       c.style.setProperty('--cfr',(k*-16).toFixed(2)+'deg');c.style.setProperty('--cfz',(-Math.abs(k)*46).toFixed(1)+'px');}}
   function flow(root){if(RM||LOW||!fxOn('flow'))return;$$(CF,root).forEach(function(tr){if(tr._cf38){flowUpd(tr);return;}tr._cf38=1;tr.classList.add('cf38');
-    tr.addEventListener('scroll',function(){if(!tr._p38){tr._p38=1;requestAnimationFrame(function(){flowUpd(tr);});}},{passive:true});flowUpd(tr);});}
+    tr.addEventListener('scroll',function(){if(!tr._p38){tr._p38=1;requestAnimationFrame(function(){flowUpd(tr);});}},{passive:true});try{new ResizeObserver(function(){flowUpd(tr);}).observe(tr);}catch(_){}flowUpd(tr);});}
   window.addEventListener('resize',function(){$$('.cf38').forEach(flowUpd);},{passive:true});
 
   /* ---------------- 5) cartes 3D qui suivent la souris ---------------- */
@@ -26545,13 +26546,13 @@ if(LOOK38)(function(){
     document.body.appendChild(o);
     var cv=o.querySelector('canvas'),W=innerWidth,H=innerHeight,MOB=W<760;
     var R;try{R=new T.WebGLRenderer({canvas:cv,antialias:!MOB,alpha:true,powerPreference:'high-performance'});}catch(e){o.remove();return fallback();}
-    R.setPixelRatio(Math.min(MOB?1.5:2,window.devicePixelRatio||1));R.setSize(W,H,false);R.setClearColor(0x000000,0);
+    R.setPixelRatio(Math.min(MOB?1.25:1.5,window.devicePixelRatio||1));R.setSize(W,H,false);R.setClearColor(0x000000,0);
     var S=new T.Scene();S.fog=new T.FogExp2(0x07040d,.028);
     var C=new T.PerspectiveCamera(55,W/H,.1,240);
     var disp=[];function keep(x){disp.push(x);return x;}
 
     /* --- affiches --- */
-    var N=MOB?24:36,PG_=keep(new T.PlaneGeometry(1.2,1.8)),P=[],loader=new T.TextureLoader();loader.setCrossOrigin('anonymous');
+    var N=MOB?18:24,PG_=keep(new T.PlaneGeometry(1.2,1.8)),P=[],loader=new T.TextureLoader();loader.setCrossOrigin('anonymous');
     var tints=[0xff4d6d,0xffd23f,0x8b5cf6,0x3a86ff,0x06d6a0,0xff9f1c];
     for(var i=0;i<N;i++){
       var m=keep(new T.MeshBasicMaterial({color:tints[i%tints.length],side:T.DoubleSide,transparent:true,opacity:0,fog:true}));
@@ -26563,14 +26564,14 @@ if(LOOK38)(function(){
     var perTier=Math.ceil(N/3);
 
     /* --- poussière dorée (tunnel) --- */
-    var DN=MOB?700:1500,dg=keep(new T.BufferGeometry()),dp=new Float32Array(DN*3);
+    var DN=MOB?400:800,dg=keep(new T.BufferGeometry()),dp=new Float32Array(DN*3);
     for(var d=0;d<DN;d++){var a=Math.random()*6.283,rr=.6+Math.random()*7;dp[d*3]=Math.cos(a)*rr;dp[d*3+1]=Math.sin(a)*rr;dp[d*3+2]=14-Math.random()*(N*1.6+30);}
     dg.setAttribute('position',new T.BufferAttribute(dp,3));
     var dot=keep(canvasTex(T,64,64,function(c,w){var g=c.createRadialGradient(w/2,w/2,0,w/2,w/2,w/2);g.addColorStop(0,'rgba(255,255,255,1)');g.addColorStop(.35,'rgba(255,255,255,.5)');g.addColorStop(1,'rgba(255,255,255,0)');c.fillStyle=g;c.fillRect(0,0,w,w);}));
     var dust=new T.Points(dg,keep(new T.PointsMaterial({map:dot,color:0xffd27a,size:.18,transparent:true,opacity:.85,blending:T.AdditiveBlending,depthWrite:false})));S.add(dust);
 
     /* --- logo en relief (couches empilées) + reflet qui balaie --- */
-    var LW=2048,LH=1024;
+    var LW=1024,LH=512;
     var front=keep(canvasTex(T,LW,LH,function(c,w,h){logoCanvas(c,w,h,false);}));
     var side=keep(canvasTex(T,LW,LH,function(c,w,h){logoCanvas(c,w,h,true);}));
     var L=new T.Group(),LGeo=keep(new T.PlaneGeometry(8,4)),layers=MOB?10:16;
@@ -26872,7 +26873,7 @@ if(LOOK38)(function(){
   /* V39 : le bouton ✨ est retiré (les effets sont toujours au maximum) */
 
   /* si aucun générique ne se lance (déjà vu cette session / désactivé), on joue quand même l'entrée */
-  setTimeout(function(){if(document.getElementById('cine-intro')||_ciBusy)return;
+  if(false)setTimeout(function(){if(document.getElementById('cine-intro')||_ciBusy)return;
     (function wait(k){if(document.getElementById('acl-ov')||document.getElementById('maint-ov')){if(k<600)setTimeout(function(){wait(k+1);},400);return;}
       if(document.getElementById('cine-intro')||_ciBusy)return;enterApp();})(0);},1400);
 })();
