@@ -2143,7 +2143,7 @@ body.dark .subr-details summary{color:#C9A8FF;}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 </head>
 <body>
-<script>/* V39 : écran noir posé tout de suite si le générique va se lancer (on ne voit jamais l'appli « clignoter » avant lui) */(function(){try{if(sessionStorage.getItem('cineIntroSess')==='1')return;var u=localStorage.getItem('cineAuthUid'),ks=['u_'+(u||'none')+'__cineIntro','cineIntro'],p=null;for(var i=0;i<ks.length&&!p;i++){var v=localStorage.getItem(ks[i]);if(v)p=JSON.parse(v);}p=p||{};var t=new Date(),d=t.getFullYear()+'-'+String(t.getMonth()+1).padStart(2,'0')+'-'+String(t.getDate()).padStart(2,'0'),m=p.mode||'day';if(m==='off'||(m==='day'&&p.last===d))return;document.write('<div id="pre39" style="position:fixed;inset:0;z-index:10049;background:#06030b"></div>');setTimeout(function(){var e=document.getElementById('pre39');if(e)e.remove();},6000);}catch(e){}})();</script>
+<script>/* V39 : écran noir posé tout de suite si le générique va se lancer (on ne voit jamais l'appli « clignoter » avant lui) */(function(){try{if(sessionStorage.getItem('cineIntroSess')==='1')return;var u=localStorage.getItem('cineAuthUid'),ks=['u_'+(u||'none')+'__cineIntro','cineIntro'],p=null;for(var i=0;i<ks.length&&!p;i++){var v=localStorage.getItem(ks[i]);if(v)p=JSON.parse(v);}p=p||{};var t=new Date(),d=t.getFullYear()+'-'+String(t.getMonth()+1).padStart(2,'0')+'-'+String(t.getDate()).padStart(2,'0'),m=p.mode||'day';if(m==='off'||(m==='day'&&p.last===d))return;document.write('<div id="pre39" style="position:fixed;inset:0;z-index:2147482999;background:#06030b"></div>');setTimeout(function(){var e=document.getElementById('pre39');if(e)e.remove();},6000);}catch(e){}})();</script>
 <div id="cine-particles" aria-hidden="true"></div>
 <header>
   <div class="brand">🎬 Mon Ciné Tracker <button class="hdr-avatar" id="hdr-avatar" title="Mon Pass">🙂</button></div>
@@ -26311,7 +26311,7 @@ if(LOOK38)(function(){
   +A+'.acl-ov .ci-cols{transform:perspective(1000px) rotateX(16deg) rotateZ(-5deg) scale(1.28);transform-origin:50% 40%}'
 
   /* ================= 8) LE GÉNÉRIQUE 3D ================= */
-  +'.i38{position:fixed;inset:0;z-index:10050;background:#06030b;overflow:hidden;font-family:Fredoka,Inter,sans-serif;color:#fff;cursor:pointer;transition:opacity .65s ease}'
+  +'.i38{position:fixed;inset:0;z-index:2147483000;background:#06030b;overflow:hidden;font-family:Fredoka,Inter,sans-serif;color:#fff;cursor:pointer;transition:opacity .65s ease}'
   +'.i38 canvas{position:absolute;inset:0;width:100%;height:100%;display:block}'
   +'.i38-bg{position:absolute;inset:0;background:radial-gradient(70% 60% at 50% 50%,var(--c1,rgba(225,29,46,.45)),var(--c2,rgba(40,0,12,.9)) 70%,#06030b);opacity:0;transition:opacity 1.2s}'
   +'.i38.c38 .i38-bg{opacity:.85}'
@@ -26564,6 +26564,7 @@ if(LOOK38)(function(){
       var m=keep(new T.MeshBasicMaterial({color:tints[i%tints.length],side:T.DoubleSide,transparent:true,opacity:0,fog:true}));
       var me=new T.Mesh(PG_,m);me.userData={tier:i%3,j:Math.floor(i/3),op:0};S.add(me);P.push(me);
       /* l'affiche est déjà dans le cache du navigateur sans autorisation CORS → on la retélécharge en contournant le cache */
+      if(posters.length&&typeof posters[0]==='object'){var pim=posters[i%posters.length];if(pim){var tx0=new T.Texture(pim);tx0.needsUpdate=true;keep(tx0);m.map=tx0;m.color.setHex(0xffffff);}continue;}
       (function(mat,url){if(!url)return;fetch(url,{mode:'cors',cache:'no-store'}).then(function(r){if(!r.ok)throw 0;return r.blob();}).then(function(bl){if(ended)return;var ou=URL.createObjectURL(bl);
         loader.load(ou,function(tx){URL.revokeObjectURL(ou);if(ended){tx.dispose();return;}keep(tx);mat.map=tx;mat.color.setHex(0xffffff);mat.needsUpdate=true;},undefined,function(){URL.revokeObjectURL(ou);});}).catch(function(){});})(m,posters[i%Math.max(1,posters.length)]);
     }
@@ -26689,10 +26690,17 @@ if(LOOK38)(function(){
     var wait=document.createElement('div');wait.className='i38 ld38';wait.style.cursor='default';wait.innerHTML='<div class="ld38-c"><i class="ld38-sw"></i><i class="ld38-x"></i><b>3</b></div>';document.body.appendChild(wait);
     (function(){var k=3,b=wait.querySelector('b');var iv=setInterval(function(){if(!document.body.contains(wait)){clearInterval(iv);return;}k=k>1?k-1:3;b.textContent=k;b.style.animation='none';void b.offsetWidth;b.style.animation='';},520);})();
     var fallback=function(){wait.remove();_ciBusy=false;var od=opt.done;prevIntro(Object.assign({},opt,{done:function(){enterApp();if(od)od();}}));};
-    var timer=new Promise(function(_,rej){setTimeout(rej,2500);});
+    var timer=new Promise(function(_,rej){setTimeout(rej,3200);});
     var fontP=(document.fonts&&document.fonts.load)?document.fonts.load('700 120px Fredoka').catch(function(){}):Promise.resolve();
-    Promise.race([Promise.all([loadThree(),ciPosters().catch(function(){return [];}),fontP]),timer]).then(function(r){
-      wait.remove();try{intro3D(opt,r[0],(r[1]||[]).map(function(u){return String(u).replace('/w185/','/w342/');}),fallback);}catch(e){console.warn('intro38',e);var i3=document.getElementById('cine-intro');if(i3)i3.remove();fallback();}
+    var N0=innerWidth<760?18:24;
+    /* téléchargées sans le cache « opaque » du navigateur (sinon la 3D ne peut pas les lire) ; le service worker les garde ensuite → instantané les fois suivantes */
+    function pre(u){u=String(u).replace(/\/(w\d+|original)\//,'/w185/');return fetch(u,{mode:'cors',cache:'no-store'}).then(function(r){if(!r.ok)throw 0;return r.blob();}).then(function(b){var im=new Image(),ou=URL.createObjectURL(b);im.src=ou;return (im.decode?im.decode():Promise.resolve()).then(function(){return im;});}).catch(function(){return null;});}
+    var postersP=ciPosters().catch(function(){return [];}).then(function(L){L=(L||[]).slice(0,N0);var got=[];
+      var all=Promise.all(L.map(function(u){return pre(u).then(function(im){if(im)got.push(im);});})).then(function(){return got;});
+      /* au plus 2,2 s d'attente : on part avec les affiches déjà prêtes (elles sont réutilisées pour remplir toutes les cases) */
+      return Promise.race([all,new Promise(function(r){setTimeout(function(){r(got.slice());},2200);})]);});
+    Promise.race([Promise.all([loadThree(),postersP,fontP]),timer]).then(function(r){
+      wait.remove();try{intro3D(opt,r[0],r[1]||[],fallback);}catch(e){console.warn('intro38',e);var i3=document.getElementById('cine-intro');if(i3)i3.remove();fallback();}
     },function(){fallback();});
   };
   window.cineIntroPlay=cineIntroPlay;
@@ -27534,6 +27542,115 @@ if(LOOK38)(function(){
   var st=document.createElement('style');st.id='v42-css';
   st.textContent='button,a,[role=button],.nav-btn,.movie-card,.ep-check,.ep-row,[data-ec]{touch-action:manipulation;-webkit-tap-highlight-color:transparent}';
   document.head.appendChild(st);
+})();
+
+
+/* ====== V43 — défilement fluide + persos fidèles à la série (les vraies photos des acteurs en costume, façon autocollants de collection) ====== */
+(function(){
+  var de=document.documentElement;de.classList.add('look43');
+  function $$(s,r){return [].slice.call((r||document).querySelectorAll(s));}
+  var RM=false;try{RM=matchMedia('(prefers-reduced-motion:reduce)').matches;}catch(_){}
+
+  /* ================= 1) DÉFILEMENT FLUIDE ================= */
+  var C=''
+  /* les flous d'arrière-plan sont recalculés à chaque image quand on fait défiler : on les remplace par des fonds pleins */
+  +'html.look43 header.scrolled,html.look43 header{-webkit-backdrop-filter:none!important;backdrop-filter:none!important}'
+  +'html.look43 body.dark header.scrolled{background:rgba(12,10,19,.97)!important}'
+  +'html.look43 .trg-play,html.look43 .v29-mc u,html.look43 .cur-sticky,html.look43 .ss-p,html.look43 .sp-badge,html.look43 .m33-hero button,html.look43 .dt39,html.look43 .ntf,html.look43 .sc-sound-btn,html.look43 .sc-fiche,html.look43 .modal-sound-btn,html.look43 .v29-sbn.v31-sbn button{-webkit-backdrop-filter:none!important;backdrop-filter:none!important}'
+  +'html.look43 .trg-play,html.look43 .m33-hero button,html.look43 .dt39{background:rgba(0,0,0,.6)!important}'
+  /* ombre des emotes : seulement en grand (sinon 342 ombres redessinées en défilant) */
+  +'html.look43 .emo-pick .emo-w svg,html.look43 .pt-mascot .emo-w svg,html.look43 .emo-grid .emo-w svg{filter:none!important}'
+  +'html.look43 .emo-pick.lock .emo-w svg{filter:brightness(0) opacity(.32)!important}'
+  /* longues listes du fil d'actus : les cartes hors écran ne sont pas dessinées */
+  +'html.look43 #feed-body .f2-it,html.look43 .mg41-grid .nw41{content-visibility:auto;contain-intrinsic-size:auto 340px}'
+  /* pendant le défilement, les animations purement décoratives se mettent en pause (elles repartent dès qu'on s'arrête) */
+  +'html.scr43 .emo-c,html.scr43 .emo-float,html.scr43 .emo-tear,html.scr43 #bg39 i,html.scr43 .pr38-pt b,html.scr43 .pr38-sh,html.scr43 .cal-day.today,html.scr43 .gtr-rank::after,html.scr43 .pass-xp-fill::after,html.scr43 .pt-card.ready,html.scr43 .sh-chest,html.scr43 .sh-chest .sh-prev,html.scr43 .sh-it.r-legend::before,html.scr43 .pass-lvl,html.scr43 .pt-num.cur,html.scr43 .pt-claim::after,html.scr43 .pass-profile::after,html.scr43 .br39 i,html.scr43 .br39 .sh::after,html.scr43 #cine-particles *,html.scr43 .v31-sbn img.v31-sbn-p{animation-play-state:paused!important}'
+  /* les cartes ne réagissent pas au survol pendant qu'on fait défiler (pas de calculs inutiles) */
+  +'html.scr43 .movie-card,html.scr43 .fy-card,html.scr43 .reco-card,html.scr43 .tp41-it,html.scr43 .nw41{pointer-events:none}'
+
+  /* ================= 2) LES PERSOS DE LA SÉRIE ================= */
+  +'.pz43w{position:fixed;left:0;right:0;bottom:calc(var(--pzb,0px) + 6px);height:0;z-index:9500;pointer-events:none}'
+  +'.pz43{position:absolute;bottom:0;left:0;width:118px;pointer-events:auto;cursor:pointer;will-change:transform;transform:translate3d(var(--x),0,0)}'
+  +'.pz43-i{position:relative;transform-origin:50% 100%;animation:pzi43 .62s ease-in-out infinite}'
+  +'.pz43.idle .pz43-i{animation:pzb43 2.6s ease-in-out infinite}'
+  +'.pz43.wave .pz43-i{animation:pzw43 .9s ease-in-out 2}'
+  +'@keyframes pzi43{0%,100%{transform:translateY(0) rotate(-3deg)}50%{transform:translateY(-16px) rotate(3deg)}}'
+  +'@keyframes pzb43{0%,100%{transform:translateY(0) rotate(-1.5deg) scale(1)}50%{transform:translateY(-4px) rotate(1.5deg) scale(1.02,.99)}}'
+  +'@keyframes pzw43{25%{transform:rotate(-9deg) scale(1.06)}75%{transform:rotate(9deg) scale(1.06)}}'
+  +'.pz43-c{width:118px;height:156px;border-radius:16px;background:#222 center 18%/cover no-repeat;border:5px solid #fff;box-shadow:0 0 0 2.5px #1b1330,0 14px 22px -8px rgba(0,0,0,.6),inset 0 -40px 40px -20px rgba(0,0,0,.45)}'
+  +'.pz43-c::after{content:"";position:absolute;inset:5px;border-radius:12px;background:linear-gradient(130deg,rgba(255,255,255,.35),transparent 38%);pointer-events:none}'
+  +'.pz43 b{position:absolute;left:50%;bottom:-10px;transform:translateX(-50%) rotate(-3deg);white-space:nowrap;font:700 .8rem/1 Fredoka,Inter,sans-serif;color:#fff;padding:5px 11px;border-radius:9px;background:linear-gradient(135deg,var(--p1,#ff4d8d),var(--p2,#8b5cf6));border:2px solid #1b1330;box-shadow:0 3px 0 #1b1330;max-width:150px;overflow:hidden;text-overflow:ellipsis}'
+  +'.pz43-sh{position:absolute;left:14px;right:14px;bottom:-14px;height:12px;border-radius:50%;background:radial-gradient(rgba(0,0,0,.45),transparent 70%);animation:pzs43 .62s ease-in-out infinite}.pz43.idle .pz43-sh{animation:none}'
+  +'@keyframes pzs43{50%{transform:scale(.7);opacity:.6}}'
+  +'.pz43-bub{position:absolute;bottom:178px;left:50%;transform:translateX(-50%) scale(.6);opacity:0;transition:transform .35s cubic-bezier(.2,1.5,.4,1),opacity .2s;max-width:220px;width:max-content;font:700 .82rem/1.3 Fredoka,Inter,sans-serif;color:#1b1330;background:linear-gradient(160deg,#fff,#fff7e6);border:2.5px solid #1b1330;border-radius:16px;padding:8px 12px;box-shadow:0 5px 0 #1b1330,0 14px 24px -10px var(--p1,#ff4d8d);text-align:center}'
+  +'.pz43-bub::after{content:"";position:absolute;left:50%;bottom:-11px;margin-left:-8px;border:9px solid transparent;border-top-color:#1b1330;border-bottom:0}'
+  +'.pz43-bub.on{opacity:1;transform:translateX(-50%) scale(1)}'
+  +'@media(max-width:700px){.pz43,.pz43-c{width:92px}.pz43-c{height:122px}.pz43-bub{bottom:142px;max-width:170px;font-size:.74rem}}';
+  var st=document.createElement('style');st.id='v43-css';st.textContent=C;document.head.appendChild(st);
+
+  var sT=0;window.addEventListener('scroll',function(){if(!sT)de.classList.add('scr43');clearTimeout(sT);sT=setTimeout(function(){sT=0;de.classList.remove('scr43');},160);},{passive:true});
+
+  /* ---------- les persos : photos de l'acteur DANS la série (images du tournage, comme sur le Mur), prénom du personnage ---------- */
+  var PH={};
+  function photoOf(a,tv){
+    var k=a.id+'_'+tv;if(PH[k])return Promise.resolve(PH[k]);
+    return ivJson('https://api.themoviedb.org/3/person/'+a.id+'/tagged_images?api_key='+TMDB).then(function(d){
+      var l=((d&&d.results)||[]).filter(function(x){return x.file_path&&x.media&&x.media.id===tv&&(x.aspect_ratio||1)<1.05;});
+      if(l.length){var x=l[Math.floor(Math.random()*Math.min(4,l.length))];return 'https://image.tmdb.org/t/p/w342'+x.file_path;}
+      return a.photo||'';}).catch(function(){return a.photo||'';}).then(function(u){PH[k]=u;return u;});
+  }
+  function first(s){s=String(s||'').split(/[\/,(]/)[0].trim();var w=s.split(/\s+/);return (w[0]&&/^(Dr|Mr|Mme|Mrs|Ms|Sir|Lady|Lord|Capitaine|Captain|Agent|Inspecteur|Inspectrice|Detective)\.?$/i.test(w[0])&&w[1])?w[0]+' '+w[1]:(w[0]||s);}
+  function lines(r,c,o){var L=r&&(r.label||r.name)||'la série',me=c.nm,ot=o?o.nm:'';
+    return [['Salut ! C\'est '+me+' 👋','Coucou, moi c\'est '+me+' !','Psst… '+me+' est là 👀'],
+      ['Tu as vu le dernier épisode de '+L+' ?','Pas de spoiler sur '+L+', hein ! 🤫','On se fait un épisode de '+L+' ce soir ? 🍿','Tu en es où dans '+L+' ?'],
+      [ot?ot+', tu viens ? On y va !':'Allez, à plus tard !',ot?'Attends-moi '+ot+' ! 🏃':'Je file, bon visionnage !','À tout à l\'heure ! ✨']];}
+  function pick(a){return a[Math.floor(Math.random()*a.length)];}
+  var busy=false;
+  function scene(force){
+    if(busy)return Promise.resolve(false);busy=true;
+    var done=function(ok){busy=false;try{MS31.busy=0;if(ok)localStorage.setItem('cineMascotLast31',String(Date.now()));MS31.next=Date.now()+MS31.gap+Math.floor(Math.random()*15000)+(ok?0:360000);}catch(_){}return ok;};
+    return premiumResolve().catch(function(){return null;}).then(function(r){
+      if(!r||!r.cast||!r.cast.length||!r.tv)return done(false);
+      var un=false;try{un=!!(premiumUnlocked(r)||v29IsAdmin());}catch(_){}if(!un&&!force)return done(false);
+      var list=r.cast.filter(function(a){return a&&a.id;}).slice(0,10).sort(function(){return Math.random()-.5;}).slice(0,innerWidth<700?2:3);
+      return Promise.all(list.map(function(a){return photoOf(a,r.tv);})).then(function(ph){
+        var chars=list.map(function(a,i){return {a:a,u:ph[i],nm:first(a.role)||first(a.name)};}).filter(function(c){return c.u;});
+        if(!chars.length)return done(false);
+        /* précharge les photos : rien n'apparaît vide */
+        return Promise.all(chars.map(function(c){return new Promise(function(res){var im=new Image();im.onload=im.onerror=function(){res();};im.src=c.u;});})).then(function(){return play(r,chars,done);});
+      });
+    }).catch(function(){return done(false);});
+  }
+  function play(r,chars,done){
+    var W=innerWidth,w=document.createElement('div');w.className='pz43w';
+    try{var tb=document.getElementById('m-tabbar')||document.getElementById('v31-mbar');if(tb){var br=tb.getBoundingClientRect();if(br.height&&br.top>innerHeight*.6)w.style.setProperty('--pzb',(innerHeight-br.top)+'px');}}catch(_){}
+    document.body.appendChild(w);
+    var cw=W<700?92:118,gap=Math.min(170,(W-40)/chars.length),x0=Math.max(20,(W-gap*chars.length)/2+(gap-cw)/2);
+    var els=chars.map(function(c,i){var e=document.createElement('div');e.className='pz43';e.style.setProperty('--x',(-cw-40)+'px');
+      e.innerHTML='<div class="pz43-bub"></div><div class="pz43-i"><div class="pz43-c" style="background-image:url(\''+c.u.replace(/'/g,'%27')+'\')"></div><b>'+esc(c.nm)+'</b></div><i class="pz43-sh"></i>';
+      e.title=c.a.name+' — '+(c.a.role||'');w.appendChild(e);c.el=e;c.tx=x0+i*gap;return e;});
+    var timers=[],ended=false;function at(ms,f){timers.push(setTimeout(f,ms));}
+    function walk(c,to,ms){c.el.classList.remove('idle');c.el.style.transition='transform '+ms+'ms linear';c.el.style.setProperty('--x',to+'px');at(ms,function(){if(!ended)c.el.classList.add('idle');});}
+    function say(c,t,ms){var b=c.el.querySelector('.pz43-bub');b.textContent=t;b.classList.add('on');try{sfx.pop();}catch(_){}at(ms||2600,function(){b.classList.remove('on');});}
+    function end(){if(ended)return;ended=true;timers.forEach(clearTimeout);chars.forEach(function(c){walk(c,W+40,900);});setTimeout(function(){w.remove();},1000);done(true);}
+    /* 1) ils arrivent l'un après l'autre en sautillant */
+    chars.forEach(function(c,i){at(i*450,function(){walk(c,c.tx,1500+i*120);});});
+    var T=1500+chars.length*450;
+    /* 2) chacun dit une phrase avec son prénom de personnage, petit salut */
+    chars.forEach(function(c,i){var L=lines(r,c,chars[(i+1)%chars.length]!==c?chars[(i+1)%chars.length]:null);
+      at(T+i*1900,function(){c.el.classList.add('wave');say(c,pick(L[0]));at(900,function(){c.el.classList.remove('wave');});});
+      at(T+chars.length*1900+i*1700,function(){say(c,pick(L[1]),2400);});});
+    var T2=T+chars.length*3600+600;
+    /* 3) au revoir, et ils repartent */
+    at(T2,function(){var c=chars[chars.length-1];say(c,pick(lines(r,c,chars[0]!==c?chars[0]:null)[2]),1600);});
+    at(T2+1700,end);
+    /* toucher un perso : il salue ; double-toucher : ils s'en vont */
+    els.forEach(function(e,i){e.addEventListener('click',function(){e.classList.remove('wave');void e.offsetWidth;e.classList.add('wave');say(chars[i],pick(lines(r,chars[i],null)[0]),1600);});e.addEventListener('dblclick',end);});
+    return true;
+  }
+  /* remplace les persos 3D (KayKit génériques) partout où l'appli les appelle */
+  try{ms31Run=function(kind,force){if(RM)return Promise.resolve(false);try{MS31.busy=1;}catch(_){}return scene(force);};}catch(_){}
+  window.CinePersos43=function(){return scene(true);};
 })();
 
 /* ==V29-END== */
