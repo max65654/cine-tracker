@@ -28169,6 +28169,100 @@ if(LOOK38)(function(){
   var st=document.createElement('style');st.id='v48-css';st.textContent=css;document.head.appendChild(st);
 })();
 
+
+/* ====== V49 — SALON redessiné, ACTIVITÉ des potes jolie et repliable, JEUX façon arcade (boutons en relief, réponses A/B/C/D, bonne / mauvaise réponse animées) ====== */
+(function(){
+  var de=document.documentElement;de.classList.add('look49');
+  function $$(s,r){return [].slice.call((r||document).querySelectorAll(s));}
+  var P='html.look49 ';
+  var OUT='-webkit-text-stroke:1px rgba(20,8,40,.85);paint-order:stroke fill;text-shadow:0 2px 0 rgba(20,8,40,.8)';
+  var B3=function(c1,c2,dk){return 'background:linear-gradient(180deg,'+c1+','+c2+')!important;color:#fff!important;border:2px solid rgba(20,8,40,.9)!important;border-radius:14px!important;box-shadow:inset 0 2px 0 rgba(255,255,255,.4),inset 0 -4px 0 rgba(0,0,0,.18),0 5px 0 '+dk+',0 10px 18px -8px rgba(0,0,0,.6)!important;font-family:Fredoka,sans-serif!important;font-weight:700!important;'+OUT+';transition:transform .08s,box-shadow .08s!important;cursor:pointer';};
+
+  /* ---------- activité des potes : repliable (mémorisé) ---------- */
+  function actCol(){try{return localStorage.getItem('cineActCol49')==='1';}catch(_){return false;}}
+  function actDeco(){var el=document.getElementById('home-activity');if(!el||el.style.display==='none')return;var h=el.querySelector('.act-h');if(!h||h.querySelector('.ac49'))return;
+    var n=el.querySelectorAll('.act-row').length;h.innerHTML='<span>👀 Activité de tes potes <small>'+n+'</small></span><button type="button" class="ac49" aria-label="Replier">▾</button>';
+    el.classList.toggle('col49',actCol());
+    h.onclick=function(){var c=!el.classList.contains('col49');el.classList.toggle('col49',c);try{localStorage.setItem('cineActCol49',c?'1':'0');}catch(_){}};
+    /* une initiale colorée par pote */
+    $$('.act-row',el).forEach(function(r){var b=r.querySelector('.act-m b');if(!b||r.querySelector('.av49'))return;var nm=b.textContent||'?',hh=0;for(var i=0;i<nm.length;i++)hh=(hh*31+nm.charCodeAt(i))%360;
+      r.insertAdjacentHTML('afterbegin','<span class="av49" style="--h:'+hh+'">'+esc(nm.charAt(0).toUpperCase())+'</span>');});
+  }
+  try{var oRA=renderActivity;renderActivity=function(){var r=oRA.apply(this,arguments);try{actDeco();}catch(_){}return r;};}catch(_){}
+  setInterval(function(){if(!document.hidden)actDeco();},1500);
+
+  var C=''
+  /* ================= ACTIVITÉ DES POTES ================= */
+  +P+'.home-activity{background:linear-gradient(160deg,rgba(40,28,68,.92),rgba(20,14,34,.92))!important;border-radius:20px!important;padding:12px 14px!important;box-shadow:0 0 0 1px rgba(255,255,255,.07),0 18px 36px -22px #000!important;color:#f4effc}'
+  +P+'.act-h{display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none;margin-bottom:6px!important}'
+  +P+'.act-h small{font:700 .7rem Inter;background:var(--p1,#ff4d8d);color:#fff;border-radius:99px;padding:1px 7px;margin-left:6px}'
+  +'.ac49{border:0;background:rgba(255,255,255,.1);color:#fff;border-radius:99px;width:28px;height:28px;cursor:pointer;transition:transform .3s cubic-bezier(.3,1.4,.5,1)}'
+  +P+'.home-activity.col49 .ac49{transform:rotate(-90deg)}'
+  +P+'.home-activity .act-row{transition:max-height .35s ease,opacity .25s,padding .3s;max-height:90px;overflow:hidden;border-top:1px solid rgba(255,255,255,.06)!important;border-radius:12px;padding:8px 6px!important}'
+  +P+'.home-activity .act-row:hover{background:rgba(255,255,255,.05)}'
+  +P+'.home-activity.col49 .act-row{max-height:0;opacity:0;padding-top:0!important;padding-bottom:0!important;border-top-color:transparent!important}'
+  +'.av49{flex:none;width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font:700 .85rem Fredoka,sans-serif;color:#fff;background:linear-gradient(135deg,hsl(var(--h),75%,58%),hsl(calc(var(--h) + 40),70%,45%));box-shadow:0 0 0 2px rgba(255,255,255,.15)}'
+  +P+'.home-activity .act-row img{border-radius:8px!important;box-shadow:0 6px 12px -6px #000}'
+  +P+'.home-activity .act-r{background:rgba(255,210,63,.18);color:#ffd23f;border-radius:99px;padding:1px 7px;font-weight:700}'
+  /* ================= LE SALON ================= */
+  +P+'#chat-fab{background:radial-gradient(circle at 30% 25%,color-mix(in srgb,var(--p1,#ff4d8d) 80%,#fff),var(--p2,#8b5cf6))!important;border:2.5px solid rgba(20,8,40,.9)!important;box-shadow:inset 0 2px 0 rgba(255,255,255,.4),0 5px 0 rgba(20,8,40,.85),0 14px 26px -8px rgba(0,0,0,.6)!important;transition:transform .15s cubic-bezier(.3,1.5,.5,1)!important}'
+  +P+'#chat-fab:hover{transform:translateY(-3px) scale(1.06)}'+P+'#chat-fab:active{transform:translateY(3px)}'
+  +P+'#chat-fab .cb{animation:cb49 1.4s ease-in-out infinite}@keyframes cb49{50%{transform:scale(1.25)}}'
+  +P+'#chat-pn{background:linear-gradient(170deg,#1d1532,#110c1d)!important;color:#f4effc!important;border:1px solid rgba(255,255,255,.08)!important;border-radius:22px!important;box-shadow:0 30px 70px -20px #000,0 0 50px -24px var(--p1,#ff4d8d)!important;overflow:hidden;transform-origin:100% 100%}'
+  +P+'#chat-pn.show{animation:pn49 .4s cubic-bezier(.2,1.3,.4,1)}@keyframes pn49{from{opacity:0;transform:translateY(20px) scale(.9)}}'
+  +P+'.ch-h{background:linear-gradient(135deg,var(--p1,#ff4d8d),var(--p2,#8b5cf6))!important;font:700 1.05rem Fredoka,sans-serif!important;padding:14px 16px!important;'+OUT+'}'
+  +P+'.ch-h button{width:30px;height:30px;border-radius:50%!important;background:rgba(0,0,0,.25)!important}'
+  +P+'.ch-list{padding:12px!important;gap:8px!important;background:radial-gradient(120% 60% at 50% 0%,rgba(255,255,255,.04),transparent)}'
+  +P+'.ch-m{background:#2a2142!important;color:#f4effc!important;border-radius:18px 18px 18px 6px!important;padding:9px 13px!important;box-shadow:0 6px 14px -10px #000;animation:mm49 .35s cubic-bezier(.2,1.3,.4,1)}'
+  +P+'.ch-m.mine{background:linear-gradient(135deg,var(--p1,#ff4d8d),var(--p2,#8b5cf6))!important;color:#fff!important;border-radius:18px 18px 6px 18px!important}'
+  +'@keyframes mm49{from{opacity:0;transform:translateY(8px) scale(.94)}}'
+  +P+'.ch-m.emo-only{background:none!important;box-shadow:none!important;padding:0!important}'
+  +P+'.ch-n{color:var(--p3,#ffd23f)!important;opacity:1!important;font-size:.72rem!important}'
+  +P+'.ch-t{opacity:.55!important}'
+  +P+'.ch-av{width:30px!important;height:30px!important;flex-basis:30px!important;box-shadow:0 0 0 2px rgba(255,255,255,.18)}'
+  +P+'.ch-day{background:rgba(255,255,255,.07);border-radius:99px;padding:3px 10px!important;opacity:.8!important;text-transform:capitalize}'
+  +P+'.ch-film{background:rgba(0,0,0,.28)!important;border-radius:12px!important}'
+  +P+'.ch-emo{gap:2px!important;overflow-x:auto;padding:8px 10px 2px!important}.ch-emo button{transition:transform .15s}.ch-emo button:hover{transform:scale(1.3)}'
+  +P+'.ch-in{border-top:1px solid rgba(255,255,255,.08)!important;padding:10px!important;gap:8px!important}'
+  +P+'.ch-in input{border-radius:99px!important;background:#251d3b!important;color:#fff!important;border:1px solid rgba(255,255,255,.12)!important;padding:11px 16px!important}'
+  +P+'.ch-in button{width:44px;height:44px;border-radius:50%!important;padding:0!important;background:linear-gradient(135deg,var(--p1,#ff4d8d),var(--p2,#8b5cf6))!important;box-shadow:0 6px 14px -6px var(--p1,#ff4d8d)}'
+  +'@media(max-width:600px){'+P+'#chat-pn{right:6px!important;left:6px!important;width:auto!important;bottom:76px!important;height:min(70vh,560px)!important}}'
+  /* ================= LES JEUX ================= */
+  +P+'#game-stage .gs-head{background:transparent!important}'
+  +P+'#game-stage .gs-head h2,'+P+'#game-stage .gs-head h3,'+P+'#game-stage .gs-head b{font-family:Fredoka,sans-serif}'
+  +P+'#game-stage .sub-action{'+B3('color-mix(in srgb,var(--p1,#ff6aa2) 85%,#fff)','var(--p2,#8b5cf6)','rgba(20,8,40,.9)')+'}'
+  +P+'#game-stage .sub-action:active{transform:translateY(4px)}'
+  +P+'#game-stage button.sub-action[class*="big"],'+P+'#game-stage .gs-play,'+P+'#game-stage .sub-action.primary{font-size:1.15rem!important;padding:14px 26px!important}'
+  +P+'.qz-box,'+P+'.bl-box{background:linear-gradient(170deg,rgba(45,32,78,.92),rgba(22,15,38,.92))!important;border-radius:22px!important;padding:16px!important;box-shadow:0 0 0 1px rgba(255,255,255,.07),0 24px 46px -26px #000!important}'
+  +P+'.qz-q{font:700 1.2rem/1.35 Fredoka,sans-serif!important;color:#fff!important;margin-bottom:12px}'
+  +P+'.qz-img{border-radius:16px!important;box-shadow:0 18px 30px -16px #000!important}'
+  +P+'.qz-opts{counter-reset:qz49;gap:10px!important}'
+  +'html.look49 #game-stage .qz-opt,html.look49 body .qz-opts .qz-opt{padding:14px 14px 14px 56px!important}'
+  +P+'.qz-opt{counter-increment:qz49;position:relative;text-align:left!important;padding:14px 14px 14px 54px!important;border:2px solid rgba(20,8,40,.9)!important;background:linear-gradient(180deg,#3a2c66,#2a1f4d)!important;color:#fff!important;border-radius:16px!important;box-shadow:inset 0 2px 0 rgba(255,255,255,.15),0 5px 0 rgba(20,8,40,.85)!important;transition:transform .12s,box-shadow .12s,background .2s!important}'
+  +P+'.qz-opt::before{content:counter(qz49,upper-alpha);position:absolute;left:12px;top:50%;transform:translateY(-50%);width:30px;height:30px;border-radius:10px;display:flex;align-items:center;justify-content:center;font:800 .95rem Fredoka,sans-serif;background:linear-gradient(180deg,#ffd166,#f08c00);color:#2b1a00;box-shadow:0 2px 0 rgba(20,8,40,.8)}'
+  +'@media(hover:hover){'+P+'.qz-opt:hover{transform:translateY(-3px);background:linear-gradient(180deg,#4a3880,#33265e)!important}}'
+  +P+'.qz-opt:active{transform:translateY(3px);box-shadow:inset 0 2px 0 rgba(255,255,255,.1),0 1px 0 rgba(20,8,40,.85)!important}'
+  +P+'.qz-opt.good{background:linear-gradient(180deg,#5ee88a,#1fb24a)!important;animation:gd49 .55s cubic-bezier(.2,1.5,.4,1)}'
+  +P+'.qz-opt.good::before{content:"✓";background:#fff;color:#1fb24a}'
+  +P+'.qz-opt.bad{background:linear-gradient(180deg,#ff8a8a,#d62828)!important;animation:bd49 .45s ease}'
+  +P+'.qz-opt.bad::before{content:"✕";background:#fff;color:#d62828}'
+  +'@keyframes gd49{40%{transform:scale(1.06)}}@keyframes bd49{20%{transform:translateX(-7px)}40%{transform:translateX(7px)}60%{transform:translateX(-4px)}80%{transform:translateX(4px)}}'
+  +P+'.bl-bar{border-radius:99px!important;overflow:hidden;height:12px!important;background:#0c0718!important;border:2px solid rgba(20,8,40,.9)}'
+  /* page des jeux : cartes plus « arcade » */
+  +P+'.gh-card{border:2.5px solid rgba(20,8,40,.9)!important;box-shadow:inset 0 2px 0 rgba(255,255,255,.15),0 7px 0 rgba(20,8,40,.85),0 18px 30px -16px #000!important;transition:transform .2s cubic-bezier(.3,1.4,.5,1)!important}'
+  +'@media(hover:hover){'+P+'.gh-card:hover{transform:translateY(-6px) rotate(-.5deg)!important}}'
+  +P+'.gh-card .gh-tag{font-family:Fredoka,sans-serif;font-weight:700;letter-spacing:.06em;border:1.5px solid rgba(20,8,40,.85);box-shadow:0 2px 0 rgba(20,8,40,.8)}';
+  var st=document.createElement('style');st.id='v49-css';st.textContent=C;document.head.appendChild(st);
+
+  /* une bonne réponse : petite pluie de confettis (3 bonnes d'affilée : grosse pluie) */
+  var streak=0;
+  var gmo=new MutationObserver(function(rs){rs.forEach(function(m){var t=m.target;if(!t.classList||!t.classList.contains('qz-opt'))return;
+    if(t.classList.contains('good')&&!t._g49){t._g49=1;var picked=t.matches(':focus')||t===document.activeElement;var anyBad=t.parentNode&&t.parentNode.querySelector('.qz-opt.bad');if(!anyBad){streak++;try{if(window.CineConfetti38)window.CineConfetti38(streak>=3?60:18);}catch(_){}}else streak=0;}});})
+;
+  /* on ne surveille que la zone des jeux (pas toute l'appli) */
+  setInterval(function(){var g=document.getElementById('game-stage');if(g&&!g._o49){g._o49=1;gmo.observe(g,{subtree:true,attributes:true,attributeFilter:['class']});}},1000);
+})();
+
 /* ==V29-END== */
 
 
