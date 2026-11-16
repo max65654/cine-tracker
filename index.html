@@ -29138,6 +29138,21 @@ if(LOOK38)(function(){
   document.head.appendChild(st);
 })();
 
+
+/* ====== V61 — prêt pour beaucoup plus de monde : la liste des potes (profils publics) n'est plus relue en entier
+   à chaque écran (16 endroits la demandaient) mais gardée 5 minutes et partagée ; même chose pour la liste cloud ====== */
+(function(){
+  function cached(fn,ms){var p=null,at=0;return function(){if(p&&Date.now()-at<ms)return p;at=Date.now();var q=fn.apply(this,arguments);p=q.then(function(v){return v;},function(e){p=null;throw e;});return p;};}
+  function wrap(){
+    try{var S=window.CineSocial;if(S&&S.friends&&!S.friends._c61){var f=cached(S.friends.bind(S),5*60*1000);f._c61=1;S.friends=f;}}catch(_){}
+    try{var P=window.CineCloudPub;if(P&&P.list&&!P.list._c61){var l=cached(P.list.bind(P),5*60*1000);l._c61=1;P.list=l;}}catch(_){}
+  }
+  /* deux boutons « 📰 Actus » dans le menu : le second est la recherche d'actus par titre */
+  function lbl(){var b=document.querySelector('header nav .nav-btn[data-view="actus"]');if(b&&b.textContent.trim()==='📰 Actus')b.textContent='🔎 Actus d\'un titre';}
+  lbl();setTimeout(lbl,1500);setTimeout(lbl,6000);
+  wrap();window.addEventListener('cine-social-ready',wrap);setTimeout(wrap,8000);setTimeout(wrap,20000);
+})();
+
 /* ==V29-END== */
 
 
