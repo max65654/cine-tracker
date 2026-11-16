@@ -2,7 +2,7 @@ name: Données Ciné Tracker (actus + tops)
 
 on:
   schedule:
-    - cron: '7 * * * *'   # toutes les heures
+    - cron: '*/30 * * * *'   # toutes les 30 minutes (GitHub saute parfois des passages)
   workflow_dispatch:          # bouton « Run workflow » pour le lancer à la main
 
 permissions:
