@@ -27357,7 +27357,8 @@ if(LOOK38)(function(){
     if(T.stremio){L.push(['stremio','films',T.stremio.films||[]]);L.push(['stremio','tv',T.stremio.tv||[]]);}
     return L;}
   function nfDay(T){return false;}
-  function nfFix(){try{var o=_premCfg&&_premCfg._nfday;if(o&&o.at&&Date.now()-o.at<40*36e5&&((o.tv&&o.tv.length)||(o.films&&o.films.length)))return o;}catch(_){}return null;}
+  function nfFix(){var C=[];try{var o=_premCfg&&_premCfg._nfday;if(o&&o.at)C.push(o);}catch(_){}try{var r=D.tops&&D.tops.nfday;if(r&&r.at)C.push(Object.assign({},r,{at:Date.parse(r.at)}));}catch(_){}
+    C=C.filter(function(o){return Date.now()-o.at<40*36e5&&((o.tv&&o.tv.length)||(o.films&&o.films.length));}).sort(function(a,b){return b.at-a.at;});return C[0]||null;}
   var TOPN=[];
   function buildIndex(){IDX={};TOPN=[];lists().forEach(function(L){L[2].forEach(function(y,i){if(y&&y.t){var t=norm(y.t).trim();if(t.length>=4)TOPN.push({n:' '+t+' ',r:y.r||i+1,pl:L[0]});}});});lists().forEach(function(L){L[2].forEach(function(x,i){if(!x||!x.id)return;var k=x.mt+'_'+x.id,r=x.r||i+1,cur=IDX[k];
     var e={pl:L[0],r:r,x:x};var score=function(a){return a.r+(a.pl==='netflix'?-.5:0)+(a.pl==='stremio'||a.pl==='bo'?.3:0);};
@@ -27462,10 +27463,25 @@ if(LOOK38)(function(){
     Object.keys(T.prov||{}).forEach(function(k){if(k==='netflix'&&!nfDay(T))return;['tv','films'].forEach(function(c){var a=((T.prov[k]||{})[c]||[])[0];if(a&&a.day&&PLAT[k]&&(!a.p0||a.p0!==1))out.push({x:a,pl:k,t:'👑 « '+a.t+' » prend la tête aujourd\'hui sur '+PLAT[k].n});});});
     if(T.bo&&T.bo[0])out.push({x:T.bo[0],pl:'bo',t:'🎟️ « '+T.bo[0].t+' » domine le box-office mondial ('+(T.bo[0].rev/1e6).toFixed(0)+' M$)'});
     return out.slice(0,14);}
+  function fmtM(n){return n>=1e6?(n/1e6).toFixed(n>=1e7?0:1).replace('.',',')+' M':n>=1e3?Math.round(n/1e3)+' k':String(n);}
+  var GCAT={'TV (English)':'des séries en anglais','TV (Non-English)':'des séries non anglophones','Films (English)':'des films en anglais','Films (Non-English)':'des films non anglophones'};
+  var PREM=null;try{premiumResolve().then(function(r){PREM=r;var b=document.getElementById('mag41');if(b){b._rk='';renderMag(b);}});}catch(_){}
+  function worldOf(id,t){var W=D.tops&&D.tops.world;if(!W)return null;var n=norm(t);return (W.items||[]).find(function(x){return (id&&x.id===id&&x.mt==='tv')||norm(x.fr||'')===n||norm(x.t)===n;})||null;}
+  function frRank(id){var F=nfFix(),T=D.tops||{},l=F?F.tv:(T.netflix&&T.netflix.tv)||[];var x=(l||[]).find(function(y){return y.id===id;});return x?{r:x.r,day:!!F}:null;}
+  function recLines(w){var L=[];if(!w)return L;if(w.n1&&w.n1.length)L.push('👑 N°1 dans <b>'+w.n1.length+' pays</b>');if(w.n10)L.push('🌍 Dans le top 10 de <b>'+w.n10+' pays</b>');if(w.gr)L.push('🏆 N°'+w.gr+' mondial '+(GCAT[w.gc]||''));if(w.views)L.push('👀 <b>'+fmtM(w.views)+'</b> de vues en une semaine');if(w.cw>1)L.push('⏳ '+w.cw+' semaines dans le top 10 mondial');if(w.mp)L.push('🥇 N°'+w.mp.rank+' '+(GCAT[w.mp.cat]||'')+' les plus vus de l\'histoire de Netflix');if(w.rec)L.push('📈 Une des meilleures semaines jamais enregistrées ('+w.rec+'e)');return L;}
+  function premBlock(T){var r=PREM;if(!r||!r.name)return '';var w=worldOf(r.tv,r.name),fr=frRank(r.tv),n=norm(r.name).trim();
+    var news=(D.news&&D.news.items||[]).filter(function(x){return nOf(x).indexOf(' '+n+' ')>=0;}).slice(0,5);
+    var lines=recLines(w);if(fr)lines.unshift('🇫🇷 N°'+fr.r+' en France sur Netflix '+(fr.day?'aujourd\'hui':'cette semaine'));
+    return '<section class="pm41"><div class="pm41-bg" style="background-image:url('+esc(r.backdrop||r.poster||'')+')"></div><div class="pm41-in">'+(r.poster?'<img class="pm41-po" src="'+esc(r.poster)+'" alt="">':'')
+      +'<div class="pm41-b"><em>👑 La série du mois</em><h3>'+esc(r.label||r.name)+'</h3>'+(lines.length?'<ul>'+lines.map(function(l){return '<li>'+l+'</li>';}).join('')+'</ul>':'<p>'+esc((r.ov||'').slice(0,180))+'</p>')
+      +(news.length?'<div class="pm41-n">'+news.map(function(x){return '<a href="'+esc(x.u||'#')+'" target="_blank" rel="noopener">📰 '+esc(x.t)+'<small>'+esc(x.s)+' · '+feedAgo(x.ts)+'</small></a>';}).join('')+'</div>':'')+'</div></div></section>';}
+  function worldBlock(){var W=D.tops&&D.tops.world;if(!W||!W.items)return '';var L=W.items.filter(function(x){return x.n1&&x.n1.length;}).slice(0,10);if(!L.length)return '';
+    return '<div class="mg41-tn wd41"><div class="mg41-st">🌍 Le monde entier regarde <small>Top 10 officiels Netflix · semaine du '+new Date(W.week+'T12:00').toLocaleDateString('fr-FR',{day:'numeric',month:'long'})+'</small></div><div class="mg41-tnr">'
+      +L.map(function(x){return '<button type="button" class="tn41 wd" data-k="'+(x.id?x.mt+'_'+x.id:'')+'">'+(x.p?'<img src="'+IMG(x.p,'w154')+'" alt="">':'')+'<span><em>👑 N°1 dans '+x.n1.length+' pays</em>'+esc(x.fr||x.t)+'<small>'+[x.views?fmtM(x.views)+' de vues':'',x.gr?'N°'+x.gr+' mondial':'',x.mp?'🥇 record historique':''].filter(Boolean).join(' · ')+'</small></span></button>';}).join('')+'</div></div>';}
   function renderMag(box){
-    var N=D.news,rk=(N&&N.updated)+'|'+MS.f+'|'+(function(){try{return localStorage.getItem('cineTheme')||'';}catch(_){return '';}})()+PREMN+'|'+(D.tops&&D.tops.updated)+'|'+(items||[]).length;if(box._rk===rk&&box.children.length)return;box._rk=rk;if(!N||!N.items||!N.items.length){box.innerHTML='<div class="tp41-empty">📰 Les actus arrivent… (mises à jour toutes les 3 h)</div>';return;}
+    var N=D.news,rk=(N&&N.updated)+'|'+(PREM&&PREM.tv)+'|'+MS.f+'|'+(function(){try{return localStorage.getItem('cineTheme')||'';}catch(_){return '';}})()+PREMN+'|'+(D.tops&&D.tops.updated)+'|'+(items||[]).length;if(box._rk===rk&&box.children.length)return;box._rk=rk;if(!N||!N.items||!N.items.length){box.innerHTML='<div class="tp41-empty">📰 Les actus arrivent… (mises à jour toutes les 3 h)</div>';return;}
     var T=myTitles(),now=Date.now(),day=now-26*36e5,L=N.items.map(function(x,i){x._i=i;return x;});
-    var TH=themeTitles(),HOR=horrorFan();
+    var TH=themeTitles(),HOR=horrorFan();if(PREM&&PREM.name){var pk=norm(PREM.name).trim();if(pk.length>=3&&!TH[pk])TH[pk]=PREM.name;}
     L.forEach(function(x){var n=nOf(x),sc=0,m=mineOf(x,T);if(m)sc+=100;for(var k in TH){if(n.indexOf(' '+k+' ')>=0){sc+=60;x._th=TH[k];break;}}
       if(topOf(x))sc+=25;if(HOR&&(x.k||[]).indexOf('horreur')>=0)sc+=20;if((x.k||[]).indexOf('officiel')>=0)sc+=8;if((x.k||[]).indexOf('ba')>=0)sc+=8;if(x.i)sc+=4;
       var age=(now-(x.ts||0))/36e5;sc+=Math.max(0,24-age);x._sc=sc;});
@@ -27477,7 +27493,7 @@ if(LOOK38)(function(){
     var chips=[['all','Tout'],['me','📌 Mes séries'],['officiel','✅ Officiel'],['rumeur','🕵️ Rumeurs'],['ba','🎞️ Bandes-annonces'],['bo','🎟️ Box-office'],['horreur','👻 Horreur'],['tops','🏆 Dans les tops']];
     var tn=topNews();
     box.innerHTML='<div class="mg41-h"><h3>📰 À la une aujourd\'hui</h3><small>'+L.length+' infos du jour · d\'abord ta liste, ton thème et ce que tu aimes · mis à jour '+feedAgo(Date.parse(N.updated)||Date.now())+'</small></div>'
-      +(f==='all'?'<div class="mg41-top">'+card(lead,lead._i,T,1)+'<div class="mg41-side">'+side.map(function(x){return card(x,x._i,T,2);}).join('')+'</div></div>':'')
+      +(f==='all'?premBlock()+worldBlock():'')+(f==='all'?'<div class="mg41-top">'+card(lead,lead._i,T,1)+'<div class="mg41-side">'+side.map(function(x){return card(x,x._i,T,2);}).join('')+'</div></div>':'')
       +(f==='all'&&tn.length?'<div class="mg41-tn"><div class="mg41-st">🏆 Les tops du moment</div><div class="mg41-tnr">'+tn.map(function(o){var p=PLAT[o.pl];return '<button type="button" class="tn41" data-k="'+(o.x.id?o.x.mt+'_'+o.x.id:'')+'" style="--c:'+p.c+'">'+(o.x.p?'<img src="'+IMG(o.x.p,'w154')+'" alt="">':'')+'<span><em>'+p.n+'</em>'+esc(o.t)+'</span></button>';}).join('')+'</div></div>':'')
       +'<div class="mg41-ch">'+chips.map(function(c){return '<button type="button" data-f="'+c[0]+'" class="'+(f===c[0]?'on':'')+'">'+c[1]+(c[0]==='me'&&mineL.length?' <b>'+mineL.length+'</b>':'')+'</button>';}).join('')+'</div>'
       +'<div class="mg41-grid">'+(list.length?list.filter(function(x){return f!=='all'||(x!==lead&&side.indexOf(x)<0);}).map(function(x){return card(x,x._i,T,0);}).join(''):'<div class="tp41-empty">Rien pour l\'instant dans cette catégorie.</div>')+'</div>'
@@ -27510,6 +27526,10 @@ if(LOOK38)(function(){
     });};}catch(e){console.warn('yt41',e);}
 
   var nfeCss=document.createElement('style');nfeCss.textContent='.nfe41{position:fixed;inset:0;z-index:100000;background:rgba(10,6,20,.7);display:grid;place-items:center;padding:16px}.nfe41-b{width:min(640px,100%);max-height:90vh;overflow:auto;background:var(--card-bg);color:var(--ink);border-radius:22px;padding:18px;box-shadow:0 30px 60px -20px #000}.nfe41-b h3{margin:0 0 6px;font:700 1.2rem Fredoka,sans-serif}.nfe41-b p{margin:0 0 12px;color:var(--muted);font-size:.85rem}.nfe41-g{display:grid;grid-template-columns:1fr 1fr;gap:10px}.nfe41-g label{display:flex;flex-direction:column;gap:4px;font-weight:700;font-size:.85rem}.nfe41-g textarea{background:var(--input-bg);color:var(--ink);border:1px solid var(--border);border-radius:12px;padding:8px;font:500 .85rem/1.5 Nunito,sans-serif;resize:vertical}.nfe41-r{display:flex;justify-content:flex-end;gap:8px;margin-top:12px}.nfe41-r button{border:0;border-radius:12px;padding:10px 16px;font-weight:800;cursor:pointer;background:var(--input-bg);color:var(--ink)}.nfe41-r .ok{background:#e50914;color:#fff}.nfe41-st{display:block;margin-top:6px;color:var(--muted)}@media(max-width:560px){.nfe41-g{grid-template-columns:1fr}}';document.head.appendChild(nfeCss);
+  var pmCss=document.createElement('style');pmCss.textContent='.pm41{position:relative;margin:0 0 16px;border-radius:24px;overflow:hidden;color:#fff;box-shadow:0 26px 50px -30px #000}.pm41-bg{position:absolute;inset:0;background:center/cover no-repeat;filter:saturate(1.1)}.pm41-bg::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(10,6,20,.94) 0,rgba(10,6,20,.78) 55%,rgba(10,6,20,.35))}'
+    +'.pm41-in{position:relative;display:flex;gap:16px;padding:18px}.pm41-po{width:110px;aspect-ratio:2/3;object-fit:cover;border-radius:14px;box-shadow:0 0 0 2px #f5c518,0 16px 30px -12px #000;flex:none}.pm41-b{min-width:0}.pm41-b em{font-style:normal;font-weight:800;font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;color:#f5c518}.pm41-b h3{margin:2px 0 8px;font:800 1.6rem Fredoka,sans-serif}'
+    +'.pm41-b ul{margin:0;padding:0;list-style:none;display:grid;gap:3px;font-size:.86rem}.pm41-b p{margin:0;opacity:.85;font-size:.86rem}.pm41-n{display:grid;gap:4px;margin-top:10px}.pm41-n a{color:#fff;text-decoration:none;font-size:.8rem;padding:6px 10px;border-radius:10px;background:rgba(255,255,255,.08)}.pm41-n a:hover{background:rgba(255,255,255,.16)}.pm41-n small{display:block;opacity:.65;font-size:.68rem}'
+    +'.wd41 .mg41-st small{font-weight:500;color:var(--muted);font-size:.72rem;margin-left:6px}.tn41.wd em{color:#f5c518!important}.tn41.wd small{display:block;color:var(--muted);font-size:.68rem;margin-top:2px}@media(max-width:560px){.pm41-po{width:80px}.pm41-b h3{font-size:1.25rem}}';document.head.appendChild(pmCss);
   /* ======================= STYLES ======================= */
   var OUT='-webkit-text-stroke:1px rgba(0,0,0,.6);paint-order:stroke fill';
   var C=''
@@ -29061,6 +29081,61 @@ if(LOOK38)(function(){
   +'.lx59-src{display:block;margin-top:10px;color:var(--muted);font-size:.72rem}'
   +'.lx59-m{display:flex;flex-direction:column;gap:3px;margin:8px 0;font-size:.82rem;color:var(--ink)}.lx59-m b{font-weight:800}';
   var st=document.createElement('style');st.textContent=C;document.head.appendChild(st);
+})();
+
+
+/* ====== V60 — 👑 la série du mois à l'honneur dans les JEUX : le quiz de la série (personnages, acteurs, épisodes), meilleur score gardé ====== */
+(function(){
+  var QK='cinePremQuiz60';
+  function best(){try{return JSON.parse(localStorage.getItem(QK)||'{}');}catch(_){return {};}}
+  function shuffle(l){l=l.slice();for(var i=l.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1)),t=l[i];l[i]=l[j];l[j]=t;}return l;}
+  function pick(l,n,not){return shuffle(l.filter(function(x){return not.indexOf(x)<0;})).slice(0,n);}
+  var R=null;try{premiumResolve().then(function(r){R=r;mount();});}catch(_){}
+  /* fabrique les questions à partir de la fiche de la série (TMDB) */
+  function build(r){
+    return Promise.all([ivJson('https://api.themoviedb.org/3/tv/'+r.tv+'/aggregate_credits?api_key='+TMDB+'&language=fr-FR'),ivJson('https://api.themoviedb.org/3/tv/'+r.tv+'/season/'+(r.season||1)+'?api_key='+TMDB+'&language=fr-FR')]).then(function(a){
+      var cast=((a[0]&&a[0].cast)||[]).filter(function(c){return c.roles&&c.roles[0]&&c.roles[0].character&&c.roles[0].character.length<40;}).slice(0,14).map(function(c){return {a:c.name,c:c.roles[0].character.replace(/\s*\(.*\)$/,''),p:c.profile_path,n:c.roles[0].episode_count||0};});
+      var eps=((a[1]&&a[1].episodes)||[]).filter(function(e){return e.name&&!/^épisode \d+$/i.test(e.name);});var Q=[];
+      var A=cast.map(function(c){return c.a;}),Cc=cast.map(function(c){return c.c;});
+      shuffle(cast).slice(0,4).forEach(function(c){if(A.length>=4)Q.push({q:'Qui joue <b>'+esc(c.c)+'</b> ?',ok:c.a,o:shuffle([c.a].concat(pick(A,3,[c.a]))),img:c.p});});
+      shuffle(cast).slice(0,3).forEach(function(c){if(Cc.length>=4)Q.push({q:'Quel personnage joue <b>'+esc(c.a)+'</b> ?',ok:c.c,o:shuffle([c.c].concat(pick(Cc,3,[c.c]))),img:c.p});});
+      if(cast.length>=4){var mx=cast.slice().sort(function(x,y){return y.n-x.n;})[0];if(mx&&mx.n)Q.push({q:'Quel personnage apparaît dans le plus d\'épisodes ?',ok:mx.c,o:shuffle([mx.c].concat(pick(Cc,3,[mx.c])))});}
+      var N=eps.map(function(e){return e.name;});
+      shuffle(eps).slice(0,3).forEach(function(e){if(N.length>=4)Q.push({q:'Comment s\'appelle l\'épisode <b>'+e.episode_number+'</b> de la saison '+(r.season||1)+' ?',ok:e.name,o:shuffle([e.name].concat(pick(N,3,[e.name])))});});
+      if(r.air){var y=r.air.slice(0,4),M=['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'],m=M[+r.air.slice(5,7)-1];var opts=shuffle([m].concat(pick(M,3,[m])));Q.push({q:'En quel mois est sortie la saison '+(r.season||1)+' ('+y+') ?',ok:m,o:opts});}
+      return shuffle(Q).slice(0,10);});}
+  function open(){if(!R)return;var o=document.createElement('div');o.className='pq60';o.innerHTML='<div class="pq60-b"><div class="pq60-ld">👑 Je prépare le quiz de '+esc(R.name)+'…</div></div>';document.body.appendChild(o);
+    o.addEventListener('click',function(e){if(e.target===o||e.target.closest('[data-x]'))o.remove();});
+    build(R).then(function(Q){if(!Q.length){o.querySelector('.pq60-b').innerHTML='<p>Pas assez d\'infos sur la série pour un quiz pour l\'instant.</p><button type="button" data-x="1">Fermer</button>';return;}
+      var i=0,sc=0,b=o.querySelector('.pq60-b');
+      function q(){var x=Q[i];b.innerHTML='<div class="pq60-top"><span>👑 Quiz '+esc(R.name)+'</span><b>'+(i+1)+' / '+Q.length+'</b><button type="button" data-x="1">✕</button></div><div class="pq60-pr"><i style="width:'+Math.round(i/Q.length*100)+'%"></i></div>'
+        +(x.img?'<img class="pq60-im" src="https://image.tmdb.org/t/p/w185'+esc(x.img)+'" alt="">':'')+'<h3>'+x.q+'</h3><div class="pq60-o">'+x.o.map(function(t){return '<button type="button" data-a="'+esc(t)+'">'+esc(t)+'</button>';}).join('')+'</div>';}
+      b.addEventListener('click',function(e){var a=e.target.closest('[data-a]');if(!a||b.querySelector('.pq60-o.done'))return;var x=Q[i],good=a.dataset.a===x.ok;if(good)sc++;
+        b.querySelector('.pq60-o').classList.add('done');b.querySelectorAll('[data-a]').forEach(function(btn){if(btn.dataset.a===x.ok)btn.classList.add('ok');else if(btn===a)btn.classList.add('ko');});
+        try{good?sfx.success():sfx.del();}catch(_){}
+        setTimeout(function(){i++;if(i<Q.length)return q();var B=best(),k=R.tv+'_'+(R.season||1),rec=!B[k]||sc>B[k];if(rec){B[k]=sc;try{localStorage.setItem(QK,JSON.stringify(B));}catch(_){}}
+          b.innerHTML='<div class="pq60-end"><div class="pq60-sc">'+sc+' / '+Q.length+'</div><h3>'+(sc===Q.length?'🏆 Sans faute ! Tu es incollable sur '+esc(R.name):sc>=Q.length*.7?'🔥 Très fort !':sc>=Q.length*.4?'👍 Pas mal !':'😅 Il est temps de revoir la série !')+'</h3>'+(rec?'<p>✨ Nouveau record personnel</p>':'<p>Ton record : '+B[k]+' / '+Q.length+'</p>')+'<div class="pq60-r"><button type="button" data-again="1">🔁 Rejouer</button><button type="button" data-x="1">Fermer</button></div></div>';
+          if(sc===Q.length)try{confetti();}catch(_){}mount();},900);});
+      b.addEventListener('click',function(e){if(e.target.closest('[data-again]')){o.remove();open();}});
+      q();}).catch(function(){o.querySelector('.pq60-b').innerHTML='<p>Quiz indisponible pour le moment.</p><button type="button" data-x="1">Fermer</button>';});}
+  /* la carte en haut de la page Jeux */
+  function mount(){var v=document.getElementById('view-fun');if(!v||!R||!R.name)return;var c=v.querySelector('.pq60-card');var B=best(),k=R.tv+'_'+(R.season||1);
+    var h='<div class="pq60-bg" style="background-image:url('+esc(R.backdrop||R.poster||'')+')"></div><div class="pq60-in"><em>👑 Le jeu de la série du mois</em><h3>Le quiz '+esc(R.label||R.name)+'</h3><p>Personnages, acteurs, épisodes : prouve que tu connais la série par cœur.'+(B[k]!=null?' · Ton record : <b>'+B[k]+'/10</b>':'')+'</p><button type="button" class="pq60-go">▶️ Jouer</button></div>';
+    if(!c){c=document.createElement('section');c.className='pq60-card';var ref=v.querySelector('.games-switch');if(ref)ref.insertAdjacentElement('afterend',c);else v.prepend(c);c.addEventListener('click',function(e){if(e.target.closest('.pq60-go'))open();});}
+    c.innerHTML=h;}
+  setInterval(function(){var v=document.getElementById('view-fun');if(v&&v.offsetHeight>0&&R&&!v.querySelector('.pq60-card'))mount();},1000);
+  var st=document.createElement('style');st.textContent=''
+    +'.pq60-card{position:relative;margin:10px 0 16px;border-radius:22px;overflow:hidden;color:#fff;box-shadow:0 24px 46px -28px #000}.pq60-bg{position:absolute;inset:0;background:center/cover}.pq60-bg::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(12,6,24,.95),rgba(12,6,24,.55))}'
+    +'.pq60-in{position:relative;padding:18px 20px}.pq60-in em{font-style:normal;font-weight:800;font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;color:#f5c518}.pq60-in h3{margin:4px 0;font:800 1.5rem Fredoka,sans-serif}.pq60-in p{margin:0 0 12px;opacity:.85;font-size:.88rem}'
+    +'.pq60-go{border:0;border-radius:14px;padding:11px 20px;font:800 1rem Fredoka,sans-serif;color:#2b1a00;background:linear-gradient(180deg,#ffe38a,#f5c518);box-shadow:0 5px 0 #a87a00;cursor:pointer}.pq60-go:active{transform:translateY(3px);box-shadow:0 2px 0 #a87a00}'
+    +'.pq60{position:fixed;inset:0;z-index:100000;background:rgba(8,4,18,.75);display:grid;place-items:center;padding:16px}.pq60-b{width:min(520px,100%);background:var(--card-bg);color:var(--ink);border-radius:24px;padding:18px;box-shadow:0 30px 60px -20px #000;text-align:center}'
+    +'.pq60-top{display:flex;align-items:center;gap:10px;justify-content:space-between;font-size:.8rem;color:var(--muted)}.pq60-top button,.pq60-b [data-x]{border:0;background:var(--input-bg);color:var(--ink);border-radius:10px;padding:6px 10px;cursor:pointer}'
+    +'.pq60-pr{height:6px;border-radius:99px;background:var(--input-bg);margin:10px 0;overflow:hidden}.pq60-pr i{display:block;height:100%;background:linear-gradient(90deg,#f5c518,#ff4d8d)}'
+    +'.pq60-im{width:90px;height:90px;border-radius:50%;object-fit:cover;box-shadow:0 0 0 3px #f5c518;margin:6px auto 0;display:block}.pq60-b h3{font:700 1.15rem Fredoka,sans-serif;margin:12px 0}'
+    +'.pq60-o{display:grid;gap:8px}.pq60-o button{border:0;border-radius:14px;padding:12px;font:700 .92rem Nunito,sans-serif;cursor:pointer;background:var(--input-bg);color:var(--ink);box-shadow:inset 0 0 0 1px var(--border);transition:transform .15s}.pq60-o button:hover{transform:translateY(-2px)}'
+    +'.pq60-o button.ok{background:#2f9e44;color:#fff}.pq60-o button.ko{background:#e03131;color:#fff;animation:ko60 .35s}@keyframes ko60{25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}'
+    +'.pq60-sc{font:900 3rem Fredoka,sans-serif;background:linear-gradient(90deg,#f5c518,#ff4d8d);-webkit-background-clip:text;background-clip:text;color:transparent}.pq60-r{display:flex;gap:8px;justify-content:center;margin-top:12px}.pq60-r button{border:0;border-radius:12px;padding:10px 16px;font-weight:800;cursor:pointer;background:var(--input-bg);color:var(--ink)}.pq60-ld{padding:30px;color:var(--muted)}';
+  document.head.appendChild(st);
 })();
 
 /* ==V29-END== */

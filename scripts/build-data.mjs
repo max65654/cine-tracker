@@ -145,17 +145,61 @@ const tmdbCache = new Map();
 async function findTmdb(title, kind) { // kind : 'movie' | 'tv'
   const k = kind + ':' + title; if (tmdbCache.has(k)) return tmdbCache.get(k);
   const q = title.replace(/:\s*(Season|Saison|Limited Series|Partie|Part|Volume)\b.*$/i, '').trim();
+  // titres Netflix du moment : on préfère le titre exact (VO ou VF) et une sortie récente, pas le premier résultat venu
+  const nn = x => String(x || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]/g, '');
+  const pickBest = R => { const now = Date.now(); return (R || []).slice(0, 12).map(x => { const dt = Date.parse(x.release_date || x.first_air_date || '') || 0; let sc = Math.log10((x.popularity || 0) + 1) * 10;
+      if (nn(x.title || x.name) === nn(q) || nn(x.original_title || x.original_name) === nn(q)) sc += 100; if (dt && now - dt < 2 * 365 * 864e5) sc += 60; else if (dt && now - dt < 6 * 365 * 864e5) sc += 15; return { x, sc }; })
+    .sort((a, b) => b.sc - a.sc).map(o => o.x)[0]; };
   let d = await tmdb(`/search/${kind}`, '&query=' + encodeURIComponent(q));
-  let r = d && d.results && d.results[0];
+  let r = pickBest(d && d.results);
   if (!r) { d = await tmdb('/search/multi', '&query=' + encodeURIComponent(q)); r = d && d.results && d.results.find(x => x.media_type === 'movie' || x.media_type === 'tv'); if (r) kind = r.media_type; }
   const out = r ? { id: r.id, mt: kind, t: r.title || r.name || title, p: r.poster_path || '', b: r.backdrop_path || '' } : null;
   tmdbCache.set(k, out); await sleep(60); return out;
 }
 const slim = (r, mt) => ({ id: r.id, mt, t: r.title || r.name, p: r.poster_path || '', b: r.backdrop_path || '' });
 
+let NFTSV = '';
+/* Top 10 Netflix France DU JOUR relevé à la main (netflix-day.json) : le robot retrouve les fiches TMDB */
+async function netflixDay() {
+  let j = null; try { j = JSON.parse(await readFile('netflix-day.json', 'utf8')); } catch (_) { return null; }
+  const at = Date.parse(j.at); if (!at || Date.now() - at > 40 * 36e5) return null;
+  const out = { at: new Date(at).toISOString(), tv: [], films: [] };
+  for (const [cat, mt] of [['tv', 'tv'], ['films', 'movie']]) {
+    let i = 0;
+    for (const t of (j[cat] || []).slice(0, 10)) { i++;
+      const d = await tmdb(`/search/${mt}`, '&region=FR&query=' + encodeURIComponent(t)); await sleep(60);
+      const R = ((d && d.results) || []).slice(0, 8), n = x => String(x || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]/g, '');
+      const r = R.find(x => n(x.title || x.name) === n(t) || n(x.original_title || x.original_name) === n(t)) || R.slice(0, 5).sort((a, b) => (b.popularity || 0) - (a.popularity || 0))[0];
+      out[cat].push(r ? { r: i, ...slim(r, mt), t: r.title || r.name || t } : { r: i, id: 0, mt, t, p: '' });
+    }
+  }
+  console.log(`📝 Netflix du jour (relevé) : ${out.tv.length} séries, ${out.films.length} films`); return out;
+}
+/* 🌍 Dans combien de pays chaque titre est n°1 / dans le top 10, ses vues dans le monde et ses records (données officielles Netflix) */
+async function netflixWorld() {
+  if (!NFTSV) return null;
+  const rows = []; let w0 = '';
+  for (const line of NFTSV.split('\n')) { const c = line.split('\t'); if (c.length < 8 || c[0] === 'country_name') continue; if (c[2] > w0) w0 = c[2]; rows.push(c); }
+  const by = {};
+  for (const c of rows) { if (c[2] !== w0) continue; const k = c[5] + '|' + c[6]; const o = by[k] = by[k] || { t: c[5], s: c[6] !== 'N/A' ? c[6] : '', cat: c[3] === 'TV' ? 'tv' : 'films', n1: [], n10: 0 }; o.n10++; if (+c[4] === 1) o.n1.push(c[1]); }
+  const glob = await get('https://www.netflix.com/tudum/top10/data/all-weeks-global.tsv', 'text', 2, 120000) || '';
+  const G = {}, hist = {};
+  for (const line of glob.split('\n')) { const c = line.split('\t'); if (c.length < 9 || c[0] === 'week') continue;
+    const k = c[3] + '|' + c[4]; if (c[0] === w0) G[k] = { gr: +c[2], gc: c[1], hours: +c[5] || 0, views: +c[7] || 0, cw: +c[8] || 1 };
+    if (+c[7] > 0) { const h = hist[c[1]] = hist[c[1]] || []; h.push(+c[7]); } }
+  const mp = {}; const most = await get('https://www.netflix.com/tudum/top10/data/most-popular.tsv', 'text', 2, 60000) || '';
+  for (const line of most.split('\n')) { const c = line.split('\t'); if (c.length < 7 || c[0] === 'category') continue; mp[c[2] + '|' + c[3]] = { rank: +c[1], cat: c[0], views: +c[6] || 0 }; }
+  const L = Object.values(by).map(o => { const k = o.t + '|' + (o.s || 'N/A'), g = G[k] || G[o.t + '|N/A'] || null; const x = { ...o, ...(g || {}) };
+      if (g && g.views) { const h = (hist[g.gc] || []).filter(v => v > 0).sort((a, b) => b - a); const pos = h.indexOf(g.views); if (pos >= 0 && pos < 20) x.rec = pos + 1; } // place parmi toutes les semaines publiées
+      const m = mp[k] || mp[o.t + '|N/A']; if (m) x.mp = m; return x; })
+    .sort((a, b) => b.n1.length - a.n1.length || b.n10 - a.n10).slice(0, 24);
+  for (const x of L) { const m = await findTmdb(x.t, x.cat === 'tv' ? 'tv' : 'movie'); if (m) Object.assign(x, { id: m.id, mt: m.mt, p: m.p, b: m.b, fr: m.t }); }
+  console.log(`🌍 Netflix monde semaine ${w0}: ${L.length} titres (n°1 dans ${L[0] ? L[0].n1.length : 0} pays pour le premier)`);
+  return { week: w0, items: L };
+}
 async function netflix() {
   const tsv = await get('https://www.netflix.com/tudum/top10/data/all-weeks-countries.tsv', 'text', 3, 180000);
-  if (!tsv) return null;
+  if (!tsv) return null; NFTSV = tsv;
   const rows = [];
   for (const line of tsv.split('\n')) { if (!line.startsWith('France\t')) continue; const c = line.split('\t'); rows.push({ week: c[2], cat: c[3], rank: +c[4], title: c[5], season: c[6], weeks: +c[7] || 1 }); }
   const weeks = [...new Set(rows.map(r => r.week))].sort().reverse(); if (!weeks.length) return null;
@@ -290,6 +334,7 @@ if (!only || only === 'tops') {
   let hist = {}; try { hist = JSON.parse(await readFile('tops-history.json', 'utf8')); } catch (_) {}
   const prov = await providers(), chartAt = prov._at; delete prov._at;
   const tops = { updated: new Date().toISOString(), chartAt, netflix: await netflix(), prov, bo: await boxOffice(), stremio: await stremio() };
+  tops.world = await netflixWorld(); tops.nfday = await netflixDay();
   if (!tops.netflix) { try { tops.netflix = JSON.parse(await readFile('tops.json', 'utf8')).netflix || null; } catch (_) {} }
   hist = withHistory(tops, hist);
   await writeFile('tops.json', JSON.stringify(tops));
