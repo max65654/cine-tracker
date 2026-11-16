@@ -74,7 +74,7 @@ function bgNotify(){
     ]).then(function(a){var N=a[0],J=a[1],n=0;
       if(N)(N.items||[]).filter(function(x){return x.ts>now-20*36e5;}).forEach(function(x){var t=nnorm(x.t+' '+(x.d||'')),hit='';for(var k in C.titles){if(t.indexOf(' '+k+' ')>=0){hit=C.titles[k];break;}}
         if(!hit||!(NIMP.test(x.t)||(x.k||[]).indexOf('officiel')>=0||(x.k||[]).indexOf('ba')>=0))return;var key='nw_'+(x.u||x.t).slice(-120);if(S[key]||n>=4)return;S[key]=now;n++;send('📰 '+hit,x.t,key,C.news,C.ntNews,'newspaper');});
-      if(J)Object.keys(J.prov||{}).forEach(function(pl){var P=J.prov[pl];if(!P||P.src!=='jw')return;['tv','films'].forEach(function(cat){(P[cat]||[]).forEach(function(x,i){var key=x.mt+'_'+x.id,title=C.keys[key];if(!title)return;var r=x.r||i+1;
+      if(J)Object.keys(J.prov||{}).forEach(function(pl){var P=J.prov[pl];if(pl==='netflix'||!P||P.src!=='jw')return;['tv','films'].forEach(function(cat){(P[cat]||[]).forEach(function(x,i){var key=x.mt+'_'+x.id,title=C.keys[key];if(!title)return;var r=x.r||i+1;
         var kk='tp_'+day+'_'+pl+'_'+key+'_'+(r===1?'1':'in');if(S[kk]||(r!==1&&S['tp_'+day+'_'+pl+'_'+key+'_1'])||n>=6)return;S[kk]=now;n++;
         send(r===1?'👑 '+title+' est n°1':'🏆 '+title+' est dans le top',(r===1?'Numéro 1 aujourd\'hui sur ':'N°'+r+' aujourd\'hui sur ')+(NPN[pl]||pl)+' en France',kk,C.tops,C.ntTops,'trophy');});});});
       C.sent=S;return Promise.all(out).then(function(){return ca.put('notif-cfg.json',new Response(JSON.stringify(C),{headers:{'content-type':'application/json'}}));});

@@ -27351,12 +27351,13 @@ if(LOOK38)(function(){
   /* ---------- index « titre → meilleur classement » pour les badges ---------- */
   var IDX={};
   function lists(){var T=D.tops||{},L=[];
-    if(T.netflix){L.push(['netflix','films',T.netflix.films||[]]);L.push(['netflix','tv',T.netflix.tv||[]]);}
+    var F=nfFix();if(F){L.push(['netflix','films',F.films||[]]);L.push(['netflix','tv',F.tv||[]]);}else if(T.netflix){L.push(['netflix','films',T.netflix.films||[]]);L.push(['netflix','tv',T.netflix.tv||[]]);}
     Object.keys(T.prov||{}).forEach(function(k){if(k==='netflix'&&!nfDay(T))return;L.push([k,'films',T.prov[k].films||[]]);L.push([k,'tv',T.prov[k].tv||[]]);});
     if(T.bo)L.push(['bo','films',T.bo]);
     if(T.stremio){L.push(['stremio','films',T.stremio.films||[]]);L.push(['stremio','tv',T.stremio.tv||[]]);}
     return L;}
-  function nfDay(T){var p=T&&T.prov&&T.prov.netflix;return !!(p&&p.src==='jw');}
+  function nfDay(T){return false;}
+  function nfFix(){try{var o=_premCfg&&_premCfg._nfday;if(o&&o.at&&Date.now()-o.at<40*36e5&&((o.tv&&o.tv.length)||(o.films&&o.films.length)))return o;}catch(_){}return null;}
   var TOPN=[];
   function buildIndex(){IDX={};TOPN=[];lists().forEach(function(L){L[2].forEach(function(y,i){if(y&&y.t){var t=norm(y.t).trim();if(t.length>=4)TOPN.push({n:' '+t+' ',r:y.r||i+1,pl:L[0]});}});});lists().forEach(function(L){L[2].forEach(function(x,i){if(!x||!x.id)return;var k=x.mt+'_'+x.id,r=x.r||i+1,cur=IDX[k];
     var e={pl:L[0],r:r,x:x};var score=function(a){return a.r+(a.pl==='netflix'?-.5:0)+(a.pl==='stremio'||a.pl==='bo'?.3:0);};
@@ -27382,10 +27383,10 @@ if(LOOK38)(function(){
     return {chip:chip,sub:sub};}
 
   /* ======================= TENDANCES : LES TOPS ======================= */
-  var TS={pl:'netflix',cat:'tv',src:'day'};
+  var TS={pl:'netflix',cat:'tv',src:''};function nfSrc(){if(!TS.src)TS.src=nfFix()?'day':'week';if(TS.src==='day'&&!nfFix())TS.src='week';return TS.src;}
   function hhmm(iso){var d=new Date(iso||Date.now());var t=d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}).replace(':','h');var today=new Date().toDateString()===d.toDateString();return (today?'aujourd\'hui':d.toLocaleDateString('fr-FR',{day:'numeric',month:'short'}))+' à '+t;}
-  function topList(){var T=D.tops||{};if(TS.pl==='netflix'&&!(TS.src==='day'&&T.prov&&T.prov.netflix))return T.netflix?(TS.cat==='tv'?T.netflix.tv:T.netflix.films):[];if(TS.pl==='bo')return T.bo||[];if(TS.pl==='stremio')return T.stremio?T.stremio[TS.cat]||[]:[];var p=(T.prov||{})[TS.pl];return p?p[TS.cat]||[]:[];}
-  function srcLabel(){var T=D.tops||{};if(TS.pl==='netflix'&&TS.src==='day'&&T.prov&&T.prov.netflix)return nfDay(T)?'📅 Classement du jour en France sur Netflix · source JustWatch (ce que les Français regardent) · mis à jour '+hhmm(T.chartAt||T.updated):'🔥 Estimation du jour (JustWatch indisponible) · '+hhmm(T.updated);if(TS.pl==='netflix')return T.netflix?'Top 10 officiel Netflix · France · semaine du '+new Date(T.netflix.week+'T12:00').toLocaleDateString('fr-FR',{day:'numeric',month:'long'}):'';
+  function topList(){var T=D.tops||{};if(TS.pl==='netflix'){var sr=nfSrc();if(sr==='day')return (nfFix()[TS.cat]||[]);if(sr==='jw'&&T.prov&&T.prov.netflix)return T.prov.netflix[TS.cat]||[];return T.netflix?(TS.cat==='tv'?T.netflix.tv:T.netflix.films):[];}if(TS.pl==='bo')return T.bo||[];if(TS.pl==='stremio')return T.stremio?T.stremio[TS.cat]||[]:[];var p=(T.prov||{})[TS.pl];return p?p[TS.cat]||[]:[];}
+  function srcLabel(){var T=D.tops||{};if(TS.pl==='netflix'&&nfSrc()==='day'){var F=nfFix();return '📅 Top 10 Netflix France du jour · relevé '+hhmm(new Date(F.at).toISOString());}if(TS.pl==='netflix'&&TS.src==='jw')return '≈ Tendance JustWatch (ce que les Français cherchent) : ce n\'est PAS le classement Netflix · '+hhmm(T.chartAt||T.updated);if(TS.pl==='netflix')return T.netflix?'Top 10 officiel Netflix · France · semaine du '+new Date(T.netflix.week+'T12:00').toLocaleDateString('fr-FR',{day:'numeric',month:'long'}):'';
     if(TS.pl==='bo')return 'Recettes mondiales cumulées des films à l\'affiche · '+hhmm(T.updated);if(TS.pl==='stremio')return 'Les plus populaires sur Stremio en ce moment · '+hhmm(T.updated);var pp=(T.prov||{})[TS.pl];return pp&&pp.src==='jw'?'📅 Classement du jour en France sur '+(PLAT[TS.pl]||{}).n+' · source JustWatch · mis à jour '+hhmm(T.chartAt||T.updated):'🔥 Titres qui buzzent aujourd\'hui sur '+(PLAT[TS.pl]||{}).n+' (estimation) · '+hhmm(T.updated);}
   function renderTops(box){
     var T=D.tops;if(!T){box.innerHTML='<div class="tp41-empty">🏆 Les tops arrivent… (mis à jour toutes les 3 h)</div>';return;}
@@ -27393,16 +27394,38 @@ if(LOOK38)(function(){
     var tabs=Object.keys(PLAT).filter(function(k){return k==='netflix'?T.netflix:k==='bo'?T.bo:k==='stremio'?T.stremio:(T.prov||{})[k];});
     box.innerHTML='<div class="tp41-h"><h3>🏆 Les tops du moment</h3><small>mis à jour '+hhmm(T.updated)+' · toutes les heures</small></div>'
       +'<div class="tp41-pl">'+tabs.map(function(k){var p=PLAT[k];return '<button type="button" data-pl="'+k+'" class="'+(TS.pl===k?'on':'')+'" style="--c:'+p.c+'"><i>'+p.i+'</i>'+p.n+'</button>';}).join('')+'</div>'
-      +(TS.pl==='netflix'&&T.prov&&T.prov.netflix?'<div class="tp41-cat"><button type="button" data-src="day" class="'+(TS.src==='day'?'on':'')+'">📅 Aujourd\'hui</button><button type="button" data-src="week" class="'+(TS.src!=='day'?'on':'')+'">🏆 Officiel Netflix (semaine)</button></div>':'')+(TS.pl!=='bo'?'<div class="tp41-cat"><button type="button" data-cat="films" class="'+(TS.cat==='films'?'on':'')+'">🎬 Films</button><button type="button" data-cat="tv" class="'+(TS.cat==='tv'?'on':'')+'">📺 Séries</button></div>':'')
+      +(TS.pl==='netflix'?'<div class="tp41-cat">'+(nfFix()?'<button type="button" data-src="day" class="'+(nfSrc()==='day'?'on':'')+'">📅 Aujourd\'hui</button>':'')+'<button type="button" data-src="week" class="'+(nfSrc()==='week'?'on':'')+'">🏆 Officiel (semaine)</button>'+(T.prov&&T.prov.netflix?'<button type="button" data-src="jw" class="'+(nfSrc()==='jw'?'on':'')+'">≈ Tendance</button>':'')+(isAdm()?'<button type="button" data-nfedit="1">✏️ Mettre à jour le top du jour</button>':'')+'</div>':'')+(TS.pl!=='bo'?'<div class="tp41-cat"><button type="button" data-cat="films" class="'+(TS.cat==='films'?'on':'')+'">🎬 Films</button><button type="button" data-cat="tv" class="'+(TS.cat==='tv'?'on':'')+'">📺 Séries</button></div>':'')
       +'<div class="tp41-src">'+srcLabel()+'</div>'
-      +'<div class="tp41-row" style="--c:'+(PLAT[TS.pl]||{}).c+'">'+l.map(function(x,i){var r=x.r||i+1,m=move(Object.assign({r:r},x),(TS.pl==='netflix'&&TS.src==='day'&&D.tops&&D.tops.prov&&D.tops.prov.netflix)?'netflixday':TS.pl),k=x.mt+'_'+x.id,own=x.id&&items.some(function(it){return +it.tmdbId===+x.id&&(it.tmdbType==='tv'?'tv':'movie')===x.mt;});
+      +'<div class="tp41-row" style="--c:'+(PLAT[TS.pl]||{}).c+'">'+l.map(function(x,i){var r=x.r||i+1,m=move(Object.assign({r:r},x),(TS.pl==='netflix'&&nfSrc()!=='week')?'netflixday':TS.pl),k=x.mt+'_'+x.id,own=x.id&&items.some(function(it){return +it.tmdbId===+x.id&&(it.tmdbType==='tv'?'tv':'movie')===x.mt;});
         return '<button type="button" class="tp41-it" data-k="'+(x.id?k:'')+'"><span class="tp41-n">'+r+'</span><span class="tp41-po">'+(x.p?'<img src="'+IMG(x.p)+'" alt="" loading="lazy">':'<span class="tp41-np">🎬</span>')+m.chip+(own?'<em class="tp41-own">✓ Vu / suivi</em>':'')+'</span><span class="tp41-t">'+esc(x.t||'')+'</span><span class="tp41-s">'+(TS.pl==='bo'&&x.rev?(x.rev/1e6).toFixed(0)+' M$ · ':'')+(x.s?esc(x.s)+' · ':'')+m.sub+'</span></button>';}).join('')+'</div>';
   }
+  function isAdm(){try{return !!(window.CineConfig&&CineConfig.isAdmin());}catch(_){return false;}}
+  /* l'admin recopie le top du jour (appli Netflix → onglet Nouveautés / Top 10) : un titre par ligne, l'appli retrouve les affiches */
+  function nfEditor(box){
+    var F=nfFix()||{},T=D.tops||{},cur=function(c){var l=(F[c]&&F[c].length?F[c]:(T.netflix&&T.netflix[c])||[]);return l.map(function(x){return x.t;}).join('\n');};
+    var o=document.createElement('div');o.className='nfe41';
+    o.innerHTML='<div class="nfe41-b"><h3>✏️ Top 10 Netflix France du jour</h3><p>Ouvre Netflix → « Top 10 en France aujourd\'hui » et recopie les titres <b>dans l\'ordre</b>, un par ligne. Tout le monde verra ce classement (pendant 40 h).</p>'
+      +'<div class="nfe41-g"><label>📺 Séries<textarea data-c="tv" rows="10">'+esc(cur('tv'))+'</textarea></label><label>🎬 Films<textarea data-c="films" rows="10">'+esc(cur('films'))+'</textarea></label></div>'
+      +'<div class="nfe41-r"><button type="button" data-x="1">Annuler</button><button type="button" class="ok" data-ok="1">💾 Publier</button></div><small class="nfe41-st"></small></div>';
+    document.body.appendChild(o);
+    o.addEventListener('click',function(e){if(e.target===o||e.target.closest('[data-x]')){o.remove();return;}if(!e.target.closest('[data-ok]'))return;
+      var st=o.querySelector('.nfe41-st');st.textContent='🔎 Je retrouve les titres…';
+      var job=['tv','films'].map(function(c){var lines=o.querySelector('[data-c='+c+']').value.split('\n').map(function(x){return x.replace(/^\s*\d+[.)\-\s]+/,'').trim();}).filter(Boolean).slice(0,10),mt=c==='tv'?'tv':'movie';
+        return Promise.all(lines.map(function(t,i){return ivJson('https://api.themoviedb.org/3/search/'+mt+'?api_key='+TMDB+'&language=fr-FR&region=FR&query='+encodeURIComponent(t)).then(function(d){var R=((d&&d.results)||[]).slice(0,8),nq=norm(t),r=R.find(function(x){return norm(x.title||x.name)===nq||norm(x.original_title||x.original_name)===nq;})||R.slice(0,5).sort(function(a,b){return (b.popularity||0)-(a.popularity||0);})[0];
+          return r?{r:i+1,id:r.id,mt:mt,t:r.title||r.name||t,p:r.poster_path||'',b:r.backdrop_path||''}:{r:i+1,id:0,mt:mt,t:t,p:''};}).catch(function(){return {r:i+1,id:0,mt:mt,t:t,p:''};});}));});
+      Promise.all(job).then(function(a){var prev=nfFix(),v={at:Date.now(),tv:a[0],films:a[1]};
+        /* évolution par rapport au relevé précédent */
+        ['tv','films'].forEach(function(c){(v[c]||[]).forEach(function(x){var p=prev&&(prev[c]||[]).find(function(y){return y.id&&y.id===x.id;});x.p0=p?p.r:0;});});
+        return CineConfig.setPremium('_nfday',v).then(function(){try{_premCfg=_premCfg||{};_premCfg._nfday=v;}catch(_){}TS.src='day';buildIndex();renderTops(box);o.remove();toast('✅ Top Netflix du jour publié pour tout le monde');});
+      }).catch(function(err){st.textContent='⚠️ Enregistrement impossible ('+(err&&err.code||'connexion')+')';});});
+  }
+  window.addEventListener('cine-config',function(){try{buildIndex();var b=document.getElementById('tops41');if(b)renderTops(b);}catch(_){}});
   function mountTops(){
     var v=document.getElementById('view-trending');if(!v)return;var box=document.getElementById('tops41');
     if(!box){box=document.createElement('section');box.id='tops41';box.className='tp41';var ref=v.querySelector(':scope>p')||v.querySelector('.trend-tabs');if(ref)v.insertBefore(box,ref);else v.appendChild(box);
       box.addEventListener('click',function(e){var b=e.target.closest('[data-pl]');if(b){TS.pl=b.dataset.pl;if(TS.pl==='bo')TS.cat='films';renderTops(box);return;}
         var c=e.target.closest('[data-cat]');if(c){TS.cat=c.dataset.cat;renderTops(box);return;}var sr=e.target.closest('[data-src]');if(sr){TS.src=sr.dataset.src;renderTops(box);return;}
+        var ed=e.target.closest('[data-nfedit]');if(ed){nfEditor(box);return;}
         var it=e.target.closest('.tp41-it');if(it&&it.dataset.k){try{fyPreview(it.dataset.k);}catch(_){}}});}
     renderTops(box);tops().then(function(){renderTops(box);});
   }
@@ -27486,6 +27509,7 @@ if(LOOK38)(function(){
       return Promise.race([p,new Promise(function(r){setTimeout(function(){r([]);},12000);})]).then(function(l){var seen={};return out.concat(l||[]).filter(function(x){if(seen[x.id])return false;seen[x.id]=1;return true;});});
     });};}catch(e){console.warn('yt41',e);}
 
+  var nfeCss=document.createElement('style');nfeCss.textContent='.nfe41{position:fixed;inset:0;z-index:100000;background:rgba(10,6,20,.7);display:grid;place-items:center;padding:16px}.nfe41-b{width:min(640px,100%);max-height:90vh;overflow:auto;background:var(--card-bg);color:var(--ink);border-radius:22px;padding:18px;box-shadow:0 30px 60px -20px #000}.nfe41-b h3{margin:0 0 6px;font:700 1.2rem Fredoka,sans-serif}.nfe41-b p{margin:0 0 12px;color:var(--muted);font-size:.85rem}.nfe41-g{display:grid;grid-template-columns:1fr 1fr;gap:10px}.nfe41-g label{display:flex;flex-direction:column;gap:4px;font-weight:700;font-size:.85rem}.nfe41-g textarea{background:var(--input-bg);color:var(--ink);border:1px solid var(--border);border-radius:12px;padding:8px;font:500 .85rem/1.5 Nunito,sans-serif;resize:vertical}.nfe41-r{display:flex;justify-content:flex-end;gap:8px;margin-top:12px}.nfe41-r button{border:0;border-radius:12px;padding:10px 16px;font-weight:800;cursor:pointer;background:var(--input-bg);color:var(--ink)}.nfe41-r .ok{background:#e50914;color:#fff}.nfe41-st{display:block;margin-top:6px;color:var(--muted)}@media(max-width:560px){.nfe41-g{grid-template-columns:1fr}}';document.head.appendChild(nfeCss);
   /* ======================= STYLES ======================= */
   var OUT='-webkit-text-stroke:1px rgba(0,0,0,.6);paint-order:stroke fill';
   var C=''
@@ -28889,7 +28913,7 @@ if(LOOK38)(function(){
         if(!hit||!(IMPORTANT.test(x.t)||(x.k||[]).indexOf('officiel')>=0||(x.k||[]).indexOf('ba')>=0))return;var key='nw_'+(x.u||x.t).slice(-120);if(S[key])return;S[key]=now;if(n>=4)return;n++;
         show('📰 '+hit,x.t,{tag:key,image:x.i||undefined,nat:c.news,nt:c.ntNews&&ntOn,tags:'newspaper'});});}).catch(function(){}));
     if(c.tops||c.ntTops)jobs.push(fetch('tops.json?n='+Math.floor(now/9e5),{cache:'no-cache'}).then(function(r){return r.ok?r.json():null;}).then(function(J){if(!J)return;
-      Object.keys(J.prov||{}).forEach(function(pl){var P=J.prov[pl];if(!P||P.src!=='jw')return;['tv','films'].forEach(function(cat){(P[cat]||[]).forEach(function(x,i){var key=x.mt+'_'+x.id,title=K[key];if(!title)return;var r=x.r||i+1;
+      Object.keys(J.prov||{}).forEach(function(pl){var P=J.prov[pl];if(pl==='netflix'||!P||P.src!=='jw')return;['tv','films'].forEach(function(cat){(P[cat]||[]).forEach(function(x,i){var key=x.mt+'_'+x.id,title=K[key];if(!title)return;var r=x.r||i+1;
         var kk='tp_'+day+'_'+pl+'_'+key+'_'+(r===1?'1':'in');if(S[kk]||(r!==1&&S['tp_'+day+'_'+pl+'_'+key+'_1']))return;S[kk]=now;if(n>=6)return;n++;
         show(r===1?'👑 '+title+' est n°1':'🏆 '+title+' est dans le top',(r===1?'Numéro 1 aujourd\'hui sur ':'N°'+r+' aujourd\'hui sur ')+(PN[pl]||pl)+' en France',{tag:kk,nat:c.tops,nt:c.ntTops&&ntOn,tags:'trophy'});});});});}).catch(function(){}));
     Promise.all(jobs).then(function(){ssent(S);snapshot();});
@@ -28959,6 +28983,84 @@ if(LOOK38)(function(){
     +'.po58-l{display:grid;gap:10px;padding:0 14px 14px}.po58-e{display:grid;grid-template-columns:120px 1fr;gap:12px;align-items:start}.po58-e img{width:120px;aspect-ratio:16/9;object-fit:cover;border-radius:10px}.po58-e b{font-size:.82rem}.po58-e p{margin:4px 0 0;font-size:.8rem;line-height:1.45;color:var(--ink)}'
     +'@media(max-width:520px){.po58-e{grid-template-columns:1fr}.po58-e img{width:100%}}';
   document.head.appendChild(st);
+})();
+
+
+/* ====== V59 — 🗺️ LIEUX : la carte des TOURNAGES et des CADRES (là où se passe l'histoire) de ta collection,
+   d'après Wikidata ; + « 📍 Tourné à / 🎭 Se passe à » dans la fiche ====== */
+(function(){
+  var LK='cineLoc59',PK='cineLocP59';
+  function ld(k){try{return JSON.parse(localStorage.getItem(k)||'{}');}catch(_){return {};}}
+  function sv(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(_){}}
+  var LOC=ld(LK),PL=ld(PK);
+  function kOf(i){return (i.tmdbType==='tv'?'tv':'movie')+'_'+i.tmdbId;}
+  function wapi(q){return fetch('https://www.wikidata.org/w/api.php?format=json&origin=*&action=wbgetentities&'+q).then(function(r){return r.ok?r.json():null;}).catch(function(){return null;});}
+  function runPool(tasks,n){var i=0,out=[];return new Promise(function(res){var act=0;function next(){if(i>=tasks.length&&act===0)return res(out);while(act<n&&i<tasks.length){(function(k){act++;tasks[k]().then(function(v){out[k]=v;},function(){out[k]=null;}).then(function(){act--;next();});})(i++);}}next();});}
+  function chunk(l,n){var o=[];for(var i=0;i<l.length;i+=n)o.push(l.slice(i,i+n));return o;}
+  /* 1) l'identifiant Wikidata de chaque titre (TMDB) ; 2) ses lieux de tournage (P915) et de l'histoire (P840) ; 3) les coordonnées des lieux */
+  function resolve(list,prog){
+    var todo=list.filter(function(i){return !LOC[kOf(i)];});
+    return runPool(todo.map(function(i,n){return function(){return ivJson('https://api.themoviedb.org/3/'+(i.tmdbType==='tv'?'tv':'movie')+'/'+i.tmdbId+'/external_ids?api_key='+TMDB).then(function(e){LOC[kOf(i)]={w:(e&&e.wikidata_id)||'',L:[]};if(prog)prog(n,todo.length);});};}),6)
+    .then(function(){var W=list.map(function(i){return LOC[kOf(i)];}).filter(function(x){return x&&x.w&&!x.done;});
+      return runPool(chunk(W,40).map(function(g){return function(){return wapi('ids='+g.map(function(x){return x.w;}).join('|')+'&props=claims').then(function(a){g.forEach(function(x){var c=(a&&a.entities&&a.entities[x.w]&&a.entities[x.w].claims)||{};x.L=[];
+        [['P915','t'],['P840','c']].forEach(function(p){(c[p[0]]||[]).forEach(function(s){var v=s.mainsnak&&s.mainsnak.datavalue&&s.mainsnak.datavalue.value&&s.mainsnak.datavalue.value.id;if(v&&!x.L.some(function(y){return y[0]===p[1]&&y[1]===v;}))x.L.push([p[1],v]);});});x.done=1;});});};}),3);})
+    .then(function(){var need={};Object.keys(LOC).forEach(function(k){(LOC[k].L||[]).forEach(function(y){if(!PL[y[1]])need[y[1]]=1;});});var N=Object.keys(need);
+      return runPool(chunk(N,45).map(function(g){return function(){return wapi('ids='+g.join('|')+'&props=claims|labels&languages=fr|en').then(function(a){g.forEach(function(q){var e=a&&a.entities&&a.entities[q];if(!e)return;var co=e.claims&&e.claims.P625&&e.claims.P625[0]&&e.claims.P625[0].mainsnak.datavalue;
+        PL[q]=[((e.labels&&(e.labels.fr||e.labels.en))||{}).value||q,co?+co.value.latitude.toFixed(4):null,co?+co.value.longitude.toFixed(4):null];});});};}),3);})
+    .then(function(){sv(LK,LOC);sv(PK,PL);});
+  }
+  /* ---------------- page ---------------- */
+  var MAP=null,LAY=null,FIL={t:1,c:1},LEAF=null;
+  function leaflet(){if(LEAF)return LEAF;var c=document.createElement('link');c.rel='stylesheet';c.href='https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css';document.head.appendChild(c);
+    return LEAF=new Promise(function(res,rej){var s=document.createElement('script');s.src='https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js';s.onload=function(){res(window.L);};s.onerror=function(){LEAF=null;rej();};document.head.appendChild(s);});}
+  function pool(){return (items||[]).filter(function(i){return i&&!i.locked&&i.tmdbId;});}
+  function places(){var by={},fic={};pool().forEach(function(i){var x=LOC[kOf(i)];if(!x)return;(x.L||[]).forEach(function(y){var p=PL[y[1]];if(!p)return;if(p[1]==null){if(y[0]==='c')(fic[p[0]]=fic[p[0]]||[]).push(i);return;}
+      var key=y[0]+y[1];(by[key]=by[key]||{k:y[0],n:p[0],lat:p[1],lng:p[2],it:[]}).it.push(i);});});
+    return {pts:Object.keys(by).map(function(k){return by[k];}),fic:fic};}
+  function draw(v){var P=places(),box=v.querySelector('.lx59-st');
+    var nt=P.pts.filter(function(p){return p.k==='t';}).length,nc=P.pts.filter(function(p){return p.k==='c';}).length,countries={};
+    if(box)box.innerHTML='<span><b>'+nt+'</b> lieux de tournage</span><span><b>'+nc+'</b> lieux où se passent tes histoires</span>';
+    var fx=v.querySelector('.lx59-fic');if(fx){var F=Object.keys(P.fic);fx.innerHTML=F.length?'<h4>✨ Mondes imaginaires visités</h4><div>'+F.slice(0,40).map(function(n){return '<span title="'+esc(P.fic[n].map(function(i){return i.title;}).join(', '))+'">'+esc(n)+' <small>'+esc(P.fic[n][0].title)+'</small></span>';}).join('')+'</div>':'';}
+    if(!MAP||!window.L)return;if(LAY)LAY.remove();LAY=L.layerGroup().addTo(MAP);var B=[];
+    P.pts.forEach(function(p){if(!FIL[p.k])return;var col=p.k==='t'?'#ff4d8d':'#8b5cf6',m=L.circleMarker([p.lat,p.lng],{radius:Math.min(18,6+p.it.length*2),color:'#fff',weight:2,fillColor:col,fillOpacity:.88}).addTo(LAY);B.push([p.lat,p.lng]);
+      m.bindPopup('<div class="lx59-pp"><b>'+(p.k==='t'?'🎬 Tourné à ':'🎭 L\'histoire se passe à ')+esc(p.n)+'</b><div>'+p.it.slice(0,12).map(function(i){return '<button type="button" data-oid="'+esc(String(i.id))+'" title="'+esc(i.title)+'">'+(i.poster?'<img src="'+esc(i.poster)+'" alt="">':'')+'<small>'+esc(i.title)+'</small></button>';}).join('')+'</div></div>',{maxWidth:320});});
+    if(B.length&&!MAP._fit59){MAP._fit59=1;try{MAP.fitBounds(B,{padding:[30,30],maxZoom:5});}catch(_){}}}
+  function renderLieux(v){
+    v.innerHTML='<div class="lx59"><div class="lx59-h"><div><h2>🗺️ Les lieux de tes films et séries</h2><p>Où ils ont été tournés, et où se passent leurs histoires.</p></div><div class="lx59-f"><button type="button" data-f="t" class="on t">🎬 Tournages</button><button type="button" data-f="c" class="on c">🎭 Cadres de l\'histoire</button></div></div>'
+      +'<div class="lx59-st"></div><div class="lx59-pr"><i></i><small>Je cherche les lieux…</small></div><div class="lx59-map"></div><div class="lx59-fic"></div><small class="lx59-src">Lieux issus de Wikidata (encyclopédie libre) : certains titres récents n\'ont pas encore leurs lieux renseignés.</small></div>';
+    FIL={t:1,c:1};MAP=null;LAY=null;
+    v.querySelector('.lx59-f').addEventListener('click',function(e){var b=e.target.closest('[data-f]');if(!b)return;FIL[b.dataset.f]=FIL[b.dataset.f]?0:1;b.classList.toggle('on',!!FIL[b.dataset.f]);draw(v);});
+    v.querySelector('.lx59-map').addEventListener('click',function(e){var b=e.target.closest('[data-oid]');if(!b)return;var it=(items||[]).find(function(i){return String(i.id)===b.dataset.oid;});if(it)try{openModal(it.id);}catch(_){}});
+    leaflet().then(function(Lf){var el=v.querySelector('.lx59-map');if(!el||!el.isConnected)return;var dark=document.body.classList.contains('dark');
+      MAP=Lf.map(el,{worldCopyJump:true,zoomControl:true,attributionControl:true}).setView([30,5],2);
+      Lf.tileLayer('https://{s}.basemaps.cartocdn.com/'+(dark?'dark_all':'rastertiles/voyager')+'/{z}/{x}/{y}{r}.png',{maxZoom:18,subdomains:'abcd',attribution:'© OpenStreetMap · © CARTO'}).addTo(MAP);
+      setTimeout(function(){try{MAP.invalidateSize();}catch(_){}},300);draw(v);}).catch(function(){var el=v.querySelector('.lx59-map');if(el)el.innerHTML='<p class="lx59-e">Carte indisponible pour le moment.</p>';});
+    draw(v);
+    var pr=v.querySelector('.lx59-pr');
+    resolve(pool(),function(n,t){if(pr){pr.querySelector('i').style.width=Math.round((n+1)/t*100)+'%';pr.querySelector('small').textContent='Je cherche les lieux… '+(n+1)+' / '+t;}})
+      .then(function(){if(pr)pr.remove();draw(v);}).catch(function(){if(pr)pr.remove();});
+  }
+  try{cinePage('lieux','🗺️ Lieux','badges',renderLieux);}catch(e){console.warn('lieux59',e);}
+
+  /* ---------------- dans la fiche ---------------- */
+  function inject(it){var mc=document.getElementById('modal-content');if(!mc||mc.querySelector('.lx59-m'))return;var ref=mc.querySelector('.modal-synopsis');if(!ref)return;
+    resolve([it]).then(function(){var x=LOC[kOf(it)];if(!x||!(x.L||[]).length)return;var mc2=document.getElementById('modal-content');if(!mc2||mc2.querySelector('.lx59-m'))return;var r2=mc2.querySelector('.modal-synopsis');if(!r2)return;
+      var t=[],c=[];x.L.forEach(function(y){var p=PL[y[1]];if(!p)return;(y[0]==='t'?t:c).push(p[0]);});if(!t.length&&!c.length)return;
+      var d=document.createElement('div');d.className='lx59-m';d.innerHTML=(c.length?'<span>🎭 <b>Se passe à</b> '+esc(c.slice(0,4).join(', '))+'</span>':'')+(t.length?'<span>🎬 <b>Tourné à</b> '+esc(t.slice(0,5).join(', '))+'</span>':'');
+      r2.insertAdjacentElement('afterend',d);});}
+  try{var oOM=openModal;openModal=function(id){var r=oOM.apply(this,arguments);try{var it=items.find(function(x){return x.id===id;});if(it&&it.tmdbId)setTimeout(function(){inject(it);},400);}catch(_){}return r;};}catch(e){console.warn('lx59m',e);}
+
+  var C=''
+  +'.lx59{max-width:1100px;margin:0 auto;padding-bottom:30px;color:var(--ink)}.lx59-h{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap;margin-bottom:10px}.lx59-h h2{font:800 1.6rem Fredoka,sans-serif;margin:0}.lx59-h p{margin:2px 0 0;color:var(--muted)}'
+  +'.lx59-f{display:flex;gap:6px}.lx59-f button{border:0;border-radius:99px;padding:8px 14px;font:700 .8rem Nunito,sans-serif;cursor:pointer;background:var(--input-bg);color:var(--muted);box-shadow:inset 0 0 0 1px var(--border)}.lx59-f button.on.t{background:#ff4d8d;color:#fff}.lx59-f button.on.c{background:#8b5cf6;color:#fff}'
+  +'.lx59-st{display:flex;gap:10px;flex-wrap:wrap;margin:6px 0 10px}.lx59-st span{background:var(--card-bg);border-radius:14px;padding:8px 12px;font-size:.82rem;box-shadow:inset 0 0 0 1px var(--border)}.lx59-st b{font:800 1.1rem Fredoka,sans-serif;margin-right:4px}'
+  +'.lx59-pr{position:relative;height:22px;margin-bottom:8px}.lx59-pr i{position:absolute;left:0;top:0;bottom:0;width:0;border-radius:99px;background:linear-gradient(90deg,#ff4d8d,#8b5cf6);opacity:.35;transition:width .3s}.lx59-pr small{position:relative;padding-left:10px;line-height:22px;font-size:.75rem;color:var(--muted)}'
+  +'.lx59-map{height:min(70vh,620px);border-radius:22px;overflow:hidden;box-shadow:0 24px 50px -30px #000,inset 0 0 0 1px var(--border);background:var(--input-bg)}.lx59-e{padding:30px;text-align:center;color:var(--muted)}'
+  +'.lx59-pp b{display:block;margin-bottom:6px;font-size:.85rem}.lx59-pp>div{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}.lx59-pp button{border:0;background:none;padding:0;cursor:pointer;text-align:center}.lx59-pp img{width:100%;aspect-ratio:2/3;object-fit:cover;border-radius:6px}.lx59-pp small{display:block;font-size:.62rem;line-height:1.2;max-height:2.4em;overflow:hidden}'
+  +'.lx59-fic{margin-top:14px}.lx59-fic h4{margin:0 0 8px;font:700 1rem Fredoka,sans-serif}.lx59-fic div{display:flex;flex-wrap:wrap;gap:6px}.lx59-fic span{background:linear-gradient(135deg,rgba(139,92,246,.18),rgba(255,77,141,.14));border-radius:99px;padding:6px 12px;font-size:.8rem;font-weight:700}.lx59-fic small{font-weight:500;color:var(--muted);margin-left:4px}'
+  +'.lx59-src{display:block;margin-top:10px;color:var(--muted);font-size:.72rem}'
+  +'.lx59-m{display:flex;flex-direction:column;gap:3px;margin:8px 0;font-size:.82rem;color:var(--ink)}.lx59-m b{font-weight:800}';
+  var st=document.createElement('style');st.textContent=C;document.head.appendChild(st);
 })();
 
 /* ==V29-END== */
