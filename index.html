@@ -26293,15 +26293,15 @@ if(LOOK38)(function(){
   +'@media(hover:hover){'+A+'.gh-card:hover .gh-ico{animation:gi38 .7s cubic-bezier(.2,1.4,.4,1)}}@keyframes gi38{40%{transform:translateY(-8px) rotate(-8deg) scale(1.2)}}'
 
   /* ================= 6) ENTRÉE DANS L\'APPLI (après le générique) ================= */
-  +'html.in38 header{animation:hd38 .95s cubic-bezier(.16,1,.3,1) backwards;transform-origin:50% 0}'
+  +'html.in38 header{animation:hd38 .5s cubic-bezier(.16,1,.3,1) backwards;transform-origin:50% 0}'
   +'@keyframes hd38{from{opacity:0;transform:perspective(900px) rotateX(-80deg) translateY(-30px)}to{opacity:1;transform:none}}'
-  +'html.in38 header nav .nav-btn{animation:nv38 .65s cubic-bezier(.2,1.3,.4,1) backwards;animation-delay:calc(.28s + var(--n38,0)*38ms)}'
+  +'html.in38 header nav .nav-btn{animation:nv38 .4s cubic-bezier(.2,1.3,.4,1) backwards;animation-delay:calc(.08s + var(--n38,0)*10ms)}'
   +'@keyframes nv38{from{opacity:0;transform:perspective(420px) translate3d(0,-16px,-50px) rotateX(-95deg)}to{opacity:1;transform:none}}'
-  +'html.in38 .hero{animation:hr38 1.05s cubic-bezier(.16,1,.3,1) .12s backwards;transform-origin:50% 0}'
+  +'html.in38 .hero{animation:hr38 .55s cubic-bezier(.16,1,.3,1) .04s backwards;transform-origin:50% 0}'
   +'@keyframes hr38{from{opacity:0;transform:perspective(1300px) translate3d(0,70px,-260px) rotateX(24deg)}to{opacity:1;transform:none}}'
-  +'html.in38 .stat-pill{animation:sp38 .85s cubic-bezier(.2,1.3,.4,1) backwards;animation-delay:calc(.5s + var(--n38,0)*75ms)}'
+  +'html.in38 .stat-pill{animation:sp38 .5s cubic-bezier(.2,1.3,.4,1) backwards;animation-delay:calc(.15s + var(--n38,0)*35ms)}'
   +'@keyframes sp38{from{opacity:0;transform:perspective(520px) rotateY(-110deg) scale(.7)}to{opacity:1;transform:none}}'
-  +'html.in38 main>[id^="view-"]{animation:hr38 1s cubic-bezier(.16,1,.3,1) .4s backwards}'
+  +'html.in38 main>[id^="view-"]{animation:hr38 .55s cubic-bezier(.16,1,.3,1) .1s backwards}'
   /* le grand bandeau de la collection penche légèrement vers la souris */
   +A+'.hero.ht38{transform:perspective(1400px) rotateX(var(--hy,0deg)) rotateY(var(--hx,0deg));transition:transform .3s ease-out}'
 
@@ -26318,8 +26318,8 @@ if(LOOK38)(function(){
   +'.i38-vig{position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse at center,transparent 45%,rgba(0,0,0,.75))}'
   +'.i38-bar{position:absolute;left:0;right:0;height:11vh;background:#000;z-index:3;transition:transform .8s cubic-bezier(.7,0,.2,1)}.i38-bar.t{top:0}.i38-bar.b{bottom:0}'
   +'.i38.out .i38-bar.t{transform:translateY(-100%)}.i38.out .i38-bar.b{transform:translateY(100%)}'
-  +'.i38-fl{position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none;z-index:4}'
-  +'.i38-fl.go{animation:fl38 .7s ease-out}@keyframes fl38{0%{opacity:.95}100%{opacity:0}}'
+  +'.i38-fl{position:absolute;inset:0;background:radial-gradient(circle at 50% 45%,#fff3d6,#ffb85c 45%,rgba(255,120,60,0) 75%);opacity:0;pointer-events:none;z-index:4}'
+  +'.i38-fl.go{animation:fl38 .42s ease-out}@keyframes fl38{0%{opacity:.6}100%{opacity:0}}'
   +'.i38-tag{position:absolute;left:0;right:0;bottom:calc(15vh + 8px);text-align:center;z-index:5;font-weight:600;font-size:clamp(.95rem,2.6vw,1.35rem);letter-spacing:.02em;text-shadow:0 2px 14px rgba(0,0,0,.8);opacity:0;transform:translateY(16px);transition:opacity .8s,transform .8s cubic-bezier(.2,1,.3,1)}'
   +'.i38-tag b{color:#ffd23f}.i38-tag small{display:block;margin-top:8px;font-size:.72em;font-weight:500;opacity:.7;letter-spacing:.18em;text-transform:uppercase}'
   +'.i38.tg .i38-tag{opacity:1;transform:none}'
@@ -26505,14 +26505,15 @@ if(LOOK38)(function(){
     $$('.stat-pill .num').forEach(function(el,i){var raw=el.textContent.trim(),m=/^(\d+(?:[.,]\d+)?)(.*)$/.exec(raw);if(!m)return;var to=parseFloat(m[1].replace(',','.')),dec=(m[1].split(/[.,]/)[1]||'').length,suf=m[2],t0=0,dur=1100,delay=520+i*75;
       if(!to)return;setTimeout(function(){var step=function(ts){if(!t0)t0=ts;var p=Math.min(1,(ts-t0)/dur),e=1-Math.pow(1-p,4);if(el.textContent.trim()!==el._c38&&el._c38!=null){return;}el._c38=(to*e).toFixed(dec).replace('.',dec&&raw.indexOf(',')>=0?',':'.')+suf;el.textContent=el._c38;if(p<1)requestAnimationFrame(step);else{el.textContent=raw;el._c38=null;}};el._c38=el.textContent.trim();requestAnimationFrame(step);},delay);});
   }
+  try{if('scrollRestoration' in history)history.scrollRestoration='manual';}catch(_){}
   function enterApp(k){
     if(RM)return;
     if(document.getElementById('acl-ov')||document.getElementById('maint-ov')){k=k||0;if(k<900)setTimeout(function(){enterApp(k+1);},350);return;}
     $$('header nav .nav-btn').forEach(function(b,i){b.style.setProperty('--n38',i);});
     $$('.stat-pill').forEach(function(b,i){b.style.setProperty('--n38',i);});
-    once(de,'in38',2200);countUp();
-    var h1=document.getElementById('app-h1');if(h1)setTimeout(function(){playTitle(h1);},250);
-    var el=visibleView();if(el){var hh=el.querySelector('.section-title h2');if(hh)setTimeout(function(){playTitle(hh);},450);}
+    once(de,'in38',900);countUp();try{if(!location.hash)window.scrollTo(0,0);}catch(_){}
+    var h1=document.getElementById('app-h1');if(h1)setTimeout(function(){playTitle(h1);},80);
+    var el=visibleView();if(el){var hh=el.querySelector('.section-title h2');if(hh)setTimeout(function(){playTitle(hh);},160);}
   }
   window.CineEnter38=enterApp;
 
@@ -28207,7 +28208,7 @@ if(LOOK38)(function(){
     addedFor(c.k).then(function(l){m.innerHTML=l.length?l.map(function(o){var mine=!o.cid||o.uid===me||adm;return '<span><img src="'+esc(urlOf(o))+'" alt="" title="'+esc((o.pn||[]).join(', ')+(o.by?' · ajoutée par '+o.by:''))+'">'+(mine?'<button type="button" data-del="'+(o.cid||('l'+o.id))+'" title="Retirer">✕</button>':'')+'</span>';}).join(''):'<em>Personne n\'a encore ajouté d\'image pour '+esc(c.name)+'.</em>';});}
   document.addEventListener('paste',function(e){return;var t=e.target;if(t&&(t.tagName==='INPUT'||t.tagName==='TEXTAREA'))return;
     var f=[].slice.call((e.clipboardData&&e.clipboardData.files)||[]);if(f.length){e.preventDefault();addFiles(f);return;}var u=e.clipboardData&&e.clipboardData.getData('text');if(u&&/^https?:\/\/\S+$/.test(u.trim())){e.preventDefault();addUrl(u);}});
-  setInterval(function(){var b=document.querySelector('#view-mur .mi54');if(b)b.remove();},1500);
+
   /* ajouts chargés sur le mur ouvert : série / film (par sa clé) ou actrice / acteur (par les photos où on l'a identifié) */
   function addedInto(sel){var M=V29.M,gen=M.gen;if(!sel)return;var c=curSel(),p;
     if(c)p=addedFor(c.k).then(function(l){return l.map(function(o){return toItem(o,c.name);});});
@@ -28691,7 +28692,7 @@ if(LOOK38)(function(){
     /* d'abord les images sans texte (les plus belles en fond), puis fr/en */
     return IMG[k]=ivJson('https://api.themoviedb.org/3/'+mt+'/'+id+'/images?api_key='+TMDB+'&include_image_language=null,fr,en').then(function(d){
       var b=((d&&d.backdrops)||[]).filter(function(x){return x.file_path&&(x.width||0)>=1280;});b.sort(function(x,y){return (x.iso_639_1?1:0)-(y.iso_639_1?1:0)||(y.vote_average||0)-(x.vote_average||0);});
-      return b.slice(0,40).map(function(x){return 'https://image.tmdb.org/t/p/w1280'+x.file_path;});}).catch(function(){delete IMG[k];return [];});}
+      var sz=innerWidth<800?'w500':'w780';return b.slice(0,15).map(function(x){return 'https://image.tmdb.org/t/p/'+sz+x.file_path;});}).catch(function(){delete IMG[k];return [];});}
   function build(list,key){
     if(L&&L.dataset.k===key)return;if(L)L.remove();
     var el=document.createElement('div');el.className='bg54';el.dataset.k=key;el.setAttribute('aria-hidden','true');
@@ -28710,14 +28711,15 @@ if(LOOK38)(function(){
       var sk=(t[0]==='tv'?'tv_':'movie_')+t[1];
       return Promise.all([images(t[0],t[1]),window.__murShared?window.__murShared(sk).catch(function(){return [];}):Promise.resolve([])]).then(function(a){busy=0;if(want!==key)return;
         /* les images ajoutées par les joueurs sont réparties dans les bandes (chacune une fois) */
-        var base=a[0],add=a[1].slice(0,24),list=[];for(var i=0;i<36&&base.length;i++)list.push(base[i%base.length]);add.forEach(function(u,j){list.splice(Math.round((j+1)*list.length/(add.length+1)),0,u);});
+        var base=a[0],add=a[1].slice(0,6),list=[];for(var i=0;i<15&&base.length;i++)list.push(base[i%base.length]);add.forEach(function(u,j){list.splice(Math.round((j+1)*list.length/(add.length+1)),0,u);});
         if(!list.length){if(L){L.remove();L=null;}return;}build(list,key+'|'+add.length);});
     }).catch(function(){busy=0;});
   }
   window.__roll54=function(force){if(force&&L)L.dataset.k='';sync();};
   window.addEventListener('cine-social-ready',function(){setTimeout(sync,1500);});
   var lastT=null;
-  setInterval(function(){if(document.hidden)return;var t=theme()+'|'+rollOn();if(t!==lastT){lastT=t;sync();}place(false);},700);
+  setInterval(function(){if(document.hidden)return;var t=theme()+'|'+rollOn();if(t!==lastT){lastT=t;sync();}place(false);},2000);
+  document.addEventListener('click',function(e){if(e.target.closest&&e.target.closest('header nav, .nav-btn'))setTimeout(function(){place(false);},60);},true);
   /* le thème change aussi quand la série du mois change : on revérifie de temps en temps */
   setInterval(function(){if(!document.hidden)sync();},5*60*1000);
 
@@ -29151,6 +29153,19 @@ if(LOOK38)(function(){
   function lbl(){var b=document.querySelector('header nav .nav-btn[data-view="actus"]');if(b&&b.textContent.trim()==='📰 Actus')b.textContent='🔎 Actus d\'un titre';}
   lbl();setTimeout(lbl,1500);setTimeout(lbl,6000);
   wrap();window.addEventListener('cine-social-ready',wrap);setTimeout(wrap,8000);setTimeout(wrap,20000);
+})();
+
+
+/* ====== V62 — pages instantanées : quand on touche un onglet du menu, l'écran change TOUT DE SUITE
+   et le contenu lourd (Pass, Badges, Mon Top, Calendrier, Jeux…) se calcule juste après l'affichage ====== */
+(function(){
+  var ND=0;
+  document.addEventListener('click',function(e){if(e.target.closest&&e.target.closest('header nav .nav-btn')){ND=1;setTimeout(function(){ND=0;},0);}},true);
+  var Q={};
+  function later(name,f,ctx,args){if(Q[name])return;Q[name]=1;var done=false;function run(){if(done)return;done=true;Q[name]=0;try{f.apply(ctx,args);}catch(e){console.warn('nd62',name,e);}}
+    try{requestAnimationFrame(function(){setTimeout(run,0);});}catch(_){}setTimeout(run,90);}
+  ['initPlanning','renderPass','renderBadges','renderTopCustom','renderTierList','renderCalendar','renderGamesHub','renderSagas','renderToku','renderMarathons','initAlerts','renderUpcomingEpisodes','initCatalog','renderPassport','renderJournal','renderWishGrid','renderSubsRow','renderPlatformChips','renderAvailBox','renderTrending','renderForYou'].forEach(function(n){
+    try{var f=eval(n);if(typeof f!=='function')return;var w=function(){if(ND)return later(n,f,this,arguments);return f.apply(this,arguments);};eval(n+'=w');}catch(_){}});
 })();
 
 /* ==V29-END== */
