@@ -35,6 +35,21 @@ const SOURCES = [
   { n: 'The Hollywood Reporter', u: 'https://www.hollywoodreporter.com/feed/', l: 'en' },
   { n: 'Screen Rant', u: 'https://screenrant.com/feed/', l: 'en' },
   { n: 'Collider', u: 'https://collider.com/feed/', l: 'en' },
+  { n: 'AlloCiné Cinéma', u: 'https://www.allocine.fr/rss/news-cine.xml', l: 'fr' },
+  { n: 'Télérama Cinéma', u: 'https://www.telerama.fr/rss/cinema.xml', l: 'fr' },
+  { n: 'Konbini Biiinge', u: 'https://biiinge.konbini.com/feed/', l: 'fr' },
+  { n: 'Numerama Pop culture', u: 'https://www.numerama.com/pop-culture/feed/', l: 'fr' },
+  { n: 'Les Inrocks Cinéma', u: 'https://www.lesinrocks.com/cinema/feed/', l: 'fr' },
+  { n: 'Horreur Québec', u: 'https://horreur.quebec/feed/', l: 'fr', hor: 1 },
+  { n: 'Bloody Disgusting', u: 'https://bloody-disgusting.com/feed/', l: 'en', hor: 1 },
+  { n: 'Dread Central', u: 'https://www.dreadcentral.com/feed/', l: 'en', hor: 1 },
+  { n: 'IndieWire', u: 'https://www.indiewire.com/feed/', l: 'en' },
+  { n: '/Film', u: 'https://www.slashfilm.com/feed/', l: 'en' },
+  { n: 'JoBlo', u: 'https://www.joblo.com/feed/', l: 'en' },
+  { n: 'Den of Geek', u: 'https://www.denofgeek.com/feed/', l: 'en' },
+  { n: 'ComingSoon', u: 'https://www.comingsoon.net/feed', l: 'en' },
+  { n: 'TVLine', u: 'https://tvline.com/feed/', l: 'en' },
+  { n: 'THR Films', u: 'https://www.hollywoodreporter.com/c/movies/feed/', l: 'en' },
   { n: 'Google Actu Séries', u: 'https://news.google.com/rss/search?q=s%C3%A9rie+saison+OR+netflix+OR+%22prime+video%22+OR+disney%2B&hl=fr&gl=FR&ceid=FR:fr', l: 'fr', gn: 1 },
   { n: 'Google Actu Cinéma', u: 'https://news.google.com/rss/search?q=film+cin%C3%A9ma+sortie+OR+bande-annonce&hl=fr&gl=FR&ceid=FR:fr', l: 'fr', gn: 1 }
 ];
@@ -54,7 +69,7 @@ function parseRss(xml, src) {
     let img = (x.match(/<media:(?:content|thumbnail)[^>]+url="([^"]+)"/i) || [])[1] || (x.match(/<enclosure[^>]+url="([^"]+\.(?:jpe?g|png|webp)[^"]*)"/i) || [])[1] || (raw.match(/<img[^>]+src="([^"]+)"/i) || [])[1] || '';
     const d = Date.parse(strip(tag(x, 'pubDate')) || strip(tag(x, 'dc:date'))) || Date.now();
     let desc = strip(raw); if (src.gn || desc.startsWith(t.slice(0, 30))) desc = '';
-    if (t) out.push({ t, d: desc.slice(0, 420), u: link, i: img.replace(/&amp;/g, '&'), s, ts: d, l: src.l });
+    if (t) out.push({ t, d: desc.slice(0, 420), u: link, i: img.replace(/&amp;/g, '&'), s, ts: d, l: src.l, hor: src.hor ? 1 : 0 });
   }
   return out;
 }
@@ -75,11 +90,11 @@ async function buildNews() {
   let all = [];
   for (const s of SOURCES) {
     const xml = await get(s.u); if (!xml) continue;
-    const l = parseRss(xml, s).slice(0, s.gn ? 25 : 18); console.log(`📰 ${s.n}: ${l.length}`); all = all.concat(l);
+    const l = parseRss(xml, s).slice(0, s.gn ? 25 : 14); console.log(`📰 ${s.n}: ${l.length}`); all = all.concat(l);
   }
   const seen = new Set(), weekAgo = Date.now() - 6 * 864e5;
   const norm = t => t.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9 ]/g, ' ').split(/\s+/).filter(w => w.length > 2).slice(0, 7).join(' ');
-  all = all.filter(x => x.ts > weekAgo).sort((a, b) => b.ts - a.ts).filter(x => { const k = norm(x.t); if (!k || seen.has(k)) return false; seen.add(k); return true; }).slice(0, 140);
+  all = all.filter(x => x.ts > weekAgo).sort((a, b) => b.ts - a.ts).filter(x => { const k = norm(x.t); if (!k || seen.has(k)) return false; seen.add(k); return true; }).slice(0, 220);
   // traduction des articles anglais (titre + résumé), avec mémoire pour ne pas retraduire
   let cache = {}; try { cache = JSON.parse(await readFile('news.json', 'utf8')).tr || {}; } catch (_) {}
   const tr = {};
@@ -95,6 +110,8 @@ async function buildNews() {
     if (RX.spoiler.test(txt)) k.push('spoiler');
     if (RX.officiel.test(txt)) k.push('officiel'); else if (RX.rumeur.test(txt)) k.push('rumeur');
     if (RX.ba.test(txt)) k.push('ba'); if (RX.bo.test(txt)) k.push('bo');
+    if (x.hor || /(horreur|horror|slasher|[ée]pouvante|possession|exorcis|zombie|found footage)/i.test(txt)) k.push('horreur');
+    delete x.hor;
     x.k = k; delete x.l;
   }
   return { updated: new Date().toISOString(), items: all, tr };

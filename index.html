@@ -27350,7 +27350,7 @@ if(LOOK38)(function(){
   var IDX={};
   function lists(){var T=D.tops||{},L=[];
     if(T.netflix){L.push(['netflix','films',T.netflix.films||[]]);L.push(['netflix','tv',T.netflix.tv||[]]);}
-    Object.keys(T.prov||{}).forEach(function(k){L.push([k,'films',T.prov[k].films||[]]);L.push([k,'tv',T.prov[k].tv||[]]);});
+    Object.keys(T.prov||{}).forEach(function(k){if(k==='netflix')return;L.push([k,'films',T.prov[k].films||[]]);L.push([k,'tv',T.prov[k].tv||[]]);});
     if(T.bo)L.push(['bo','films',T.bo]);
     if(T.stremio){L.push(['stremio','films',T.stremio.films||[]]);L.push(['stremio','tv',T.stremio.tv||[]]);}
     return L;}
@@ -27378,18 +27378,18 @@ if(LOOK38)(function(){
     return {chip:chip,sub:sub};}
 
   /* ======================= TENDANCES : LES TOPS ======================= */
-  var TS={pl:'netflix',cat:'films',src:'day'};
+  var TS={pl:'netflix',cat:'films',src:'week'};
   function hhmm(iso){var d=new Date(iso||Date.now());var t=d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}).replace(':','h');var today=new Date().toDateString()===d.toDateString();return (today?'aujourd\'hui':d.toLocaleDateString('fr-FR',{day:'numeric',month:'short'}))+' à '+t;}
   function topList(){var T=D.tops||{};if(TS.pl==='netflix'&&!(TS.src==='day'&&T.prov&&T.prov.netflix))return T.netflix?(TS.cat==='tv'?T.netflix.tv:T.netflix.films):[];if(TS.pl==='bo')return T.bo||[];if(TS.pl==='stremio')return T.stremio?T.stremio[TS.cat]||[]:[];var p=(T.prov||{})[TS.pl];return p?p[TS.cat]||[]:[];}
-  function srcLabel(){var T=D.tops||{};if(TS.pl==='netflix'&&TS.src==='day'&&T.prov&&T.prov.netflix)return '🔥 Les plus regardés AUJOURD\'HUI sur Netflix en France · données de '+hhmm(T.updated);if(TS.pl==='netflix')return T.netflix?'Top 10 officiel Netflix · France · semaine du '+new Date(T.netflix.week+'T12:00').toLocaleDateString('fr-FR',{day:'numeric',month:'long'}):'';
-    if(TS.pl==='bo')return 'Recettes mondiales cumulées des films à l\'affiche · '+hhmm(T.updated);if(TS.pl==='stremio')return 'Les plus populaires sur Stremio en ce moment · '+hhmm(T.updated);return '🔥 Les plus regardés AUJOURD\'HUI en France sur '+(PLAT[TS.pl]||{}).n+' · données de '+hhmm(T.updated);}
+  function srcLabel(){var T=D.tops||{};if(TS.pl==='netflix'&&TS.src==='day'&&T.prov&&T.prov.netflix)return '🔥 Estimation : titres Netflix qui buzzent aujourd\'hui en France (pas le classement officiel) · données de '+hhmm(T.updated);if(TS.pl==='netflix')return T.netflix?'Top 10 officiel Netflix · France · semaine du '+new Date(T.netflix.week+'T12:00').toLocaleDateString('fr-FR',{day:'numeric',month:'long'}):'';
+    if(TS.pl==='bo')return 'Recettes mondiales cumulées des films à l\'affiche · '+hhmm(T.updated);if(TS.pl==='stremio')return 'Les plus populaires sur Stremio en ce moment · '+hhmm(T.updated);return '🔥 Titres qui buzzent aujourd\'hui en France sur '+(PLAT[TS.pl]||{}).n+' (estimation, la plateforme ne publie pas son top) · données de '+hhmm(T.updated);}
   function renderTops(box){
     var T=D.tops;if(!T){box.innerHTML='<div class="tp41-empty">🏆 Les tops arrivent… (mis à jour toutes les 3 h)</div>';return;}
     var l=topList()||[];
     var tabs=Object.keys(PLAT).filter(function(k){return k==='netflix'?T.netflix:k==='bo'?T.bo:k==='stremio'?T.stremio:(T.prov||{})[k];});
     box.innerHTML='<div class="tp41-h"><h3>🏆 Les tops du moment</h3><small>mis à jour '+hhmm(T.updated)+' · toutes les heures</small></div>'
       +'<div class="tp41-pl">'+tabs.map(function(k){var p=PLAT[k];return '<button type="button" data-pl="'+k+'" class="'+(TS.pl===k?'on':'')+'" style="--c:'+p.c+'"><i>'+p.i+'</i>'+p.n+'</button>';}).join('')+'</div>'
-      +(TS.pl==='netflix'&&T.prov&&T.prov.netflix?'<div class="tp41-cat"><button type="button" data-src="day" class="'+(TS.src==='day'?'on':'')+'">🔥 Aujourd\'hui</button><button type="button" data-src="week" class="'+(TS.src!=='day'?'on':'')+'">🏆 Top 10 officiel (semaine)</button></div>':'')+(TS.pl!=='bo'?'<div class="tp41-cat"><button type="button" data-cat="films" class="'+(TS.cat==='films'?'on':'')+'">🎬 Films</button><button type="button" data-cat="tv" class="'+(TS.cat==='tv'?'on':'')+'">📺 Séries</button></div>':'')
+      +(TS.pl==='netflix'&&T.prov&&T.prov.netflix?'<div class="tp41-cat"><button type="button" data-src="day" class="'+(TS.src==='day'?'on':'')+'">🔥 Tendance du jour (estimation)</button><button type="button" data-src="week" class="'+(TS.src!=='day'?'on':'')+'">🏆 Top 10 officiel (semaine)</button></div>':'')+(TS.pl!=='bo'?'<div class="tp41-cat"><button type="button" data-cat="films" class="'+(TS.cat==='films'?'on':'')+'">🎬 Films</button><button type="button" data-cat="tv" class="'+(TS.cat==='tv'?'on':'')+'">📺 Séries</button></div>':'')
       +'<div class="tp41-src">'+srcLabel()+'</div>'
       +'<div class="tp41-row" style="--c:'+(PLAT[TS.pl]||{}).c+'">'+l.map(function(x,i){var r=x.r||i+1,m=move(Object.assign({r:r},x),(TS.pl==='netflix'&&TS.src==='day'&&D.tops&&D.tops.prov&&D.tops.prov.netflix)?'netflixday':TS.pl),k=x.mt+'_'+x.id,own=x.id&&items.some(function(it){return +it.tmdbId===+x.id&&(it.tmdbType==='tv'?'tv':'movie')===x.mt;});
         return '<button type="button" class="tp41-it" data-k="'+(x.id?k:'')+'"><span class="tp41-n">'+r+'</span><span class="tp41-po">'+(x.p?'<img src="'+IMG(x.p)+'" alt="" loading="lazy">':'<span class="tp41-np">🎬</span>')+m.chip+(own?'<em class="tp41-own">✓ Vu / suivi</em>':'')+'</span><span class="tp41-t">'+esc(x.t||'')+'</span><span class="tp41-s">'+(TS.pl==='bo'&&x.rev?(x.rev/1e6).toFixed(0)+' M$ · ':'')+(x.s?esc(x.s)+' · ':'')+m.sub+'</span></button>';}).join('')+'</div>';
@@ -27413,7 +27413,7 @@ if(LOOK38)(function(){
   function mineOf(x,T){if(x._mk===T)return x._mv;var n=nOf(x),v='';for(var k in T){if(n.indexOf(' '+k+' ')>=0){v=T[k];break;}}x._mk=T;x._mv=v;return v;}
   function nOf(x){return x._n||(x._n=norm(x.t+' '+(x.d||'')));}
   function topOf(x){if(!D.tops)return null;var n=x._nt||(x._nt=norm(x.t)),best=null;for(var i=0;i<TOPN.length;i++){var y=TOPN[i];if(n.indexOf(y.n)>=0&&(!best||y.r<best.r))best=y;}return best;}
-  var TAGS={officiel:['✅ Officiel','ok'],rumeur:['🕵️ Rumeur','ru'],spoiler:['⚠️ Spoiler','sp'],ba:['🎞️ Bande-annonce','ba'],bo:['🎟️ Box-office','bo']};
+  var TAGS={horreur:['👻 Horreur','hr'],officiel:['✅ Officiel','ok'],rumeur:['🕵️ Rumeur','ru'],spoiler:['⚠️ Spoiler','sp'],ba:['🎞️ Bande-annonce','ba'],bo:['🎟️ Box-office','bo']};
   function tagsHtml(x,mine,top){return (mine?'<em class="tg41 me">📌 '+esc(mine)+'</em>':'')+(top?'<em class="tg41 tp" style="--c:'+PLAT[top.pl].c+'">'+(top.r===1?'👑 ':'')+'N°'+top.r+' '+PLAT[top.pl].n+'</em>':'')+(x.k||[]).map(function(k){var t=TAGS[k];return t?'<em class="tg41 '+t[1]+'">'+t[0]+'</em>':'';}).join('');}
   function card(x,i,T,big){
     var mine=mineOf(x,T),top=topOf(x),sp=(x.k||[]).indexOf('spoiler')>=0&&!MS.open[i];
@@ -27428,7 +27428,7 @@ if(LOOK38)(function(){
     if(T.netflix){[['tv','série'],['films','film']].forEach(function(c){var l=T.netflix[c[0]]||[],a=l[0];if(a)out.push({x:a,pl:'netflix',t:'👑 « '+a.t+' » est n°1 '+(c[0]==='tv'?'des séries':'des films')+' sur Netflix France'+(a.w>1?' ('+a.w+'e semaine dans le top 10)':' (nouveau !)')});
       l.forEach(function(x){if(x.p0&&x.p0-x.r>=3)out.push({x:x,pl:'netflix',t:'📈 « '+x.t+' » gagne '+(x.p0-x.r)+' places sur Netflix (n°'+x.r+')'});else if(x.p0&&x.r-x.p0>=3)out.push({x:x,pl:'netflix',t:'📉 « '+x.t+' » perd '+(x.r-x.p0)+' places sur Netflix (n°'+x.r+')'});else if(!x.p0&&x.r<=5&&x.r>1)out.push({x:x,pl:'netflix',t:'🆕 « '+x.t+' » entre directement n°'+x.r+' sur Netflix'});
         if(x.w>=6)out.push({x:x,pl:'netflix',t:'⏳ « '+x.t+' » tient depuis '+x.w+' semaines dans le top 10 Netflix'});});});}
-    Object.keys(T.prov||{}).forEach(function(k){['tv','films'].forEach(function(c){var a=((T.prov[k]||{})[c]||[])[0];if(a&&(!a.p0||a.p0!==1))out.push({x:a,pl:k,t:'🔥 « '+a.t+' » prend la tête sur '+PLAT[k].n});});});
+    Object.keys(T.prov||{}).forEach(function(k){if(k==='netflix')return;['tv','films'].forEach(function(c){var a=((T.prov[k]||{})[c]||[])[0];if(a&&a.day&&(!a.p0||a.p0!==1))out.push({x:a,pl:k,t:'🔥 « '+a.t+' » prend la tête sur '+PLAT[k].n});});});
     if(T.bo&&T.bo[0])out.push({x:T.bo[0],pl:'bo',t:'🎟️ « '+T.bo[0].t+' » domine le box-office mondial ('+(T.bo[0].rev/1e6).toFixed(0)+' M$)'});
     return out.slice(0,14);}
   function renderMag(box){
@@ -27437,7 +27437,7 @@ if(LOOK38)(function(){
     var f=MS.f,list=L.filter(function(x){if(f==='all')return true;if(f==='me')return !!mineOf(x,T);if(f==='tops')return !!topOf(x);return (x.k||[]).indexOf(f)>=0;});
     var heroes=L.filter(function(x){return x.i&&(x.k||[]).indexOf('spoiler')<0;}),mineL=L.filter(function(x){return mineOf(x,T);});
     var lead=(mineL.find(function(x){return x.i;})||heroes[0]||L[0]),side=heroes.filter(function(x){return x!==lead;}).slice(0,4);
-    var chips=[['all','Tout'],['me','📌 Mes séries'],['officiel','✅ Officiel'],['rumeur','🕵️ Rumeurs'],['spoiler','⚠️ Spoilers'],['ba','🎞️ Bandes-annonces'],['bo','🎟️ Box-office'],['tops','🏆 Dans les tops']];
+    var chips=[['all','Tout'],['me','📌 Mes séries'],['officiel','✅ Officiel'],['rumeur','🕵️ Rumeurs'],['spoiler','⚠️ Spoilers'],['ba','🎞️ Bandes-annonces'],['bo','🎟️ Box-office'],['horreur','👻 Horreur'],['tops','🏆 Dans les tops']];
     var tn=topNews();
     box.innerHTML='<div class="mg41-h"><h3>📰 À la une</h3><small>'+N.items.length+' articles · tous les sites · en français · mis à jour '+feedAgo(Date.parse(N.updated)||Date.now())+'</small></div>'
       +(f==='all'?'<div class="mg41-top">'+card(lead,lead._i,T,1)+'<div class="mg41-side">'+side.map(function(x){return card(x,x._i,T,2);}).join('')+'</div></div>':'')
@@ -27498,7 +27498,7 @@ if(LOOK38)(function(){
   +'.nw41.hero41 .nw41-b b{font-size:1.45rem}'
   +'.nw41.hero41 .nw41-im{position:relative}.nw41.hero41 .nw41-im::after{content:"";position:absolute;inset:50% 0 0;background:linear-gradient(transparent,rgba(0,0,0,.55))}'
   +'.nw41-tg{display:flex;gap:5px;flex-wrap:wrap}.nw41-tg:empty{display:none}'
-  +'.tg41{font-style:normal;font-size:.66rem;font-weight:800;padding:3px 8px;border-radius:99px;letter-spacing:.02em}.tg41.ok{background:#2f9e44;color:#fff}.tg41.ru{background:#f59f00;color:#2b1a00}.tg41.sp{background:#e03131;color:#fff}.tg41.ba{background:#7048e8;color:#fff}.tg41.bo{background:#ffd43b;color:#2b1a00}.tg41.me{background:var(--raspberry);color:#fff}.tg41.tp{background:var(--c);color:#fff}'
+  +'.tg41{font-style:normal;font-size:.66rem;font-weight:800;padding:3px 8px;border-radius:99px;letter-spacing:.02em}.tg41.hr{background:#1b1330;color:#ff6b6b;box-shadow:inset 0 0 0 1px #ff6b6b}.tg41.ok{background:#2f9e44;color:#fff}.tg41.ru{background:#f59f00;color:#2b1a00}.tg41.sp{background:#e03131;color:#fff}.tg41.ba{background:#7048e8;color:#fff}.tg41.bo{background:#ffd43b;color:#2b1a00}.tg41.me{background:var(--raspberry);color:#fff}.tg41.tp{background:var(--c);color:#fff}'
   +'.nw41.spo .nw41-im img,.nw41.spo .nw41-b b,.nw41.spo .nw41-d{filter:blur(9px)}'
   +'.nw41-sp{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;background:rgba(20,8,10,.55);color:#fff;font:700 1rem Fredoka,sans-serif}.nw41-sp small{font:600 .72rem Inter;opacity:.8}'
   +'.mg41-tn{margin:20px 0 6px}.mg41-st{font:700 1.05rem Fredoka,sans-serif;margin-bottom:8px}'
