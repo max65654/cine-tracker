@@ -26862,6 +26862,7 @@ if(LOOK38)(function(){
       +tg('spot',FX.spot,'🔦 Projecteur','une lumière suit ta souris (thème sombre)')
       +tg('prem',FX.prem,'👑 Couleurs Premium','bandeaux et Pass aux couleurs de la série du mois')
       +tg('mascot',mascotOn(),'🧍 Persos 3D','les persos de la série passent faire un tour')
+      +tg('roll',(function(){try{return localStorage.getItem('cineRoll54')!=='0';}catch(_){return true;}})(),'🎞️ Images en fond','les images de la série de ton thème défilent derrière')
       +'<div class="fx38-btns"><button type="button" data-act="intro">▶️ Revoir le générique</button><button type="button" data-act="perso">🧍 Appeler les persos</button><button type="button" data-act="party">🎉 Confettis</button><button type="button" class="ok" data-act="close">C\'est bon</button></div></div>';
     document.body.appendChild(ov);
     function close(){ov.remove();}
@@ -26873,6 +26874,7 @@ if(LOOK38)(function(){
       var t=e.target.closest('[data-tg]');
       if(t){var k=t.dataset.tg,on=!t.classList.contains('on');t.classList.toggle('on',on);t.setAttribute('aria-pressed',on?'true':'false');
         if(k==='mascot'){try{if(on)localStorage.removeItem('cineMascot31');else localStorage.setItem('cineMascot31','0');}catch(_){}}
+        else if(k==='roll'){try{if(on)localStorage.removeItem('cineRoll54');else localStorage.setItem('cineRoll54','0');}catch(_){}try{window.__roll54&&window.__roll54();}catch(_){}}
         else{FX[k]=on?1:0;fxSave();fxClasses();if(k==='spot')spotSet();if(k==='prem')palApply();}
         try{sfx.nav();}catch(_){}return;}
       var a=e.target.closest('[data-act]');if(!a)return;var act=a.dataset.act;
@@ -27057,8 +27059,8 @@ if(LOOK38)(function(){
     TC+='body.theme-'+t.k+'{'+acc+'--cream:'+l.bg+';--card-bg:'+l.card+';--border:'+l.bd+';--input-bg:'+l.in+';--ink:'+l.ink+';--muted:'+l.mu+';--muted2:'+l.mu+'}'
       +'body.dark.theme-'+t.k+'{'+acc+'--cream:'+d.bg+';--card-bg:'+d.card+';--border:'+d.bd+';--input-bg:'+d.in+';--ink:'+d.ink+';--muted:'+d.mu+';--muted2:'+d.mu+';background:radial-gradient(1000px 520px at 10% -8%,'+d.a+'33,transparent 62%),radial-gradient(900px 480px at 100% -4%,'+d.b+'33,transparent 58%),'+d.bg+'!important;background-repeat:no-repeat!important}';});
   css('v39-themes',TC);
-  try{COLTHEMES.length=0;COLTHEMES.push({k:'',name:'👑 Série du mois (auto)',sw:'linear-gradient(135deg,var(--p1,#ff4d8d),var(--p2,#8b5cf6))'});SER.forEach(function(t){COLTHEMES.push({k:t.k,name:t.n,sw:t.sw});});
-    var cur=localStorage.getItem(COLTHEME)||'';if(cur&&!SER.some(function(t){return t.k===cur;})){localStorage.removeItem(COLTHEME);document.body.classList.remove('theme-'+cur);}
+  try{COLTHEMES.length=0;COLTHEMES.push({k:'',name:'👑 Série du mois (auto)',sw:'linear-gradient(135deg,var(--p1,#ff4d8d),var(--p2,#8b5cf6))'});SER.forEach(function(t){COLTHEMES.push({k:t.k,name:t.n,sw:t.sw});});COLTHEMES.push({k:'classic',name:'✨ Classique (sans série)',sw:'#FF4D6D'},{k:'cinema',name:'🎬 Rouge cinéma',sw:'#E50914'},{k:'neon',name:'🌃 Violet néon',sw:'#E040FB'},{k:'sepia',name:'📜 Sépia rétro',sw:'#B5651D'});
+    var cur=localStorage.getItem(COLTHEME)||'';if(cur&&!SER.some(function(t){return t.k===cur;})&&['classic','cinema','neon','sepia'].indexOf(cur)<0){localStorage.removeItem(COLTHEME);document.body.classList.remove('theme-'+cur);}
     applyColorTheme();}catch(_){}
 
   /* ---------- 6) épisodes : une série passée en « Vu » compte tous ses épisodes (sans date) ---------- */
@@ -27972,7 +27974,7 @@ if(LOOK38)(function(){
   try{var oRP=renderPassport;renderPassport=function(v){var r=oRP.apply(this,arguments);try{extras(v);}catch(e){console.warn('pp47',e);}return r;};}catch(_){}
 
   /* ======================= MUR ======================= */
-  try{V29_MS.img='🖼️ Images officielles';V29_MS.still='🎬 Épisodes';V29_MS.shoot='📸 Tournage';}catch(_){}
+  try{V29_MS.tvm='📺 TVmaze';V29_MS.vid='▶️ Vidéos';V29_MS.mine='💖 Mes ajouts';V29_MS.img='🖼️ Images officielles';V29_MS.still='🎬 Épisodes';V29_MS.shoot='📸 Tournage';}catch(_){}
   var MK='cineMurTitles47';
   function picked(){try{return JSON.parse(localStorage.getItem(MK)||'[]')||[];}catch(_){return [];}}
   function setPicked(l){try{localStorage.setItem(MK,JSON.stringify(l));}catch(_){}}
@@ -27989,20 +27991,38 @@ if(LOOK38)(function(){
   function loadInto(sel,jobs){
     var M=V29.M,gen=M.gen,C=M.cache['t47'+sel.k]=M.cache['t47'+sel.k]||{};
     function add(src,list){if(gen!==M.gen)return;(list||[]).forEach(function(x){if(!x||!x.u)return;var k=String(x.u).replace(/^https?:\/\/(www\.)?/,'').split('?')[0];if(M.seen[k])return;M.seen[k]=1;x.s=src;M.items.push(x);});M.src[src]=(M.src[src]||0)+((list||[]).length);v29MurTick();}
-    jobs.forEach(function(j){if(C[j[0]]){add(j[0],C[j[0]]);return;}M.loading++;j[1]().then(function(l){C[j[0]]=l||[];if(gen===M.gen){M.loading--;add(j[0],l||[]);}},function(){if(gen===M.gen)M.loading--;});});
+    jobs.forEach(function(j){var ck=j[2]||j[0];if(C[ck]){add(j[0],C[ck]);return;}M.loading++;j[1]().then(function(l){C[ck]=l||[];if(gen===M.gen){M.loading--;add(j[0],l||[]);}},function(){if(gen===M.gen)M.loading--;});});
   }
-  function titleJobs(mt,id,name){var J=[['img',function(){return fImages(mt,id,name);}],['shoot',function(){return fShoot(mt,id,name);}]];
-    if(mt==='tv')J.push(['still',function(){return fStills(id,name);}]);return J;}
+  function ext(mt,id){return ivJson('https://api.themoviedb.org/3/'+mt+'/'+id+'/external_ids?api_key='+TMDB).then(function(e){return e||{};});}
+  /* TVmaze : fonds, affiches, bannières et images d'épisodes de CETTE série (retrouvée par son identifiant IMDb/TVDB) */
+  function fTvmaze(id,name){return ext('tv',id).then(function(e){var q=e.imdb_id?'imdb='+e.imdb_id:e.tvdb_id?'thetvdb='+e.tvdb_id:'';if(!q)return [];
+    return fetch('https://api.tvmaze.com/lookup/shows?'+q).then(function(r){return r.ok?r.json():null;}).then(function(sh){if(!sh||!sh.id)return [];
+      return Promise.all([fetch('https://api.tvmaze.com/shows/'+sh.id+'/images').then(function(r){return r.ok?r.json():[];}),fetch('https://api.tvmaze.com/shows/'+sh.id+'/episodes').then(function(r){return r.ok?r.json():[];})]).then(function(a){var out=[];
+        (a[0]||[]).forEach(function(x){var R=x.resolutions||{},o=R.original||R.medium;if(!o||!o.url||x.type==='typography')return;var m=R.medium||o;out.push({u:o.url,th:m.url,ar:(o.width&&o.height)?o.width/o.height:(x.type==='poster'?.68:1.78),a:name,c:x.type==='background'?'Fond':x.type==='banner'?'Bannière':'Affiche'});});
+        (a[1]||[]).forEach(function(ep){if(ep.image&&ep.image.original)out.push({u:ep.image.original,th:ep.image.medium||ep.image.original,ar:1.78,a:name,c:'S'+ep.season+'É'+ep.number+(ep.name?' — '+ep.name:'')});});return out;});});}).catch(function(){return [];});}
+  /* images des bandes-annonces, teasers et extraits officiels */
+  function fVids(mt,id,name){return ivJson('https://api.themoviedb.org/3/'+mt+'/'+id+'/videos?api_key='+TMDB+'&include_video_language=fr,en,null').then(function(d){
+    return ((d&&d.results)||[]).filter(function(v){return v.site==='YouTube'&&v.key;}).map(function(v){var u='https://i.ytimg.com/vi/'+v.key+'/hqdefault.jpg';return {u:u,th:u,ar:4/3,a:name,c:'▶️ '+(v.name||v.type)};});});}
+  /* images de l'article Wikipédia de CETTE série (retrouvé par Wikidata) */
+  function fWiki(mt,id,name){return ext(mt,id).then(function(e){if(!e.wikidata_id)return [];
+    return fetch('https://www.wikidata.org/wiki/Special:EntityData/'+e.wikidata_id+'.json').then(function(r){return r.ok?r.json():null;}).then(function(w){var en=w&&w.entities&&w.entities[e.wikidata_id],sl=(en&&en.sitelinks)||{},T=[];
+      if(sl.frwiki)T.push(['fr',sl.frwiki.title]);if(sl.enwiki)T.push(['en',sl.enwiki.title]);
+      return Promise.all(T.map(function(t){return ivJson('https://'+t[0]+'.wikipedia.org/w/api.php?action=query&generator=images&titles='+encodeURIComponent(t[1])+'&gimlimit=50&prop=imageinfo&iiprop=url|size|mime&iiurlwidth=900&format=json&origin=*').then(function(d){return v29MurWikiList(d,name);}).catch(function(){return [];});})).then(function(a){return [].concat.apply([],a);});});}).catch(function(){return [];});}
+  /* affiches de chaque saison */
+  function fSeasons(id,name){return ivJson('https://api.themoviedb.org/3/tv/'+id+'?api_key='+TMDB+'&language=fr-FR').then(function(d){return ((d&&d.seasons)||[]).filter(function(x){return x.poster_path;}).map(function(x){return {u:img(x.poster_path,'w780'),th:img(x.poster_path,'w342'),ar:.667,a:name,c:x.name||('Saison '+x.season_number)};});});}
+  function mineInto(k,name){var M=V29.M,gen=M.gen;mineItems(k,name).then(function(l){if(gen!==M.gen||!l.length)return;l.forEach(function(x){x.s='mine';M.items.unshift(x);});M.src.mine=(M.src.mine||0)+l.length;M._lk='';M.shown=0;var g=document.getElementById('mur-grid');if(g)g.innerHTML='';v29MurTick();});}
+  function titleJobs(mt,id,name){var J=[['img',function(){return fImages(mt,id,name);}],['shoot',function(){return fShoot(mt,id,name);}],['vid',function(){return fVids(mt,id,name);}],['wp',function(){return fWiki(mt,id,name);}]];
+    if(mt==='tv'){J.push(['still',function(){return fStills(id,name);}]);J.push(['tvm',function(){return fTvmaze(id,name);}]);J.push(['img',function(){return fSeasons(id,name);},'sea']);}return J;}
   try{var oML=v29MurLoad;v29MurLoad=function(){
     var M=V29.M,sel=M.sel;
     if(sel&&sel.type==='title'){
       M.gen++;M.items=[];M.seen={};M.src={};M.shown=0;M.target=30;M.loading=0;M.filter='';M.ext={};M.locked=false;M.sig='';
       var g=document.getElementById('mur-grid');if(g)g.innerHTML='';
-      loadInto(sel,titleJobs(sel.mt,sel.id,sel.name));v29MurTick();return;}
+      loadInto(sel,titleJobs(sel.mt,sel.id,sel.name));mineInto(sel.k,sel.name);v29MurTick();return;}
     /* série du mois : pas de GIF cherchés au nom */
     var okey=v29MurKey;v29MurKey=function(){return '';};var r;try{r=oML.apply(this,arguments);}finally{v29MurKey=okey;}
     /* la série du mois : encore plus d'images */
-    try{if(sel&&sel.type==='series'&&sel.r&&sel.r.tv&&!M.locked){sel.k=sel.k||('tv_'+sel.r.tv);loadInto(sel,titleJobs('tv',sel.r.tv,sel.r.name));}}catch(_){}
+    try{if(sel&&sel.type==='series'&&sel.r&&sel.r.tv&&!M.locked){sel.k=sel.k||('tv_'+sel.r.tv);loadInto(sel,titleJobs('tv',sel.r.tv,sel.r.name));}if(sel&&sel.type==='series'&&sel.r&&sel.r.tv)mineInto('tv_'+sel.r.tv,sel.r.name);}catch(_){}
     return r;};}catch(_){}
   /* puces des titres choisis, à côté de la série du mois et des acteurs */
   try{var oMW=v29MurWho;v29MurWho=function(){var r=oMW.apply(this,arguments);var el=document.getElementById('mur-who');if(!el)return r;
@@ -28028,30 +28048,62 @@ if(LOOK38)(function(){
       c.closest('.mp47-i').classList.toggle('on',c.checked);wrap.querySelector('.mp47-tg b').textContent=P.length;try{v29MurWho();}catch(_){}});
   }
   window.__mp47x=panel;
-    /* ===== The Body : ses images défilent en fond derrière le mur ===== */
-  var BG=null;
-  function isBody(sel){var n=sel&&(sel.type==='series'?(sel.r&&sel.r.name):sel.name);return /^\s*the body\s*$/i.test(String(n||''));}
-  function bgOff(){if(BG){BG.el.remove();BG=null;}}
-  function bgSync(){
-    var v=document.getElementById('view-mur'),sel=V29.M&&V29.M.sel,on=v&&v.style.display!=='none'&&v.offsetHeight>0&&isBody(sel);
-    if(!on){bgOff();return;}
-    var mt=sel.type==='series'?'tv':sel.mt,id=sel.type==='series'?sel.r.tv:sel.id,key=mt+id;
-    if(BG&&BG.key===key&&BG.el.parentNode===v)return;bgOff();
-    var el=document.createElement('div');el.className='bb54';el.setAttribute('aria-hidden','true');v.insertBefore(el,v.firstChild);BG={el:el,key:key};
-    fImages(mt,id,'').then(function(l){if(!BG||BG.el!==el)return;var L=l.filter(function(x){return x.ar>1.2;}).map(function(x){return x.th;});if(L.length<6)L=L.concat(l.map(function(x){return x.th;}));if(!L.length)return;
-      var rows='';for(var r=0;r<3;r++){var part=[];for(var i=0;i<10;i++)part.push(L[(r*7+i)%L.length]);var h=part.map(function(u){return '<img src="'+esc(u)+'" alt="" decoding="async">';}).join('');rows+='<div class="bb54-r'+(r%2?' rev':'')+'" style="animation-duration:'+(90+r*25)+'s">'+h+h+'</div>';}
-      el.innerHTML=rows;requestAnimationFrame(function(){el.classList.add('on');});});
+    /* ===== tes propres images (gardées sur cet appareil) ===== */
+  var DB54=null;
+  function idb(){if(DB54)return DB54;DB54=new Promise(function(res,rej){try{var r=indexedDB.open('cineMur54',1);r.onupgradeneeded=function(){var d=r.result;if(!d.objectStoreNames.contains('img')){var st=d.createObjectStore('img',{keyPath:'id',autoIncrement:true});st.createIndex('k','k');}};r.onsuccess=function(){res(r.result);};r.onerror=function(){rej(r.error);};}catch(e){rej(e);}});return DB54;}
+  function myList(k){return idb().then(function(d){return new Promise(function(res){var out=[];var q=d.transaction('img').objectStore('img').index('k').openCursor(IDBKeyRange.only(k));q.onsuccess=function(){var c=q.result;if(!c)return res(out);out.push(c.value);c.continue();};q.onerror=function(){res(out);};});}).catch(function(){return [];});}
+  function myAdd(o){return idb().then(function(d){return new Promise(function(res,rej){var t=d.transaction('img','readwrite');t.objectStore('img').add(o);t.oncomplete=function(){res();};t.onerror=function(){rej(t.error);};});});}
+  function myDel(id){return idb().then(function(d){return new Promise(function(res){var t=d.transaction('img','readwrite');t.objectStore('img').delete(id);t.oncomplete=res;t.onerror=res;});});}
+  var URLS={};
+  function urlOf(o){if(o.url)return o.url;if(!URLS[o.id])URLS[o.id]=URL.createObjectURL(o.blob);return URLS[o.id];}
+  function mineItems(k,name){return myList(k).then(function(l){return l.map(function(o){var u=urlOf(o);return {u:u,th:u,ar:o.ar||0,a:name,c:'Ajoutée par toi',gif:o.gif?1:0,my54:o.id};});});}
+  /* réduit les grosses photos pour ne pas remplir l'appareil (les GIF restent animés) */
+  function shrink(file){return new Promise(function(res){
+    if(/gif$/i.test(file.type)||file.size<350000){var u=URL.createObjectURL(file),im=new Image();im.onload=function(){res({blob:file,ar:im.naturalWidth/im.naturalHeight||0,gif:/gif$/i.test(file.type)});URL.revokeObjectURL(u);};im.onerror=function(){res(null);};im.src=u;return;}
+    var u2=URL.createObjectURL(file),im2=new Image();im2.onload=function(){var W=im2.naturalWidth,H=im2.naturalHeight,sc=Math.min(1,1800/Math.max(W,H)),c=document.createElement('canvas');c.width=Math.round(W*sc);c.height=Math.round(H*sc);c.getContext('2d').drawImage(im2,0,0,c.width,c.height);URL.revokeObjectURL(u2);
+      c.toBlob(function(b){res(b?{blob:b,ar:W/H}:null);},'image/jpeg',.86);};im2.onerror=function(){res(null);};im2.src=u2;});}
+  function curSel(){var M=V29.M,sel=M&&M.sel;if(!sel)return null;if(sel.type==='title')return {k:sel.k,name:sel.name,mt:sel.mt};if(sel.type==='series'&&sel.r&&sel.r.tv)return {k:'tv_'+sel.r.tv,name:sel.r.name,mt:'tv'};return null;}
+  function addFiles(files){var c=curSel();if(!c)return;var L=[].slice.call(files||[]).filter(function(f){return /^image\//.test(f.type);});if(!L.length){toast('Choisis des images 🖼️');return;}
+    toast('📥 Import de '+L.length+' image'+(L.length>1?'s':'')+'…');
+    Promise.all(L.map(function(f){return shrink(f).then(function(r){return r?myAdd({k:c.k,blob:r.blob,ar:r.ar,gif:r.gif?1:0,ts:Date.now()}):null;});})).then(function(){toast('✅ Ajouté sur le mur de '+c.name);v29MurLoad();}).catch(function(){toast('⚠️ Plus de place sur l\'appareil');});}
+  function addUrl(u){var c=curSel();u=String(u||'').trim();if(!c||!/^https?:\/\//i.test(u)){toast('Colle un lien d\'image qui commence par http');return;}
+    var im=new Image();im.onload=function(){myAdd({k:c.k,url:u,ar:im.naturalWidth/im.naturalHeight||0,gif:/\.gif(\?|$)/i.test(u)?1:0,ts:Date.now()}).then(function(){toast('✅ Image ajoutée');v29MurLoad();});};
+    im.onerror=function(){toast('⚠️ Ce lien n\'est pas une image (clic droit sur l\'image → « Copier l\'adresse de l\'image »)');};im.src=u;}
+  function bar(v){
+    var c=curSel(),b=v.querySelector('.mi54');
+    if(!c){if(b)b.remove();return;}
+    if(!b){var ref=v.querySelector('.mp47')||v.querySelector('.v29-m-sr');if(!ref)return;b=document.createElement('div');b.className='mi54';ref.insertAdjacentElement('afterend',b);
+      b.innerHTML='<b class="mi54-t"></b><label class="mi54-b">📥 Importer mes images<input type="file" accept="image/*" multiple hidden></label><button type="button" class="mi54-b" data-a="url">🔗 Coller un lien</button><a class="mi54-b" data-a="g" target="_blank" rel="noopener">🔎 Chercher sur Google Images</a><button type="button" class="mi54-b" data-a="mine">🗂️ Mes ajouts</button>'
+        +'<div class="mi54-u"><input class="v29-in" placeholder="https://… lien de l\'image"><button type="button" class="mi54-b" data-a="ok">Ajouter</button></div><div class="mi54-m"></div><small class="mi54-h">Astuce : tu peux aussi glisser des images ici ou faire Ctrl+V. Tes images restent sur cet appareil.</small>';
+      b.querySelector('input[type=file]').onchange=function(e){addFiles(e.target.files);e.target.value='';};
+      b.addEventListener('click',function(e){var a=e.target.closest('[data-a]');if(!a)return;var w=a.dataset.a;
+        if(w==='url'){b.classList.toggle('su');var i=b.querySelector('.mi54-u input');if(b.classList.contains('su'))i.focus();}
+        if(w==='ok'){var i2=b.querySelector('.mi54-u input');addUrl(i2.value);i2.value='';}
+        if(w==='mine'){var m=b.querySelector('.mi54-m'),on=!b.classList.contains('sm');b.classList.toggle('sm',on);if(!on)return;var c2=curSel();
+          myList(c2.k).then(function(l){m.innerHTML=l.length?l.map(function(o){return '<span><img src="'+esc(urlOf(o))+'" alt=""><button type="button" data-del="'+o.id+'" title="Retirer">✕</button></span>';}).join(''):'<em>Tu n\'as encore rien ajouté pour '+esc(c2.name)+'.</em>';});}
+      });
+      b.querySelector('.mi54-m').addEventListener('click',function(e){var d=e.target.closest('[data-del]');if(!d)return;myDel(+d.dataset.del).then(function(){d.parentNode.remove();v29MurLoad();toast('🗑️ Image retirée');});});
+      b.querySelector('.mi54-u input').addEventListener('keydown',function(e){if(e.key==='Enter'){addUrl(e.target.value);e.target.value='';}});
+      if(!v.dataset.dz54){v.dataset.dz54='1';
+        ['dragover','dragenter'].forEach(function(t){v.addEventListener(t,function(e){if(!curSel())return;e.preventDefault();v.classList.add('dz54');});});
+        v.addEventListener('dragleave',function(e){if(e.target===v)v.classList.remove('dz54');});
+        v.addEventListener('drop',function(e){v.classList.remove('dz54');if(!curSel())return;e.preventDefault();var dt=e.dataTransfer;if(dt.files&&dt.files.length)addFiles(dt.files);else{var u=dt.getData('text/uri-list')||dt.getData('text/plain');if(u)addUrl(u.split('\n')[0]);}});}
+    }
+    if(b.dataset.k!==c.k){b.dataset.k=c.k;b.classList.remove('sm','su');b.querySelector('.mi54-t').textContent='🖼️ '+c.name;
+      b.querySelector('[data-a=g]').href='https://www.google.com/search?tbm=isch&q='+encodeURIComponent('"'+c.name+'" '+(c.mt==='tv'?'série':'film'));}
   }
-  setInterval(function(){if(!document.hidden)bgSync();},600);
-  document.addEventListener('visibilitychange',function(){if(BG)BG.el.classList.toggle('pz',document.hidden);});
+  document.addEventListener('paste',function(e){var v=document.getElementById('view-mur');if(!v||v.offsetHeight===0||!curSel())return;var t=e.target;if(t&&(t.tagName==='INPUT'||t.tagName==='TEXTAREA'))return;
+    var f=[].slice.call((e.clipboardData&&e.clipboardData.files)||[]);if(f.length){e.preventDefault();addFiles(f);return;}var u=e.clipboardData&&e.clipboardData.getData('text');if(u&&/^https?:\/\/\S+$/.test(u.trim())){e.preventDefault();addUrl(u);}});
+  setInterval(function(){if(document.hidden)return;var v=document.getElementById('view-mur');if(v&&v.offsetHeight>0)bar(v);},700);
 
   try{var oMR=v29MurRender;v29MurRender=function(v){var r=oMR.apply(this,arguments);try{panel(v);}catch(e){console.warn('mur47',e);}return r;};}catch(_){}
 
   var css=''
-  +'.bb54{position:fixed;inset:0;z-index:-1;pointer-events:none;overflow:hidden;display:flex;flex-direction:column;justify-content:space-around;gap:14px;opacity:0;transition:opacity 1.2s;-webkit-mask-image:radial-gradient(ellipse at center,rgba(0,0,0,.55),#000 85%);mask-image:radial-gradient(ellipse at center,rgba(0,0,0,.55),#000 85%)}'
-  +'.bb54.on{opacity:.32}body.dark .bb54.on{opacity:.4}.bb54-r{display:flex;gap:14px;width:max-content;animation:bb54 100s linear infinite;will-change:transform}.bb54-r.rev{animation-direction:reverse}.bb54.pz .bb54-r{animation-play-state:paused}'
-  +'.bb54 img{height:28vh;aspect-ratio:16/9;object-fit:cover;border-radius:18px;flex:none;filter:saturate(1.1)}@keyframes bb54{from{transform:translateX(0)}to{transform:translateX(-50%)}}'
-  +'@media (prefers-reduced-motion:reduce){.bb54-r{animation:none}}'
+  +'.mi54{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:10px 0;padding:10px 12px;border-radius:16px;background:var(--card-bg);box-shadow:inset 0 0 0 1px var(--border)}.mi54-t{flex:1 0 100%;font:700 .95rem Fredoka,sans-serif}'
+  +'.mi54-b{display:inline-flex;align-items:center;gap:4px;border:0;border-radius:99px;padding:8px 12px;font:700 .8rem Nunito,sans-serif;cursor:pointer;background:var(--input-bg);color:var(--ink);text-decoration:none;box-shadow:inset 0 0 0 1px var(--border)}.mi54-b:hover{background:var(--p1,#ff4d8d);color:#fff}'
+  +'.mi54-u,.mi54-m{display:none;flex:1 0 100%;gap:8px}.mi54.su .mi54-u{display:flex}.mi54-u input{flex:1}.mi54.sm .mi54-m{display:flex;flex-wrap:wrap}'
+  +'.mi54-m span{position:relative}.mi54-m img{height:80px;border-radius:8px;display:block}.mi54-m button{position:absolute;top:3px;right:3px;border:0;border-radius:50%;width:22px;height:22px;background:#000a;color:#fff;cursor:pointer}.mi54-m em{color:var(--muted);font-size:.8rem}'
+  +'.mi54-h{flex:1 0 100%;color:var(--muted);font-size:.72rem}#view-mur.dz54{outline:3px dashed var(--p1,#ff4d8d);outline-offset:-10px}'
   +'.pp47{margin:14px 0}.pp47-ref{font-size:.85rem;color:var(--muted);margin-bottom:6px}.pp47-ref b{color:var(--ink)}'
   +'.pp47-top{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px}'
   +'.pp47-c{position:relative;display:grid;grid-template-columns:auto auto 1fr;grid-template-rows:auto auto;align-items:center;gap:2px 8px;text-align:left;border:0;border-radius:16px;padding:10px 12px;background:var(--card-bg);color:var(--ink);cursor:pointer;box-shadow:0 12px 24px -18px #000,inset 0 0 0 1px rgba(255,255,255,.06);transition:transform .2s}'
@@ -28474,6 +28526,110 @@ if(LOOK38)(function(){
   }
   /* la page Attentes est redessinée par l'appli : on vérifie simplement si le radar y est */
   setInterval(function(){if(document.hidden)return;var v=document.getElementById('view-attentes');if(v&&v.style.display!=='none'&&v.querySelector('.section-title')&&!v.querySelector('#rr51'))render(v);},800);
+})();
+
+
+/* ====== V54 — 🎞️ IMAGES QUI DÉFILENT EN FOND sur toutes les pages, selon le thème (série du mois ou série-thème choisie ;
+   les thèmes de base n'en ont pas) + 📉 PRÉVISION D'ANNULATION dans la fiche des séries ====== */
+(function(){
+  var RM=false;try{RM=matchMedia('(prefers-reduced-motion:reduce)').matches;}catch(_){}
+  var C=''
+  +'.bg54{position:fixed;inset:0;z-index:-1;pointer-events:none;overflow:hidden;display:flex;flex-direction:column;justify-content:space-around;gap:14px;opacity:0;transition:opacity 1.2s;contain:strict;-webkit-mask-image:radial-gradient(ellipse at center,rgba(0,0,0,.45),#000 88%);mask-image:radial-gradient(ellipse at center,rgba(0,0,0,.45),#000 88%)}'
+  +'.bg54.on{opacity:.2}body.dark .bg54.on{opacity:.32}#view-mur>.bg54.on{opacity:.3}'
+  +'.bg54-r{display:flex;gap:14px;width:max-content;animation:bg54 110s linear infinite;will-change:transform}.bg54-r.rev{animation-direction:reverse}html.v31-hid .bg54-r,html.v34-hid .bg54-r{animation-play-state:paused}'
+  +'.bg54 img{height:27vh;aspect-ratio:16/9;object-fit:cover;border-radius:18px;flex:none}@keyframes bg54{from{transform:translateX(0)}to{transform:translateX(-50%)}}'
+  +'@media (prefers-reduced-motion:reduce){.bg54-r{animation:none}}'
+  /* prévision */
+  +'.ca54{margin:14px 0;padding:14px 16px;border-radius:18px;background:var(--input-bg);box-shadow:inset 0 0 0 1px var(--border)}'
+  +'.ca54-h{display:flex;align-items:center;gap:12px}.ca54-h b{font:700 1rem Fredoka,sans-serif;display:block}.ca54-h small{color:var(--muted);font-size:.75rem}'
+  +'.ca54-g{flex:none;width:58px;height:58px;border-radius:50%;display:grid;place-items:center;font:800 .95rem Fredoka,sans-serif;color:var(--ink);background:conic-gradient(var(--c54) calc(var(--p54)*1%),rgba(127,127,127,.2) 0)}.ca54-g span{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;background:var(--input-bg)}'
+  +'.ca54 ul{margin:10px 0 0;padding:0;list-style:none;display:grid;gap:4px}.ca54 li{font-size:.8rem;color:var(--ink)}.ca54 li i{font-style:normal;margin-right:6px}'
+  +'.ca54-s{display:block;margin-top:8px;color:var(--muted);font-size:.7rem}';
+  var st=document.createElement('style');st.id='v54-css';st.textContent=C;document.head.appendChild(st);
+
+  /* ================= FOND QUI DÉFILE ================= */
+  var MAP={lupin:['tv',96677],stranger:['tv',66732],squid:['tv',93405],mercredi:['tv',119051],casa:['tv',71446],arcane:['tv',94605],dune:['movie',438631],witcher:['tv',71912]};
+  var BASE={classic:1,cinema:1,neon:1,sepia:1};
+  function rollOn(){try{return localStorage.getItem('cineRoll54')!=='0';}catch(_){return true;}}
+  function theme(){try{return localStorage.getItem('cineTheme')||'';}catch(_){return '';}}
+  function target(){var t=theme();if(!rollOn()||BASE[t])return Promise.resolve(null);if(MAP[t])return Promise.resolve(MAP[t]);if(t)return Promise.resolve(null);
+    try{return premiumResolve().then(function(r){return r&&r.tv?['tv',r.tv]:null;}).catch(function(){return null;});}catch(_){return Promise.resolve(null);}}
+  var IMG={},L=null,want='',busy=0;
+  function images(mt,id){var k=mt+id;if(IMG[k])return IMG[k];
+    /* d'abord les images sans texte (les plus belles en fond), puis fr/en */
+    return IMG[k]=ivJson('https://api.themoviedb.org/3/'+mt+'/'+id+'/images?api_key='+TMDB+'&include_image_language=null,fr,en').then(function(d){
+      var b=((d&&d.backdrops)||[]).filter(function(x){return x.file_path;});b.sort(function(x,y){return (x.iso_639_1?1:0)-(y.iso_639_1?1:0)||(y.vote_average||0)-(x.vote_average||0);});
+      return b.slice(0,30).map(function(x){return 'https://image.tmdb.org/t/p/w780'+x.file_path;});}).catch(function(){delete IMG[k];return [];});}
+  function build(list,key){
+    if(L&&L.dataset.k===key)return;if(L)L.remove();
+    var el=document.createElement('div');el.className='bg54';el.dataset.k=key;el.setAttribute('aria-hidden','true');
+    var rows='';for(var r=0;r<3;r++){var part=[];for(var i=0;i<9;i++)part.push(list[(r*7+i*1)%list.length]);var h=part.map(function(u){return '<img src="'+esc(u)+'" alt="" decoding="async" loading="lazy">';}).join('');
+      rows+='<div class="bg54-r'+(r%2?' rev':'')+'" style="animation-duration:'+(100+r*30)+'s;animation-delay:-'+(r*17)+'s">'+h+h+'</div>';}
+    el.innerHTML=rows;L=el;place(true);setTimeout(function(){el.classList.add('on');},60);
+  }
+  /* le fond va dans la page plein écran ouverte (Mur, Passeport…) ou derrière l'appli */
+  function host(){var V=document.querySelectorAll('[id^="view-"]');for(var i=0;i<V.length;i++){var v=V[i];if(v.offsetHeight>0&&v.style.display!=='none'&&getComputedStyle(v).position==='fixed')return v;}return document.body;}
+  function place(force){if(!L)return;var h=host();if(L.parentNode!==h||force){if(h===document.body)h.insertBefore(L,h.firstChild);else h.insertBefore(L,h.firstChild);}}
+  function sync(){
+    if(busy)return;busy=1;
+    target().then(function(t){
+      if(!t){want='';if(L){L.remove();L=null;}busy=0;return;}
+      var key=t[0]+t[1];want=key;
+      return images(t[0],t[1]).then(function(list){busy=0;if(want!==key)return;if(!list.length){if(L){L.remove();L=null;}return;}build(list,key);});
+    }).catch(function(){busy=0;});
+  }
+  window.__roll54=sync;
+  var lastT=null;
+  setInterval(function(){if(document.hidden)return;var t=theme()+'|'+rollOn();if(t!==lastT){lastT=t;sync();}place(false);},700);
+  /* le thème change aussi quand la série du mois change : on revérifie de temps en temps */
+  setInterval(function(){if(!document.hidden)sync();},5*60*1000);
+
+  /* ================= PRÉVISION D'ANNULATION ================= */
+  var NEWS=null;
+  function news(){if(NEWS)return NEWS;var d=new Date(),h=''+d.getFullYear()+d.getMonth()+d.getDate()+d.getHours();
+    return NEWS=fetch('news.json?h='+h,{cache:'no-cache'}).then(function(r){return r.ok?r.json():null;}).then(function(j){return (j&&j.items)||[];}).catch(function(){NEWS=null;return [];});}
+  function norm(s){return ' '+String(s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]+/g,' ').trim()+' ';}
+  var RENEW=/renouvel|renew|saison \d+ (est )?(confirmee|commandee|officiel)|season \d+ (is )?(confirmed|ordered)|commande une (nouvelle|\w+) saison|picked up for/i;
+  var CANCEL=/(est|a ete|officiellement|finalement) annulee|annule (la serie|sa serie)|(netflix|hbo|max|prime video|apple tv|disney|canal) annule|is (officially )?cancell?ed|cancell?ed (after|at|by)|cancels|pas de saison \d|no season \d|axed|ne reviendra pas|won.t return|arret de la serie/i,NOTC=/reclam|petition|boycott|appel|demand|call(s|ing)? for|veulent|exige|sauver|save/i;
+  function months(a,b){return (b-a)/(30.44*864e5);}
+  function fmtD(s){try{return new Date(s+'T12:00:00').toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'});}catch(_){return s;}}
+  function predict(it){
+    return Promise.all([ivJson('https://api.themoviedb.org/3/tv/'+it.tmdbId+'?api_key='+TMDB+'&language=fr-FR'),news()]).then(function(a){
+      var d=a[0],N=a[1]||[];if(!d)return null;
+      var now=Date.now(),R=[],t=norm(d.name),to=norm(d.original_name),hits=N.filter(function(x){var n=norm(x.t+' '+(x.d||''));return (t.trim().length>=4&&n.indexOf(t)>=0)||(to.trim().length>=4&&n.indexOf(to)>=0);});
+      var ren=hits.find(function(x){var n=norm(x.t);return RENEW.test(n)&&!NOTC.test(n);}),can=hits.find(function(x){var n=norm(x.t);return CANCEL.test(n)&&!NOTC.test(n);});
+      var st=d.status||'',nx=d.next_episode_to_air,last=d.last_air_date?Date.parse(d.last_air_date):0,ns=d.number_of_seasons||0;
+      var nets=(d.networks||[]).map(function(n){return n.name;}).join(', ');
+      if(st==='Canceled')return {v:'❌ Annulée',p:0,c:'#e03131',sub:'C\'est officiel : la chaîne ou la plateforme a arrêté la série.',R:[['📺','Diffusée sur '+(nets||'—')+' · '+ns+' saison'+(ns>1?'s':'')]]};
+      if(st==='Ended')return {v:'🏁 Terminée',p:100,c:'#868e96',sub:'La série est finie : l\'histoire est bouclée, pas de suite prévue.',R:[['📺',ns+' saison'+(ns>1?'s':'')+' sur '+(nets||'—')]]};
+      if(nx&&nx.air_date)return {v:'✅ La suite arrive',p:100,c:'#2f9e44',sub:'Prochain épisode (S'+nx.season_number+'É'+nx.episode_number+') le '+fmtD(nx.air_date)+'.',R:[]};
+      if(st==='In Production'||st==='Planned')return {v:'✅ Confirmée',p:96,c:'#2f9e44',sub:'Une nouvelle saison est officiellement en préparation.',R:ren?[['📰','« '+ren.t+' » — '+ren.s]]:[]};
+      if(ren)return {v:'✅ Renouvelée',p:92,c:'#2f9e44',sub:'D\'après les actus (à confirmer par la plateforme).',R:[['📰','« '+ren.t+' » — '+ren.s]]};
+      if(d.type==='Miniseries')return {v:'🎬 Mini-série',p:8,c:'#868e96',sub:'Pensée comme une histoire unique : une suite est très rare.',R:[]};
+      /* estimation : on part de 55 % et on ajuste avec ce qui pèse vraiment sur une décision de renouvellement */
+      var p=55,pop=d.popularity||0,va=d.vote_average||0,vc=d.vote_count||0,m=last?months(last,now):0,netflix=/netflix/i.test(nets);
+      if(pop>150){p+=18;R.push(['🔥','Énorme succès en ce moment (popularité '+Math.round(pop)+')']);}else if(pop>50){p+=10;R.push(['📈','Très regardée (popularité '+Math.round(pop)+')']);}else if(pop<12){p-=16;R.push(['📉','Peu regardée en ce moment']);}else R.push(['📊','Audience moyenne']);
+      if(vc>=50){if(va>=8){p+=10;R.push(['⭐','Adorée du public ('+va.toFixed(1)+'/10)']);}else if(va<6.5){p-=12;R.push(['👎','Notes moyennes ('+va.toFixed(1)+'/10)']);}}
+      if(netflix&&ns>=2){p-=ns>=3?14:8;R.push(['🔪','Netflix arrête souvent ses séries après '+(ns>=3?'3':'2')+' saisons']);}
+      if(m>24){p-=28;R.push(['⏳','Aucun épisode depuis '+Math.round(m)+' mois']);}else if(m>15){p-=12;R.push(['⌛','Pas de nouvelle depuis '+Math.round(m)+' mois']);}else if(m<5&&last){p+=4;R.push(['🆕','Saison diffusée récemment : la décision n\'est souvent pas encore prise']);}
+      if(ns>=5){p+=6;R.push(['🏛️','Série installée ('+ns+' saisons)']);}
+      if(can){p-=30;R.push(['📰','Les actus parlent de fin : « '+can.t+' » — '+can.s]);}
+      p=Math.max(4,Math.min(94,Math.round(p)));
+      var v=p>=70?'🟢 Bien partie pour continuer':p>=45?'🟡 Avenir incertain':'🔴 En danger';
+      return {v:v,p:p,c:p>=70?'#2f9e44':p>=45?'#f59f00':'#e03131',sub:'Chances estimées d\'une nouvelle saison',R:R,est:1};
+    });
+  }
+  function inject(it){
+    var mc=document.getElementById('modal-content');if(!mc||mc.querySelector('.ca54'))return;
+    var ref=mc.querySelector('.modal-synopsis');if(!ref)return;
+    var box=document.createElement('div');box.className='ca54';box.innerHTML='<div class="ca54-h"><small>📉 Prévision : je regarde l\'avenir de la série…</small></div>';ref.insertAdjacentElement('afterend',box);
+    predict(it).then(function(r){if(!r){box.remove();return;}
+      box.innerHTML='<div class="ca54-h"><div class="ca54-g" style="--p54:'+r.p+';--c54:'+r.c+'"><span>'+(r.est?r.p+'%':(r.p>=90?'✓':r.p===0?'✕':'•'))+'</span></div><div><small>📉 Prévision d\'annulation</small><b>'+r.v+'</b><small>'+esc(r.sub)+'</small></div></div>'
+        +(r.R.length?'<ul>'+r.R.map(function(x){return '<li><i>'+x[0]+'</i>'+esc(x[1])+'</li>';}).join('')+'</ul>':'')
+        +(r.est?'<span class="ca54-s">Estimation calculée avec l\'audience, les notes, la plateforme, le temps depuis la dernière saison et les actus. Ce n\'est pas une annonce officielle.</span>':'');
+    }).catch(function(){box.remove();});
+  }
+  try{var oOM=openModal;openModal=function(id){var r=oOM.apply(this,arguments);try{var it=items.find(function(x){return x.id===id;});if(it&&it.type==='serie'&&it.tmdbId){setTimeout(function(){inject(it);},250);setTimeout(function(){inject(it);},900);}}catch(_){}return r;};}catch(e){console.warn('ca54',e);}
 })();
 
 /* ==V29-END== */
