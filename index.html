@@ -28847,6 +28847,79 @@ if(LOOK38)(function(){
   var st=document.createElement('style');st.id='v56-css';st.textContent=C;document.head.appendChild(st);
 })();
 
+
+/* ====== V57 — 🔔 NOTIFICATIONS TÉLÉPHONE
+   • notifications natives de l'appli (sans rien installer), en plus du canal ntfy existant
+   • nouvelles alertes : actus importantes sur TA liste, tes titres dans les tops (entrée / n°1), épisodes du jour
+   • vérification en arrière-plan par le service worker (Android, appli installée) même quand l'appli est fermée ====== */
+(function(){
+  var NK='cineNotif57',SK='cineNotif57Sent';
+  function cfg(){try{return Object.assign({native:false,news:true,tops:true,eps:true,ntNews:true,ntTops:true},JSON.parse(localStorage.getItem(NK)||'{}'));}catch(_){return {native:false,news:true,tops:true,eps:true,ntNews:true,ntTops:true};}}
+  function scfg(c){try{localStorage.setItem(NK,JSON.stringify(c));}catch(_){}snapshot();}
+  function sent(){try{return JSON.parse(localStorage.getItem(SK)||'{}');}catch(_){return {};}}
+  function ssent(s){var lim=Date.now()-12*864e5;Object.keys(s).forEach(function(k){if(s[k]<lim)delete s[k];});try{localStorage.setItem(SK,JSON.stringify(s));}catch(_){}}
+  function norm(s){return ' '+String(s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]+/g,' ').trim()+' ';}
+  var IMPORTANT=/renouvel|renew|annul|cancel|date de sortie|release date|bande[- ]annonce|trailer|teaser|saison \d|season \d|premi[eè]res? images|first look|casting|rejoint|joins|officiel|official|confirm/i;
+  function myTitles(){var o={};(items||[]).concat(wishlist||[]).forEach(function(i){if(!i||i.locked)return;var t=norm(i.title).trim();if(t.length>=4)o[t]=i.title;});return o;}
+  function myKeys(){var o={};(items||[]).concat(wishlist||[]).forEach(function(i){if(i&&i.tmdbId)o[(i.tmdbType==='tv'?'tv':'movie')+'_'+i.tmdbId]=i.title;});return o;}
+  var PN={netflix:'Netflix',prime:'Prime Video',disney:'Disney+',canal:'Canal+',max:'Max',apple:'Apple TV+',paramount:'Paramount+',tf1:'TF1+',m6:'M6+'};
+  function canNative(){return 'Notification' in window&&Notification.permission==='granted'&&cfg().native;}
+  function show(title,body,opt){opt=opt||{};
+    if(opt.nat!==false&&canNative()&&navigator.serviceWorker){navigator.serviceWorker.ready.then(function(r){r.showNotification(title,{body:body,icon:'icon-192.png',badge:'icon-192.png',tag:opt.tag||undefined,image:opt.image||undefined,data:{url:SITE_URL}});}).catch(function(){try{new Notification(title,{body:body,icon:'icon-192.png'});}catch(_){}});}
+    if(opt.nt&&typeof ntfyCfg!=='undefined'&&ntfyCfg.on&&ntfyCfg.topic){try{ntfySend(title,body,{tags:opt.tags||'clapper'});}catch(_){}}}
+  /* ---------- le contrôle (appli ouverte) ---------- */
+  function check(){
+    var c=cfg(),ntOn=typeof ntfyCfg!=='undefined'&&ntfyCfg.on&&ntfyCfg.topic;if(!canNative()&&!ntOn)return;
+    var S=sent(),T=myTitles(),K=myKeys(),day=new Date().toISOString().slice(0,10),now=Date.now(),n=0;
+    var hour=new Date().getHours();
+    /* épisodes qui sortent aujourd'hui (le canal ntfy les programme déjà à l'heure exacte) */
+    if(c.eps&&canNative()&&hour>=8){(items||[]).forEach(function(it){var ne=it.nextEpisode;if(!ne||ne.airDate!==day)return;var k='ep_'+it.id+'_'+ne.season+'_'+ne.episode;if(S[k])return;S[k]=now;n++;
+      show('📺 '+it.title,'Nouvel épisode aujourd\'hui : S'+ne.season+'E'+ne.episode+(ne.name?' — '+ne.name:''),{tag:k});});}
+    var jobs=[];
+    if(c.news||c.ntNews)jobs.push(fetch('news.json?n='+Math.floor(now/9e5),{cache:'no-cache'}).then(function(r){return r.ok?r.json():null;}).then(function(N){
+      ((N&&N.items)||[]).filter(function(x){return x.ts>now-20*36e5;}).forEach(function(x){var t=norm(x.t+' '+(x.d||'')),hit='';for(var k in T){if(t.indexOf(' '+k+' ')>=0){hit=T[k];break;}}
+        if(!hit||!(IMPORTANT.test(x.t)||(x.k||[]).indexOf('officiel')>=0||(x.k||[]).indexOf('ba')>=0))return;var key='nw_'+(x.u||x.t).slice(-120);if(S[key])return;S[key]=now;if(n>=4)return;n++;
+        show('📰 '+hit,x.t,{tag:key,image:x.i||undefined,nat:c.news,nt:c.ntNews&&ntOn,tags:'newspaper'});});}).catch(function(){}));
+    if(c.tops||c.ntTops)jobs.push(fetch('tops.json?n='+Math.floor(now/9e5),{cache:'no-cache'}).then(function(r){return r.ok?r.json():null;}).then(function(J){if(!J)return;
+      Object.keys(J.prov||{}).forEach(function(pl){var P=J.prov[pl];if(!P||P.src!=='jw')return;['tv','films'].forEach(function(cat){(P[cat]||[]).forEach(function(x,i){var key=x.mt+'_'+x.id,title=K[key];if(!title)return;var r=x.r||i+1;
+        var kk='tp_'+day+'_'+pl+'_'+key+'_'+(r===1?'1':'in');if(S[kk]||(r!==1&&S['tp_'+day+'_'+pl+'_'+key+'_1']))return;S[kk]=now;if(n>=6)return;n++;
+        show(r===1?'👑 '+title+' est n°1':'🏆 '+title+' est dans le top',(r===1?'Numéro 1 aujourd\'hui sur ':'N°'+r+' aujourd\'hui sur ')+(PN[pl]||pl)+' en France',{tag:kk,nat:c.tops,nt:c.ntTops&&ntOn,tags:'trophy'});});});});}).catch(function(){}));
+    Promise.all(jobs).then(function(){ssent(S);snapshot();});
+  }
+  /* ---------- ce que le service worker doit savoir pour vérifier appli fermée ---------- */
+  function snapshot(){try{if(!('caches' in window))return;var c=cfg();var data={native:c.native&&('Notification' in window)&&Notification.permission==='granted',news:c.news,tops:c.tops,ntNews:c.ntNews,ntTops:c.ntTops,topic:(typeof ntfyCfg!=='undefined'&&ntfyCfg.on)?ntfyCfg.topic:'',site:SITE_URL,titles:myTitles(),keys:myKeys(),sent:sent()};
+    caches.open('cine-notif').then(function(ca){ca.put('notif-cfg.json',new Response(JSON.stringify(data),{headers:{'content-type':'application/json'}}));});}catch(_){}}
+  function bgRegister(){if(!navigator.serviceWorker)return;navigator.serviceWorker.ready.then(function(r){if(!r.periodicSync)return;
+    return navigator.permissions.query({name:'periodic-background-sync'}).then(function(p){if(p.state==='granted')return r.periodicSync.register('cine-notif',{minInterval:3*3600*1000});});}).catch(function(){});}
+  setTimeout(function(){snapshot();check();bgRegister();},20000);
+  setInterval(function(){if(!document.hidden)check();},20*60*1000);
+  document.addEventListener('visibilitychange',function(){if(!document.hidden)setTimeout(check,3000);});
+
+  /* ---------- réglages (Mon profil → Notifications) ---------- */
+  function boxHtml(){var c=cfg(),perm=('Notification' in window)?Notification.permission:'unsupported',on=c.native&&perm==='granted';
+    var ios=/iphone|ipad/i.test(navigator.userAgent),standalone=(window.matchMedia&&matchMedia('(display-mode: standalone)').matches)||navigator.standalone;
+    return '<details class="cn-box nt57"'+(on?'':' open')+'><summary>📲 Notifications de l\'appli <span class="cn-on'+(on?'':' off')+'">'+(on?'activées':'sans rien installer')+'</span></summary>'
+      +(perm==='unsupported'?'<div class="cn-hint">'+(ios&&!standalone?'Sur iPhone : ajoute d\'abord l\'appli à l\'écran d\'accueil (Partager → « Sur l\'écran d\'accueil »), puis ouvre-la depuis l\'icône.':'Ce navigateur ne gère pas les notifications. Utilise plutôt ntfy ci-dessous.')+'</div>'
+       :perm==='denied'?'<div class="cn-hint">⚠️ Les notifications sont bloquées pour ce site. Autorise-les dans les réglages du navigateur (cadenas à côté de l\'adresse).</div>':'')
+      +'<div class="cn-opts"><label><input type="checkbox" data-n="news"'+(c.news?' checked':'')+'> 📰 Actus importantes sur ta liste (renouvellement, annulation, date, bande-annonce)</label>'
+      +'<label><input type="checkbox" data-n="tops"'+(c.tops?' checked':'')+'> 🏆 Tes séries et films qui entrent dans un top ou passent n°1</label>'
+      +'<label><input type="checkbox" data-n="eps"'+(c.eps?' checked':'')+'> 📺 Épisodes qui sortent aujourd\'hui</label></div>'
+      +'<div class="cn-row">'+(perm!=='unsupported'&&perm!=='denied'?'<button class="cn-btn big" data-na="on">'+(on?'💾 Enregistrer':'🔔 Activer sur cet appareil')+'</button>':'')+(on?'<button class="cn-btn" data-na="test">📨 Tester</button><button class="cn-btn" data-na="off">Désactiver</button>':'')+'</div>'
+      +'<div class="cn-hint">'+(('PeriodicSyncManager' in window)?'✅ Si l\'appli est installée sur ton téléphone Android, elle vérifie aussi les nouveautés appli fermée (quelques fois par jour).':'ℹ️ Les alertes arrivent quand l\'appli est ouverte ou en arrière-plan. Pour être prévenu appli fermée partout, active aussi ntfy ci-dessous.')+'</div>'
+      +'<div class="cn-hint" style="margin-top:6px">Via ntfy aussi : <label><input type="checkbox" data-n="ntNews"'+(c.ntNews?' checked':'')+'> 📰 actus</label> <label><input type="checkbox" data-n="ntTops"'+(c.ntTops?' checked':'')+'> 🏆 tops</label></div></details>';}
+  function bindBox(el){var b=el.querySelector('.nt57');if(!b)return;
+    b.addEventListener('change',function(e){var i=e.target.closest('[data-n]');if(!i)return;var c=cfg();c[i.dataset.n]=i.checked;scfg(c);});
+    b.addEventListener('click',function(e){var a=e.target.closest('[data-na]');if(!a)return;e.preventDefault();var w=a.dataset.na,c=cfg();
+      if(w==='on'){Notification.requestPermission().then(function(p){if(p!=='granted'){toast('⚠️ Autorisation refusée');return;}c.native=true;scfg(c);toast('🔔 Notifications activées sur cet appareil');bgRegister();
+        show('🎬 Mon Ciné Tracker','C\'est activé ! Tu seras prévenu des nouveautés sur tes séries 🍿',{tag:'hello57'});redraw(el);setTimeout(check,1500);});}
+      if(w==='test')show('🎬 Test','Les notifications marchent 🎉',{tag:'test57'});
+      if(w==='off'){c.native=false;scfg(c);toast('🔕 Notifications de l\'appli désactivées');redraw(el);}});}
+  function redraw(el){var b=el.querySelector('.nt57');if(!b)return;var t=document.createElement('div');t.innerHTML=boxHtml();b.replaceWith(t.firstChild);bindBox(el);}
+  try{var oCP=connectPanelHtml;connectPanelHtml=function(){return boxHtml()+oCP.apply(this,arguments);};
+    var oBC=bindConnectPanel;bindConnectPanel=function(el){var r=oBC.apply(this,arguments);try{bindBox(el);}catch(e){console.warn('nt57',e);}return r;};}catch(e){console.warn('nt57',e);}
+  var st=document.createElement('style');st.textContent='.nt57 .cn-on.off{background:var(--input-bg);color:var(--muted)}.nt57 .cn-opts label{display:block}';document.head.appendChild(st);
+})();
+
 /* ==V29-END== */
 
 
