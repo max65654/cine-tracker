@@ -28717,6 +28717,136 @@ if(LOOK38)(function(){
   try{var oOM=openModal;openModal=function(id){var r=oOM.apply(this,arguments);try{var it=items.find(function(x){return x.id===id;});if(it&&it.type==='serie'&&it.tmdbId){setTimeout(function(){inject(it);},250);setTimeout(function(){inject(it);},900);}}catch(_){}return r;};}catch(e){console.warn('ca54',e);}
 })();
 
+
+/* ====== V56 — 🎭 ÉPISODES : une ambiance en emoji + le résumé dépliable sur chaque épisode
+   + ⚔️ CINÉ-ARÈNE : tournois et duels entre tes films et séries, avec ton classement Arène ====== */
+(function(){
+  var RM=false;try{RM=matchMedia('(prefers-reduced-motion:reduce)').matches;}catch(_){}
+  /* ---------------- ÉPISODES ---------------- */
+  var MOODS=[
+    [/\b(meurt|mort|morte|tu[ée]e?s?|assassin|meurtre|cadavre|corps|deuil|enterrement|funérailles)\b/i,'💀','Mort'],
+    [/\b(r[ée]v[ée]lation|secret|v[ée]rit[ée]|d[ée]couvre|trahi|trahison|mensonge|choc)\b/i,'😱','Révélation'],
+    [/\b(amour|amoureu|baiser|embrasse|romance|couple|mariage|rendez-vous|s[ée]duire|flirt)\b/i,'❤️','Romance'],
+    [/\b(combat|bataille|guerre|attaque|explosion|fusillade|poursuite|braquage|[ée]vasion|course)\b/i,'🔥','Action'],
+    [/\b(enqu[êe]te|indice|suspect|myst[èe]re|disparition|disparu|police|interrogatoire|piste)\b/i,'🕵️','Enquête'],
+    [/\b(peur|terreur|cauchemar|d[ée]mon|hant[ée]|monstre|cr[ée]ature|surnaturel|vision|possession|rituel)\b/i,'👻','Frissons'],
+    [/\b(rival|jalou|dispute|conflit|clash|affront|vengeance|venger|col[èe]re|humili)/i,'⚡','Conflit'],
+    [/\b(culpabilit|panique|menace|chantage|pression|tension|angoisse|danger|pi[èe]ge|fuir|cache|dissimul|retomb[ée]es)/i,'😰','Tension'],
+    [/\b(comp[ée]tition|concours|audition|championnat|tournoi|s[ée]lection|recrue|[ée]preuve|initiation|danse)/i,'🏆','Défi'],
+    [/\b(f[êe]te|soir[ée]e|bal|anniversaire|vacances|voyage|road trip)\b/i,'🎉','Fête'],
+    [/\b(dr[ôo]le|blague|gaffe|quiproquo|com[ée]die|catastrophe ambulante)\b/i,'😂','Comédie'],
+    [/\b(famille|m[èe]re|p[èe]re|s[œo]eur|fr[èe]re|enfant|parents|retrouvailles)\b/i,'🏠','Famille'],
+    [/\b(finale|fin de saison|tout bascule|derni[èe]re chance|ultime)\b/i,'🎬','Grand final']
+  ];
+  function mood(ep,i,n){var t=(ep.synopsis||'')+' '+(ep.title||'');if(n&&i===n-1)return ['🎬','Final de saison'];if(i===0)return ['🚪','Début de saison'];for(var k=0;k<MOODS.length;k++)if(MOODS[k][0].test(t))return [MOODS[k][1],MOODS[k][2]];return t.trim().length>20?['📺','Épisode']:null;}
+  try{var oER=epRowsHtml;epRowsHtml=function(itemId,s){var h=oER.apply(this,arguments),eps=(episodes[itemId]||{})[s]||[];
+    eps.forEach(function(ep,i){var key='data-epr="'+s+'-'+i+'"',a=h.indexOf(key);if(a<0)return;
+      var m=mood(ep,i,eps.length),t=h.indexOf('</span>',h.indexOf('class="ep-title"',a));if(t<0)return;t+=7;
+      var mh=m?'<span class="ep-mood" title="'+m[1]+'">'+m[0]+'</span>':'';
+      h=h.slice(0,t)+mh+(ep.synopsis?'<button type="button" class="ep-synb" data-syn="1" title="Résumé">📖</button>':'')+h.slice(t);
+      var ck=h.indexOf('data-ec="'+s+'-'+i+'"',a);if(ck<0)return;var end=h.indexOf('</div>',h.indexOf('</button>',ck));if(end<0)return;
+      var meta=[ep.airDate?new Date(ep.airDate+'T12:00').toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'}):'',ep.runtime?ep.runtime+' min':''].filter(Boolean).join(' · ');
+      if(ep.synopsis)h=h.slice(0,end)+'<div class="ep-syn">'+(meta?'<small>'+meta+'</small>':'')+esc(ep.synopsis)+'</div>'+h.slice(end);});
+    return h;};}catch(e){console.warn('ep56',e);}
+  document.addEventListener('click',function(e){var b=e.target.closest&&(e.target.closest('.ep-synb')||e.target.closest('.ep-row .ep-title'));if(!b)return;var r=b.closest('.ep-row');if(!r||!r.querySelector('.ep-syn'))return;e.stopPropagation();r.classList.toggle('syn56');},true);
+
+  /* ---------------- CINÉ-ARÈNE ---------------- */
+  var AK='cineArena56';
+  function A(){try{return Object.assign({elo:{},champs:[],duels:0},JSON.parse(localStorage.getItem(AK)||'{}'));}catch(_){return {elo:{},champs:[],duels:0};}}
+  function Asave(a){try{localStorage.setItem(AK,JSON.stringify(a));}catch(_){}}
+  function kOf(i){return (i.tmdbType==='tv'?'tv':'movie')+'_'+(i.tmdbId||i.id);}
+  function pool(kind){return (items||[]).filter(function(i){return i&&!i.locked&&i.poster&&(i.status==='termine'||i.status==='en_cours')&&(kind==='all'||(kind==='films'?i.type!=='serie':i.type==='serie'));});}
+  function shuffle(l){l=l.slice();for(var i=l.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1)),t=l[i];l[i]=l[j];l[j]=t;}return l;}
+  function elo(a,w,l){var E=a.elo,rw=E[w]||1200,rl=E[l]||1200,ex=1/(1+Math.pow(10,(rl-rw)/400)),k=32;E[w]=Math.round(rw+k*(1-ex));E[l]=Math.round(rl-k*(1-ex));a.duels=(a.duels||0)+1;}
+  var ST={mode:'home',kind:'all',size:16,round:[],next:[],idx:0,total:0,played:0};
+  var ROUND={16:'Huitièmes de finale',8:'Quarts de finale',4:'Demi-finales',2:'La grande finale'};
+  function stars(i){var r=+i.rating||0;return r?'⭐ '+(r>10?r/10:r)+'':'';}
+  function cardHtml(i,side){return '<button type="button" class="ar56-c '+side+'" data-pick="'+side+'"><span class="ar56-im"><img src="'+esc(i.poster)+'" alt=""></span><b>'+esc(i.title)+'</b><small>'+(i.type==='serie'?'📺 Série':'🎬 Film')+(i.year?' · '+i.year:'')+(stars(i)?' · '+stars(i):'')+'</small></button>';}
+  function render(v){
+    var a=A();
+    if(ST.mode==='home'){
+      var top=Object.keys(a.elo).map(function(k){var it=(items||[]).find(function(i){return kOf(i)===k;});return it?{it:it,r:a.elo[k]}:null;}).filter(Boolean).sort(function(x,y){return y.r-x.r;}).slice(0,10);
+      v.innerHTML='<div class="ar56"><div class="ar56-hero"><h2>⚔️ Ciné-Arène</h2><p>Fais s\'affronter tes films et séries. Un seul restera debout.</p></div>'
+        +'<div class="ar56-modes"><div class="ar56-m"><h3>🏆 Tournoi</h3><p>Un tableau à élimination directe tiré de ta collection.</p>'
+        +'<div class="ar56-seg" data-g="kind">'+[['all','Tout'],['films','🎬 Films'],['series','📺 Séries']].map(function(o){return '<button type="button" data-v="'+o[0]+'" class="'+(ST.kind===o[0]?'on':'')+'">'+o[1]+'</button>';}).join('')+'</div>'
+        +'<div class="ar56-seg" data-g="size">'+[8,16,32].map(function(n){return '<button type="button" data-v="'+n+'" class="'+(ST.size===n?'on':'')+'">'+n+' combattants</button>';}).join('')+'</div>'
+        +'<button type="button" class="ar56-go" data-act="cup">⚔️ Lancer le tournoi</button></div>'
+        +'<div class="ar56-m"><h3>🔥 Duel express</h3><p>Des duels sans fin : chaque choix fait monter ou descendre tes titres dans ton classement Arène.</p><button type="button" class="ar56-go" data-act="duel">🔥 C\'est parti</button><small>'+(a.duels||0)+' duels joués</small></div></div>'
+        +'<div class="ar56-cols"><div class="ar56-box"><h3>📊 Ton classement Arène</h3>'+(top.length?'<ol>'+top.map(function(o,n){return '<li><span>'+(n===0?'👑':n+1)+'</span><img src="'+esc(o.it.poster)+'" alt=""><b>'+esc(o.it.title)+'</b><em>'+o.r+'</em></li>';}).join('')+'</ol>':'<p class="ar56-e">Joue quelques duels pour voir apparaître ton classement.</p>')+'</div>'
+        +'<div class="ar56-box"><h3>🏆 Tes champions</h3>'+(a.champs.length?'<div class="ar56-ch">'+a.champs.slice(-8).reverse().map(function(c){return '<span><img src="'+esc(c.p)+'" alt=""><b>'+esc(c.t)+'</b><small>'+new Date(c.d).toLocaleDateString('fr-FR',{day:'numeric',month:'short'})+' · '+c.n+' en lice</small></span>';}).join('')+'</div>':'<p class="ar56-e">Aucun tournoi gagné pour l\'instant.</p>')+'</div></div></div>';
+      return;}
+    var L=ST.round,i1=L[ST.idx*2],i2=L[ST.idx*2+1];
+    var head=ST.mode==='cup'?'<b>'+(ROUND[L.length]||('Tour de '+L.length))+'</b><small>Duel '+(ST.idx+1)+' / '+(L.length/2)+'</small>':'<b>🔥 Duel express</b><small>'+(A().duels||0)+' duels joués</small>';
+    v.innerHTML='<div class="ar56 fight"><div class="ar56-top"><button type="button" class="ar56-x" data-act="home">← Arène</button><div class="ar56-rd">'+head+'</div>'+(ST.mode==='cup'?'<div class="ar56-pr"><i style="width:'+Math.round(ST.played/ST.total*100)+'%"></i></div>':'')+'</div>'
+      +'<p class="ar56-q">Lequel tu préfères ?</p><div class="ar56-arena">'+cardHtml(i1,'l')+'<span class="ar56-vs">VS</span>'+cardHtml(i2,'r')+'</div>'
+      +(ST.mode==='duel'?'<button type="button" class="ar56-skip" data-act="skip">Je ne sais pas, passe</button>':'')+'</div>';
+  }
+  function champion(v,w){var a=A();a.champs.push({t:w.title,p:w.poster,k:kOf(w),d:Date.now(),n:ST.size});Asave(a);
+    v.innerHTML='<div class="ar56 win"><div class="ar56-crown">👑</div><img src="'+esc(w.poster)+'" alt=""><h2>'+esc(w.title)+'</h2><p>remporte la Ciné-Arène face à '+(ST.size-1)+' adversaires !</p><div class="ar56-btns"><button type="button" class="ar56-go" data-act="cup">🔁 Nouveau tournoi</button><button type="button" class="ar56-x" data-act="home">← Arène</button></div></div>';
+    try{if(typeof confetti==='function')confetti();}catch(_){}
+    try{sfx.success();}catch(_){}}
+  function newDuel(){var P=pool(ST.kind);if(P.length<2)return false;var a=A(),x=P[Math.floor(Math.random()*P.length)],y;
+    /* on fait plutôt s'affronter des titres de niveau proche */
+    var near=P.filter(function(i){return i!==x&&Math.abs((a.elo[kOf(i)]||1200)-(a.elo[kOf(x)]||1200))<150;});y=(near.length?near:P.filter(function(i){return i!==x;}))[Math.floor(Math.random()*(near.length||P.length-1))];
+    ST.round=[x,y];ST.idx=0;return true;}
+  function start(v,mode){
+    if(mode==='cup'){var P=shuffle(pool(ST.kind));if(P.length<4){toast('Il faut au moins 4 titres vus avec une affiche');return;}var n=ST.size;while(n>P.length)n/=2;ST.size=n;ST.round=P.slice(0,n);ST.next=[];ST.idx=0;ST.total=n-1;ST.played=0;}
+    else{if(!newDuel()){toast('Il faut au moins 2 titres vus');return;}}
+    ST.mode=mode;render(v);}
+  function pick(v,side,btn){
+    var L=ST.round,w=side==='l'?L[ST.idx*2]:L[ST.idx*2+1],l=side==='l'?L[ST.idx*2+1]:L[ST.idx*2];var a=A();elo(a,kOf(w),kOf(l));Asave(a);
+    try{sfx.click();}catch(_){}
+    var box=v.querySelector('.ar56-arena');if(box&&!RM){box.classList.add('pk-'+side);}
+    setTimeout(function(){
+      if(ST.mode==='duel'){newDuel();render(v);return;}
+      ST.next.push(w);ST.played++;ST.idx++;
+      if(ST.idx*2>=L.length){if(ST.next.length===1){ST.mode='home';champion(v,ST.next[0]);return;}ST.round=ST.next;ST.next=[];ST.idx=0;}
+      render(v);},RM?60:520);}
+  function renderArena(v){
+    if(!v._ar56){v._ar56=1;v.addEventListener('click',function(e){
+      var s=e.target.closest('.ar56-seg button');if(s){var g=s.parentNode.dataset.g;ST[g]=g==='size'?+s.dataset.v:s.dataset.v;render(v);return;}
+      var p=e.target.closest('[data-pick]');if(p&&!v.querySelector('.ar56-arena[class*="pk-"]')){pick(v,p.dataset.pick,p);return;}
+      var a=e.target.closest('[data-act]');if(!a)return;var act=a.dataset.act;
+      if(act==='home'){ST.mode='home';render(v);}else if(act==='cup'||act==='duel')start(v,act);else if(act==='skip'){newDuel();render(v);}});
+      document.addEventListener('keydown',function(e){if(v.style.display==='none'||!v.querySelector('.ar56-arena'))return;if(e.key==='ArrowLeft'){var b=v.querySelector('[data-pick=l]');if(b)b.click();}if(e.key==='ArrowRight'){var c=v.querySelector('[data-pick=r]');if(c)c.click();}});}
+    if(ST.mode==='home'||!ST.round.length){ST.mode='home';}
+    render(v);
+  }
+  try{cinePage('arene','⚔️ Arène','badges',renderArena);}catch(e){console.warn('arene56',e);}
+
+  var C=''
+  /* épisodes */
+  +'.ep-row{flex-wrap:wrap}.ep-mood{font-size:1rem;margin:0 2px;flex:none;cursor:default}.ep-synb{border:0;background:none;cursor:pointer;font-size:.9rem;padding:2px 4px;opacity:.65;flex:none}.ep-synb:hover{opacity:1}'
+  +'.ep-row .ep-title{cursor:pointer}.ep-syn{display:none;flex:1 0 100%;order:99;margin:6px 0 2px;padding:10px 12px;border-radius:12px;background:var(--input-bg);color:var(--ink);font-size:.82rem;line-height:1.45;box-shadow:inset 0 0 0 1px var(--border)}.ep-syn small{display:block;color:var(--muted);font-size:.7rem;margin-bottom:4px}'
+  +'.ep-row.syn56 .ep-syn{display:block;animation:syn56 .25s ease}@keyframes syn56{from{opacity:0;transform:translateY(-4px)}}'
+  /* arène */
+  +'.ar56{max-width:1000px;margin:0 auto;padding:6px 0 30px;color:var(--ink)}'
+  +'.ar56-hero{text-align:center;padding:26px 16px;border-radius:24px;background:radial-gradient(600px 220px at 50% 0,rgba(255,77,141,.35),transparent),linear-gradient(160deg,#2a1240,#120a1f);color:#fff;box-shadow:0 24px 50px -30px #000}'
+  +'.ar56-hero h2{font:800 2.2rem Fredoka,sans-serif;margin:0;letter-spacing:.02em;text-shadow:0 4px 0 rgba(0,0,0,.35)}.ar56-hero p{margin:6px 0 0;opacity:.85}'
+  +'.ar56-modes{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px;margin:16px 0}'
+  +'.ar56-m,.ar56-box{padding:16px;border-radius:20px;background:var(--card-bg);box-shadow:inset 0 0 0 1px var(--border),0 14px 30px -24px #000}.ar56-m h3,.ar56-box h3{font:700 1.15rem Fredoka,sans-serif;margin:0 0 4px}.ar56-m p{margin:0 0 10px;color:var(--muted);font-size:.85rem}.ar56-m small{display:block;margin-top:8px;color:var(--muted);font-size:.75rem}'
+  +'.ar56-seg{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}.ar56-seg button{border:0;border-radius:99px;padding:7px 12px;background:var(--input-bg);color:var(--ink);font:700 .78rem Nunito,sans-serif;cursor:pointer;box-shadow:inset 0 0 0 1px var(--border)}.ar56-seg button.on{background:var(--p1,#ff4d8d);color:#fff}'
+  +'.ar56-go{border:0;border-radius:14px;padding:12px 18px;font:800 1rem Fredoka,sans-serif;color:#fff;cursor:pointer;background:linear-gradient(180deg,var(--p1,#ff4d8d),var(--p2,#8b5cf6));box-shadow:0 5px 0 rgba(0,0,0,.3);transition:transform .15s}.ar56-go:active{transform:translateY(3px);box-shadow:0 2px 0 rgba(0,0,0,.3)}'
+  +'.ar56-cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px}.ar56-box ol{list-style:none;margin:8px 0 0;padding:0;display:grid;gap:6px}.ar56-box li{display:grid;grid-template-columns:26px 30px 1fr auto;align-items:center;gap:8px;font-size:.85rem}.ar56-box li span{font:800 .95rem Fredoka,sans-serif;text-align:center;color:var(--p1,#ff4d8d)}.ar56-box li img{width:30px;height:45px;object-fit:cover;border-radius:6px}.ar56-box li em{font-style:normal;font-weight:800;color:var(--muted);font-size:.75rem}'
+  +'.ar56-ch{display:grid;grid-template-columns:repeat(auto-fill,minmax(90px,1fr));gap:10px;margin-top:8px}.ar56-ch span{text-align:center}.ar56-ch img{width:100%;aspect-ratio:2/3;object-fit:cover;border-radius:10px;box-shadow:0 0 0 2px #f5c518,0 10px 20px -12px #000}.ar56-ch b{display:block;font-size:.75rem;margin-top:4px}.ar56-ch small{color:var(--muted);font-size:.65rem}.ar56-e{color:var(--muted);font-size:.85rem}'
+  +'.ar56-top{display:flex;align-items:center;gap:12px;flex-wrap:wrap}.ar56-x{border:0;border-radius:99px;padding:8px 14px;background:var(--input-bg);color:var(--ink);font:700 .8rem Nunito,sans-serif;cursor:pointer;box-shadow:inset 0 0 0 1px var(--border)}.ar56-rd b{display:block;font:800 1.2rem Fredoka,sans-serif}.ar56-rd small{color:var(--muted);font-size:.75rem}'
+  +'.ar56-pr{flex:1 0 100%;height:6px;border-radius:99px;background:var(--input-bg);overflow:hidden}.ar56-pr i{display:block;height:100%;background:linear-gradient(90deg,var(--p1,#ff4d8d),var(--p2,#8b5cf6));transition:width .4s}'
+  +'.ar56-q{text-align:center;font:700 1.1rem Fredoka,sans-serif;margin:18px 0 10px}'
+  +'.ar56-arena{display:grid;grid-template-columns:minmax(0,270px) auto minmax(0,270px);justify-content:center;align-items:center;gap:22px;perspective:1200px}'
+  +'.ar56-c{border:0;background:none;color:var(--ink);cursor:pointer;padding:0;text-align:center;transition:transform .45s cubic-bezier(.2,.8,.2,1),opacity .45s,filter .45s;transform-style:preserve-3d}'
+  +'.ar56-c.l{transform:rotateY(10deg)}.ar56-c.r{transform:rotateY(-10deg)}.ar56-c:hover{transform:rotateY(0) translateY(-6px) scale(1.03)}'
+  +'.ar56-im{display:block;border-radius:18px;overflow:hidden;box-shadow:0 30px 50px -28px #000,0 0 0 3px rgba(255,255,255,.08)}.ar56-im img{display:block;width:100%;aspect-ratio:2/3;object-fit:cover}'
+  +'.ar56-c b{display:block;font:700 1.05rem Fredoka,sans-serif;margin-top:10px}.ar56-c small{color:var(--muted);font-size:.78rem}'
+  +'.ar56-vs{font:900 2.2rem Fredoka,sans-serif;color:#fff;width:70px;height:70px;border-radius:50%;display:grid;place-items:center;background:radial-gradient(circle at 35% 30%,#ff8a5b,#e5383b 60%,#7a0b1d);box-shadow:0 10px 30px -8px #e5383b,inset 0 -5px 0 rgba(0,0,0,.25);text-shadow:0 3px 0 rgba(0,0,0,.35);animation:vs56 1.6s ease-in-out infinite}@keyframes vs56{50%{transform:scale(1.08) rotate(-4deg)}}'
+  +'.ar56-arena.pk-l .ar56-c.l,.ar56-arena.pk-r .ar56-c.r{transform:scale(1.08) translateY(-10px);filter:drop-shadow(0 0 22px var(--p1,#ff4d8d))}'
+  +'.ar56-arena.pk-l .ar56-c.r,.ar56-arena.pk-r .ar56-c.l{transform:translateY(40px) rotate(8deg) scale(.85);opacity:0;filter:grayscale(1)}.ar56-arena[class*="pk-"] .ar56-vs{opacity:0;transition:opacity .2s}'
+  +'.ar56-skip{display:block;margin:16px auto 0;border:0;background:none;color:var(--muted);text-decoration:underline;cursor:pointer;font-size:.8rem}'
+  +'.ar56.win{text-align:center;padding:30px 16px}.ar56.win img{width:min(240px,60vw);aspect-ratio:2/3;object-fit:cover;border-radius:20px;box-shadow:0 0 0 4px #f5c518,0 30px 60px -20px #000;animation:win56 .8s cubic-bezier(.2,1.4,.4,1)}.ar56-crown{font-size:3.2rem;animation:cr56 1.2s ease-in-out infinite}.ar56.win h2{font:800 1.8rem Fredoka,sans-serif;margin:14px 0 4px}.ar56.win p{color:var(--muted)}.ar56-btns{display:flex;gap:10px;justify-content:center;margin-top:16px;flex-wrap:wrap}'
+  +'@keyframes win56{from{transform:scale(.4) rotate(-12deg);opacity:0}}@keyframes cr56{50%{transform:translateY(-8px)}}'
+  +'@media(max-width:600px){.ar56-arena{gap:8px}.ar56-vs{width:46px;height:46px;font-size:1.3rem}.ar56-c b{font-size:.85rem}.ar56-hero h2{font-size:1.7rem}}';
+  var st=document.createElement('style');st.id='v56-css';st.textContent=C;document.head.appendChild(st);
+})();
+
 /* ==V29-END== */
 
 
