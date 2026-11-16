@@ -86,15 +86,19 @@ const RX = {
   ba: /\b(bande[- ]annonce|teaser|trailer|premi[èe]res? images)/i,
   bo: /\b(box[- ]office|entr[ée]es|recettes|millions de dollars|record d'audience)/i
 };
+// un article doit parler de cinéma, de séries ou de streaming (les sites généralistes publient aussi d'autres sujets)
+const CINE = /\b(films?|cin[ée](ma|aste)?|s[ée]ries?|saisons?|[ée]pisodes?|netflix|prime video|disney\+?|canal\+|hbo|max|apple tv|paramount|crunchyroll|bande[- ]annonce|teaser|trailer|acteurs?|actrices?|r[ée]alisat|casting|box[- ]office|streaming|anim[ée]|marvel|star wars|pixar|ghibli|oscars?|c[ée]sar|cannes|sundance|venise|movies?|tv (show|series)|showrunner|sequel|prequel|remake|reboot|spin-?off|biopic|horreur|horror|thriller|documentaire|sitcom|blockbuster|studio|warner|universal|sony pictures|a24|lionsgate)\b/i;
+const OFF = /\b(vpn|box tv|forfait|smartphone|pr[ée]nom|recette de cuisine|horoscope|m[ée]t[ée]o|bourse|imp[ôo]ts?|ligue 1|football|nba|nfl|élection|election|bitcoin)\b/i;
 async function buildNews() {
   let all = [];
   for (const s of SOURCES) {
     const xml = await get(s.u); if (!xml) continue;
-    const l = parseRss(xml, s).slice(0, s.gn ? 25 : 14); console.log(`📰 ${s.n}: ${l.length}`); all = all.concat(l);
+    const l = parseRss(xml, s).slice(0, s.gn ? 30 : 20).filter(x => { const t = x.t + ' ' + x.d; return (s.hor || CINE.test(t)) && !OFF.test(x.t); });
+    console.log(`📰 ${s.n}: ${l.length}`); all = all.concat(l);
   }
-  const seen = new Set(), weekAgo = Date.now() - 6 * 864e5;
+  const seen = new Set(), weekAgo = Date.now() - 3 * 864e5;
   const norm = t => t.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9 ]/g, ' ').split(/\s+/).filter(w => w.length > 2).slice(0, 7).join(' ');
-  all = all.filter(x => x.ts > weekAgo).sort((a, b) => b.ts - a.ts).filter(x => { const k = norm(x.t); if (!k || seen.has(k)) return false; seen.add(k); return true; }).slice(0, 220);
+  all = all.filter(x => x.ts > weekAgo && x.ts < Date.now() + 36e5).sort((a, b) => b.ts - a.ts).filter(x => { const k = norm(x.t); if (!k || seen.has(k)) return false; seen.add(k); return true; }).slice(0, 300);
   // traduction des articles anglais (titre + résumé), avec mémoire pour ne pas retraduire
   let cache = {}; try { cache = JSON.parse(await readFile('news.json', 'utf8')).tr || {}; } catch (_) {}
   const tr = {};
@@ -107,14 +111,33 @@ async function buildNews() {
   }
   for (const x of all) {
     const txt = (x.o || '') + ' ' + x.t + ' ' + x.d, k = [];
-    if (RX.spoiler.test(txt)) k.push('spoiler');
     if (RX.officiel.test(txt)) k.push('officiel'); else if (RX.rumeur.test(txt)) k.push('rumeur');
     if (RX.ba.test(txt)) k.push('ba'); if (RX.bo.test(txt)) k.push('bo');
     if (x.hor || /(horreur|horror|slasher|[ée]pouvante|possession|exorcis|zombie|found footage)/i.test(txt)) k.push('horreur');
     delete x.hor;
     x.k = k; delete x.l;
   }
-  return { updated: new Date().toISOString(), items: all, tr };
+  return { updated: new Date().toISOString(), items: all, tr, yt: await youtube() };
+}
+
+/* ======================= CHAÎNES YOUTUBE (lues ici car les relais publics du navigateur ne marchent plus) ======================= */
+const YT = [{ h: 'FilmsActu', id: 'UC_i8X3p8oZNaik8X513Zn1Q' }, { h: 'matteosapin' }, { h: 'landri_', id: 'UCoUwu6fnB6xYt4f1rPwHHQw' }, { h: 'marvelfr' }, { h: 'Regelegorila', id: 'UCouHAi3jWpC8lAqsoeM_zOA' }];
+async function youtube() {
+  const out = [];
+  for (const c of YT) {
+    let id = c.id;
+    if (!id) { const html = await get('https://www.youtube.com/@' + c.h); id = html && ((html.match(/"externalId":"(UC[\w-]{22})"/) || html.match(/<meta itemprop="identifier" content="(UC[\w-]{22})"/) || html.match(/"channelId":"(UC[\w-]{22})"/) || [])[1]); }
+    if (!id) { console.log(`📺 @${c.h}: introuvable`); continue; }
+    const xml = await get('https://www.youtube.com/feeds/videos.xml?channel_id=' + id); if (!xml) continue;
+    const name = strip(tag(xml, 'title')) || c.h; let n = 0;
+    for (const m of xml.matchAll(/<entry>[\s\S]*?<\/entry>/gi)) {
+      const x = m[0], vid = strip(tag(x, 'yt:videoId')); if (!vid) continue;
+      const link = (x.match(/<link[^>]+href="([^"]+)"/) || [])[1] || '';
+      out.push({ vid, cid: id, h: c.h, ch: name, t: strip(tag(x, 'title')), d: strip(tag(x, 'media:description')).slice(0, 600), ts: Date.parse(strip(tag(x, 'published'))) || Date.now(), short: /\/shorts\//.test(link) ? 1 : 0 }); n++;
+    }
+    console.log(`📺 ${name}: ${n} vidéos`);
+  }
+  return out;
 }
 
 /* ======================= TOPS ======================= */
@@ -152,7 +175,45 @@ async function netflix() {
 const PROVIDERS = [{ k: 'netflix', n: 'Netflix', id: 8 }, { k: 'prime', n: 'Prime Video', id: 119 }, { k: 'disney', n: 'Disney+', id: 337 }, { k: 'canal', n: 'Canal+', id: 381 }, { k: 'max', n: 'Max', id: 1899 }, { k: 'apple', n: 'Apple TV+', id: 350 }, { k: 'paramount', n: 'Paramount+', id: 531 }];
 // Tendances DU JOUR par plateforme : les titres les plus regardés aujourd'hui (TMDB, mis à jour en continu),
 // rangés par plateforme selon où ils sont disponibles en abonnement EN FRANCE. Complété par la popularité de la plateforme si besoin.
+/* Classement DU JOUR en France (JustWatch, mis à jour plusieurs fois par jour), filtré plateforme par plateforme */
+const JW = { netflix: ['nfx', 'nfa'], prime: ['prv'], disney: ['dnp'], canal: ['cpd', 'cns'], max: ['mxx'], apple: ['atp'], paramount: ['pmp', 'ppp'], tf1: ['tf1'], m6: ['sxp'] };
+const JW_N = { tf1: 'TF1+', m6: 'M6+' };
+const JWQ = `query T($f:TitleFilter){popularTitles(country:FR,first:100,filter:$f,sortBy:POPULAR){edges{node{content(country:FR,language:"fr"){title externalIds{tmdbId}} streamingCharts(country:FR){edges{streamingChartInfo{rank trend daysInTop10 updatedAt}}}}}}}`;
+async function jwChart(pk, ot) {
+  for (let i = 0; i < 2; i++) {
+    try {
+      const r = await fetch('https://apis.justwatch.com/graphql', { method: 'POST', headers: { 'content-type': 'application/json', 'User-Agent': UA }, body: JSON.stringify({ query: JWQ, variables: { f: { packages: pk, objectTypes: [ot] } } }), signal: AbortSignal.timeout(30000) });
+      const j = await r.json(); const E = (j && j.data && j.data.popularTitles && j.data.popularTitles.edges) || [];
+      return E.map(e => { const n = e.node, c = (n.streamingCharts && n.streamingCharts.edges && n.streamingCharts.edges[0] && n.streamingCharts.edges[0].streamingChartInfo) || null; return { tmdb: +(n.content && n.content.externalIds && n.content.externalIds.tmdbId) || 0, t: n.content && n.content.title, c }; })
+        .filter(x => x.c && x.c.rank && x.tmdb).sort((a, b) => a.c.rank - b.c.rank);
+    } catch (e) { console.warn('⚠️ JustWatch', String(e.message || e).slice(0, 120)); await sleep(1500); }
+  }
+  return [];
+}
+async function justwatch() {
+  const out = {}; let at = '';
+  for (const [k, pk] of Object.entries(JW)) {
+    out[k] = { n: (PROVIDERS.find(p => p.k === k) || {}).n || JW_N[k], films: [], tv: [], src: 'jw' };
+    for (const [ot, mt, cat] of [['MOVIE', 'movie', 'films'], ['SHOW', 'tv', 'tv']]) {
+      const L = (await jwChart(pk, ot)).slice(0, 10);
+      for (const x of L) {
+        const d = await tmdb(`/${mt}/${x.tmdb}`); await sleep(30);
+        out[k][cat].push({ ...(d ? slim(d, mt) : { id: x.tmdb, mt, t: x.t, p: '', b: '' }), day: 1, jw: x.c.rank, tr: x.c.trend, d10: x.c.daysInTop10 || 0 });
+        if (x.c.updatedAt > at) at = x.c.updatedAt;
+      }
+    }
+    console.log(`📅 ${out[k].n}: ${out[k].films.length} films, ${out[k].tv.length} séries (JustWatch du jour)`);
+  }
+  return { out, at };
+}
 async function providers() {
+  const J = await justwatch();
+  let T = null;
+  // JustWatch d'abord ; l'ancienne estimation ne sert que si JustWatch n'a rien donné pour une plateforme
+  for (const k of Object.keys(J.out)) { for (const cat of ['films', 'tv']) if (J.out[k][cat].length < 5 && PROVIDERS.some(p => p.k === k)) { T = T || await providersTmdb(); J.out[k][cat] = T[k][cat]; J.out[k].src = 'tmdb'; } }
+  J.out._at = J.at; return J.out;
+}
+async function providersTmdb() {
   const out = {}; PROVIDERS.forEach(p => { out[p.k] = { n: p.n, films: [], tv: [] }; });
   const byId = Object.fromEntries(PROVIDERS.map(p => [p.id, p.k]));
   for (const [mt, cat] of [['movie', 'films'], ['tv', 'tv']]) {
@@ -201,7 +262,7 @@ async function stremio() {
 // évolution des places (pour tout sauf Netflix, qui a ses propres données officielles)
 function withHistory(tops, hist) {
   const lists = {};
-  for (const [pk, v] of Object.entries(tops.prov || {})) { lists['prov.' + pk + '.films'] = v.films; lists['prov.' + pk + '.tv'] = v.tv; }
+  for (const [pk, v] of Object.entries(tops.prov || {})) { if (!v || !v.films) continue; lists['prov.' + pk + '.films'] = v.films; lists['prov.' + pk + '.tv'] = v.tv; }
   if (tops.stremio) { lists['stremio.films'] = tops.stremio.films; lists['stremio.tv'] = tops.stremio.tv; }
   if (tops.bo) lists['bo'] = tops.bo;
   for (const [key, list] of Object.entries(lists)) {
@@ -227,7 +288,8 @@ if (!only || only === 'news') {
 }
 if (!only || only === 'tops') {
   let hist = {}; try { hist = JSON.parse(await readFile('tops-history.json', 'utf8')); } catch (_) {}
-  const tops = { updated: new Date().toISOString(), netflix: await netflix(), prov: await providers(), bo: await boxOffice(), stremio: await stremio() };
+  const prov = await providers(), chartAt = prov._at; delete prov._at;
+  const tops = { updated: new Date().toISOString(), chartAt, netflix: await netflix(), prov, bo: await boxOffice(), stremio: await stremio() };
   if (!tops.netflix) { try { tops.netflix = JSON.parse(await readFile('tops.json', 'utf8')).netflix || null; } catch (_) {} }
   hist = withHistory(tops, hist);
   await writeFile('tops.json', JSON.stringify(tops));
