@@ -28001,19 +28001,32 @@ if(LOOK38)(function(){
   try{var oRP=renderPassport;renderPassport=function(v){var r=oRP.apply(this,arguments);try{extras(v);}catch(e){console.warn('pp47',e);}return r;};}catch(_){}
 
   /* ======================= MUR ======================= */
-  try{V29_MS.tvm='📺 TVmaze';V29_MS.vid='▶️ Vidéos';V29_MS.mine='💖 Mes ajouts';V29_MS.img='🖼️ Images officielles';V29_MS.still='🎬 Épisodes';V29_MS.shoot='📸 Tournage';}catch(_){}
+  try{V29_MS.tvm='📺 TVmaze';V29_MS.vid='▶️ Bandes-annonces';V29_MS.sea='🖼️ Affiches de saison';V29_MS.mine='💖 Mes ajouts';V29_MS.img='🖼️ Images officielles';V29_MS.still='🎬 Épisodes';V29_MS.shoot='📸 Tournage';}catch(_){}
   var MK='cineMurTitles47';
   function picked(){try{return JSON.parse(localStorage.getItem(MK)||'[]')||[];}catch(_){return [];}}
   function setPicked(l){try{localStorage.setItem(MK,JSON.stringify(l));}catch(_){}}
   function keyOf(i){return (i.tmdbType==='tv'?'tv':'movie')+'_'+i.tmdbId;}
   /* sources d'images pour un titre */
+  /* ---- chercheur d'images V58 : uniquement des images de CE titre, en bonne qualité, et beaucoup ---- */
+  function runPool(tasks,n){var i=0,out=[];return new Promise(function(res){var act=0;function next(){if(i>=tasks.length&&act===0)return res(out);while(act<n&&i<tasks.length){(function(k){act++;tasks[k]().then(function(v){out[k]=v;},function(){out[k]=null;}).then(function(){act--;next();});})(i++);}}next();});}
+  /* fonds (≥ 1280 px) et affiches (≥ 700 px) officiels, sans texte ou en français / anglais */
   function fImages(mt,id,name){return ivJson('https://api.themoviedb.org/3/'+mt+'/'+id+'/images?api_key='+TMDB+'&include_image_language=fr,en,null').then(function(d){var out=[];
-    ((d&&d.backdrops)||[]).forEach(function(x){out.push({u:img(x.file_path,'w1280'),th:img(x.file_path,'w780'),ar:x.aspect_ratio||1.78,a:name});});
-    ((d&&d.posters)||[]).slice(0,60).forEach(function(x){out.push({u:img(x.file_path,'w780'),th:img(x.file_path,'w342'),ar:x.aspect_ratio||.667,a:name});});return out;});}
-  function fStills(id,name){return ivJson('https://api.themoviedb.org/3/tv/'+id+'?api_key='+TMDB+'&language=fr-FR').then(function(d){var ss=((d&&d.seasons)||[]).filter(function(s){return s.season_number>0;});
-    return Promise.all(ss.map(function(s){return ivJson('https://api.themoviedb.org/3/tv/'+id+'/season/'+s.season_number+'?api_key='+TMDB+'&language=fr-FR').then(function(x){return ((x&&x.episodes)||[]).filter(function(e){return e.still_path;}).map(function(e){return {u:img(e.still_path,'original'),th:img(e.still_path,'w500'),ar:1.78,a:name+' · S'+s.season_number+'É'+e.episode_number+(e.name?' — '+e.name:'')};});}).catch(function(){return [];});})).then(function(l){return [].concat.apply([],l);});});}
-  function fShoot(mt,id,name){return ivJson('https://api.themoviedb.org/3/'+mt+'/'+id+'/'+(mt==='tv'?'aggregate_credits':'credits')+'?api_key='+TMDB).then(function(d){var cast=((d&&d.cast)||[]).slice(0,12);
-    return Promise.all(cast.map(function(a){return ivJson('https://api.themoviedb.org/3/person/'+a.id+'/tagged_images?api_key='+TMDB).then(function(x){return ((x&&x.results)||[]).filter(function(t){return t.media&&t.media.id===id&&(!t.media_type||t.media_type===mt);}).map(function(t){return {u:img(t.file_path,'original'),th:img(t.file_path,'w500'),ar:t.aspect_ratio||1,a:a.name};});}).catch(function(){return [];});})).then(function(l){return [].concat.apply([],l);});});}
+    ((d&&d.backdrops)||[]).filter(function(x){return (x.width||0)>=1280;}).forEach(function(x){out.push({u:img(x.file_path,'original'),th:img(x.file_path,'w780'),ar:x.aspect_ratio||1.78,a:name});});
+    ((d&&d.posters)||[]).filter(function(x){return (x.width||0)>=700;}).slice(0,40).forEach(function(x){out.push({u:img(x.file_path,'original'),th:img(x.file_path,'w500'),ar:x.aspect_ratio||.667,a:name});});return out;});}
+  /* toutes les images de chaque épisode (plusieurs par épisode), en HD */
+  function fStills(id,name){return ivJson('https://api.themoviedb.org/3/tv/'+id+'?api_key='+TMDB+'&language=fr-FR').then(function(d){var ss=((d&&d.seasons)||[]).filter(function(s){return s.season_number>0&&s.episode_count>0;});
+    return runPool(ss.map(function(s){return function(){return ivJson('https://api.themoviedb.org/3/tv/'+id+'/season/'+s.season_number+'?api_key='+TMDB+'&language=fr-FR').then(function(x){return ((x&&x.episodes)||[]).filter(function(e){return e.air_date&&e.air_date<=new Date().toISOString().slice(0,10);}).map(function(e){return {s:s.season_number,e:e.episode_number,n:e.name||'',p:e.still_path};});});};}),4)
+      .then(function(L){var eps=[].concat.apply([],L.filter(Boolean)).reverse().slice(0,80);
+        return runPool(eps.map(function(ep){return function(){return ivJson('https://api.themoviedb.org/3/tv/'+id+'/season/'+ep.s+'/episode/'+ep.e+'/images?api_key='+TMDB).then(function(x){var st=((x&&x.stills)||[]).filter(function(i){return (i.width||0)>=1280;});
+          if(!st.length&&ep.p)st=[{file_path:ep.p,aspect_ratio:1.78}];
+          return st.map(function(i){return {u:img(i.file_path,'original'),th:img(i.file_path,'w780'),ar:i.aspect_ratio||1.78,a:name,c:'S'+ep.s+'É'+ep.e+(ep.n?' — '+ep.n:'')};});});};}),8);})
+      .then(function(L){return [].concat.apply([],(L||[]).filter(Boolean));});});}
+  /* photos de tournage / scènes où les acteurs sont identifiés, uniquement pour CE titre */
+  function fShoot(mt,id,name){return ivJson('https://api.themoviedb.org/3/'+mt+'/'+id+'/'+(mt==='tv'?'aggregate_credits':'credits')+'?api_key='+TMDB).then(function(d){var cast=((d&&d.cast)||[]).slice(0,15);
+    return runPool(cast.map(function(a){return function(){return ivJson('https://api.themoviedb.org/3/person/'+a.id+'/tagged_images?api_key='+TMDB).then(function(x){return ((x&&x.results)||[]).filter(function(t){return t.media&&t.media.id===id&&(!t.media_type||t.media_type===mt)&&(t.width||0)>=800;}).map(function(t){return {u:img(t.file_path,'original'),th:img(t.file_path,'w780'),ar:t.aspect_ratio||1,a:a.name};});});};}),6).then(function(l){return [].concat.apply([],(l||[]).filter(Boolean));});});}
+  /* affiches de chaque saison (toutes les versions HD) */
+  function fSeasons(id,name){return ivJson('https://api.themoviedb.org/3/tv/'+id+'?api_key='+TMDB+'&language=fr-FR').then(function(d){var ss=((d&&d.seasons)||[]).filter(function(s){return s.season_number>0;});
+    return runPool(ss.map(function(s){return function(){return ivJson('https://api.themoviedb.org/3/tv/'+id+'/season/'+s.season_number+'/images?api_key='+TMDB+'&include_image_language=fr,en,null').then(function(x){return ((x&&x.posters)||[]).filter(function(p){return (p.width||0)>=700;}).slice(0,8).map(function(p){return {u:img(p.file_path,'original'),th:img(p.file_path,'w500'),ar:p.aspect_ratio||.667,a:name,c:s.name||('Saison '+s.season_number)};});});};}),4).then(function(l){return [].concat.apply([],(l||[]).filter(Boolean));});});}
   /* chargement d'un mur, même logique que le mur d'origine (sources ajoutées au fil de l'eau) */
   function loadInto(sel,jobs){
     var M=V29.M,gen=M.gen,C=M.cache['t47'+sel.k]=M.cache['t47'+sel.k]||{};
@@ -28021,23 +28034,18 @@ if(LOOK38)(function(){
     jobs.forEach(function(j){var ck=j[2]||j[0];if(C[ck]){add(j[0],C[ck]);return;}M.loading++;j[1]().then(function(l){C[ck]=l||[];if(gen===M.gen){M.loading--;add(j[0],l||[]);}},function(){if(gen===M.gen)M.loading--;});});
   }
   function ext(mt,id){return ivJson('https://api.themoviedb.org/3/'+mt+'/'+id+'/external_ids?api_key='+TMDB).then(function(e){return e||{};});}
-  /* TVmaze : fonds, affiches, bannières et images d'épisodes de CETTE série (retrouvée par son identifiant IMDb/TVDB) */
+  /* TVmaze : seulement les grands fonds et affiches de CETTE série (retrouvée par son identifiant IMDb/TVDB) */
   function fTvmaze(id,name){return ext('tv',id).then(function(e){var q=e.imdb_id?'imdb='+e.imdb_id:e.tvdb_id?'thetvdb='+e.tvdb_id:'';if(!q)return [];
     return fetch('https://api.tvmaze.com/lookup/shows?'+q).then(function(r){return r.ok?r.json():null;}).then(function(sh){if(!sh||!sh.id)return [];
-      return Promise.all([fetch('https://api.tvmaze.com/shows/'+sh.id+'/images').then(function(r){return r.ok?r.json():[];}),fetch('https://api.tvmaze.com/shows/'+sh.id+'/episodes').then(function(r){return r.ok?r.json():[];})]).then(function(a){var out=[];
-        (a[0]||[]).forEach(function(x){var R=x.resolutions||{},o=R.original||R.medium;if(!o||!o.url||x.type==='typography')return;var m=R.medium||o;out.push({u:o.url,th:m.url,ar:(o.width&&o.height)?o.width/o.height:(x.type==='poster'?.68:1.78),a:name,c:x.type==='background'?'Fond':x.type==='banner'?'Bannière':'Affiche'});});
-        (a[1]||[]).forEach(function(ep){if(ep.image&&ep.image.original)out.push({u:ep.image.original,th:ep.image.medium||ep.image.original,ar:1.78,a:name,c:'S'+ep.season+'É'+ep.number+(ep.name?' — '+ep.name:'')});});return out;});});}).catch(function(){return [];});}
-  /* images des bandes-annonces, teasers et extraits officiels */
+      return fetch('https://api.tvmaze.com/shows/'+sh.id+'/images').then(function(r){return r.ok?r.json():[];}).then(function(a){var out=[];
+        (a||[]).forEach(function(x){if(x.type!=='background'&&x.type!=='poster')return;var R=x.resolutions||{},o=R.original;if(!o||!o.url||(o.width||0)<(x.type==='poster'?600:1200))return;
+          out.push({u:o.url,th:(R.medium||o).url,ar:(o.width&&o.height)?o.width/o.height:(x.type==='poster'?.68:1.78),a:name});});return out;});});}).catch(function(){return [];});}
+  /* images HD des bandes-annonces et extraits officiels (on garde seulement celles qui existent en 1280 px) */
   function fVids(mt,id,name){return ivJson('https://api.themoviedb.org/3/'+mt+'/'+id+'/videos?api_key='+TMDB+'&include_video_language=fr,en,null').then(function(d){
-    return ((d&&d.results)||[]).filter(function(v){return v.site==='YouTube'&&v.key;}).map(function(v){var u='https://i.ytimg.com/vi/'+v.key+'/hqdefault.jpg';return {u:u,th:u,ar:4/3,a:name,c:'▶️ '+(v.name||v.type)};});});}
-  /* images de l'article Wikipédia de CETTE série (retrouvé par Wikidata) */
-  function fWiki(mt,id,name){return ext(mt,id).then(function(e){if(!e.wikidata_id)return [];
-    return fetch('https://www.wikidata.org/wiki/Special:EntityData/'+e.wikidata_id+'.json').then(function(r){return r.ok?r.json():null;}).then(function(w){var en=w&&w.entities&&w.entities[e.wikidata_id],sl=(en&&en.sitelinks)||{},T=[];
-      if(sl.frwiki)T.push(['fr',sl.frwiki.title]);if(sl.enwiki)T.push(['en',sl.enwiki.title]);
-      return Promise.all(T.map(function(t){return ivJson('https://'+t[0]+'.wikipedia.org/w/api.php?action=query&generator=images&titles='+encodeURIComponent(t[1])+'&gimlimit=50&prop=imageinfo&iiprop=url|size|mime&iiurlwidth=900&format=json&origin=*').then(function(d){return v29MurWikiList(d,name);}).catch(function(){return [];});})).then(function(a){return [].concat.apply([],a);});});}).catch(function(){return [];});}
-  /* affiches de chaque saison */
-  function fSeasons(id,name){return ivJson('https://api.themoviedb.org/3/tv/'+id+'?api_key='+TMDB+'&language=fr-FR').then(function(d){return ((d&&d.seasons)||[]).filter(function(x){return x.poster_path;}).map(function(x){return {u:img(x.poster_path,'w780'),th:img(x.poster_path,'w342'),ar:.667,a:name,c:x.name||('Saison '+x.season_number)};});});}
-  function titleJobs(mt,id,name){var J=[['img',function(){return fImages(mt,id,name);}],['shoot',function(){return fShoot(mt,id,name);}],['vid',function(){return fVids(mt,id,name);}],['wp',function(){return fWiki(mt,id,name);}]];
+    var V=((d&&d.results)||[]).filter(function(v){return v.site==='YouTube'&&v.key;}).slice(0,20);
+    return Promise.all(V.map(function(v){return new Promise(function(res){var u='https://i.ytimg.com/vi/'+v.key+'/maxresdefault.jpg',im=new Image();var t=setTimeout(function(){res(null);},8000);
+      im.onload=function(){clearTimeout(t);res(im.naturalWidth>=1000?{u:u,th:'https://i.ytimg.com/vi/'+v.key+'/sddefault.jpg',ar:16/9,a:name,c:'▶️ '+(v.name||v.type)}:null);};im.onerror=function(){clearTimeout(t);res(null);};im.src=u;});})).then(function(l){return l.filter(Boolean);});});}
+  function titleJobs(mt,id,name){var J=[['img',function(){return fImages(mt,id,name);}],['shoot',function(){return fShoot(mt,id,name);}],['vid',function(){return fVids(mt,id,name);}]];
     if(mt==='tv'){J.push(['still',function(){return fStills(id,name);}]);J.push(['tvm',function(){return fTvmaze(id,name);}]);J.push(['img',function(){return fSeasons(id,name);},'sea']);}return J;}
   try{var oML=v29MurLoad;v29MurLoad=function(){
     var M=V29.M,sel=M.sel;
@@ -28096,7 +28104,7 @@ if(LOOK38)(function(){
   function cloudDel(id){var db=fdb();if(!db)return Promise.resolve();return db.collection('murimg').doc(id).delete().then(function(){CL={};});}
   /* toutes les images ajoutées pour une série/un film (serveur + celles restées sur l'appareil) */
   function addedFor(k){return Promise.all([cloudBy('k',k),myList(k)]).then(function(a){return a[0].concat(a[1]);});}
-  window.__murShared=function(k){return addedFor(k).then(function(l){return l.map(urlOf);});};
+  window.__murShared=function(){return Promise.resolve([]);};
   function toItem(o,name){var u=urlOf(o);return {u:u,th:u,ar:o.ar||0,a:(o.pn&&o.pn.length?o.pn.join(', '):name),c:o.by?'Ajoutée par '+o.by:'Ajoutée par toi',gif:o.gif?1:0,add55:o.cid||('l'+o.id)};}
   /* compression : une photo tient dans un document du serveur (< 850 Ko) */
   function readData(file){return new Promise(function(res){var fr=new FileReader();fr.onload=function(){res(fr.result);};fr.onerror=function(){res(null);};fr.readAsDataURL(file);});}
@@ -28153,9 +28161,9 @@ if(LOOK38)(function(){
   }
   function drawMine(b){var m=b.querySelector('.mi54-m'),c=curSel(),me=meUid(),adm=amAdmin();m.innerHTML='<em>…</em>';
     addedFor(c.k).then(function(l){m.innerHTML=l.length?l.map(function(o){var mine=!o.cid||o.uid===me||adm;return '<span><img src="'+esc(urlOf(o))+'" alt="" title="'+esc((o.pn||[]).join(', ')+(o.by?' · ajoutée par '+o.by:''))+'">'+(mine?'<button type="button" data-del="'+(o.cid||('l'+o.id))+'" title="Retirer">✕</button>':'')+'</span>';}).join(''):'<em>Personne n\'a encore ajouté d\'image pour '+esc(c.name)+'.</em>';});}
-  document.addEventListener('paste',function(e){var v=document.getElementById('view-mur');if(!v||v.offsetHeight===0||!curSel())return;var t=e.target;if(t&&(t.tagName==='INPUT'||t.tagName==='TEXTAREA'))return;
+  document.addEventListener('paste',function(e){return;var t=e.target;if(t&&(t.tagName==='INPUT'||t.tagName==='TEXTAREA'))return;
     var f=[].slice.call((e.clipboardData&&e.clipboardData.files)||[]);if(f.length){e.preventDefault();addFiles(f);return;}var u=e.clipboardData&&e.clipboardData.getData('text');if(u&&/^https?:\/\/\S+$/.test(u.trim())){e.preventDefault();addUrl(u);}});
-  setInterval(function(){if(document.hidden)return;var v=document.getElementById('view-mur');if(v&&v.offsetHeight>0)bar(v);},700);
+  setInterval(function(){var b=document.querySelector('#view-mur .mi54');if(b)b.remove();},1500);
   /* ajouts chargés sur le mur ouvert : série / film (par sa clé) ou actrice / acteur (par les photos où on l'a identifié) */
   function addedInto(sel){var M=V29.M,gen=M.gen;if(!sel)return;var c=curSel(),p;
     if(c)p=addedFor(c.k).then(function(l){return l.map(function(o){return toItem(o,c.name);});});
@@ -28169,7 +28177,7 @@ if(LOOK38)(function(){
     var add=L.filter(function(x){return x.s==='mine';});if(!add.length)return L;var out=L.filter(function(x){return x.s!=='mine';});
     add.forEach(function(x){var span=Math.max(2,Math.min(out.length,24+out.length/2));out.splice(1+hsh(x.add55||x.u)%span,0,x);});
     try{Object.defineProperty(L,'_mx55',{value:out,enumerable:false});}catch(_){}return out;};}catch(e){console.warn('mix55',e);}
-  try{var oML2=v29MurLoad;v29MurLoad=function(){var r=oML2.apply(this,arguments);try{addedInto(V29.M.sel);}catch(e){console.warn('add55',e);}return r;};}catch(_){}
+  try{var oML2=v29MurLoad;v29MurLoad=function(){var r=oML2.apply(this,arguments);return r;};}catch(_){}
   try{V29_MS.mine='💖 Ajouts';}catch(_){}
 
   try{var oMR=v29MurRender;v29MurRender=function(v){var r=oMR.apply(this,arguments);try{panel(v);}catch(e){console.warn('mur47',e);}return r;};}catch(_){}
@@ -28638,8 +28646,8 @@ if(LOOK38)(function(){
   function images(mt,id){var k=mt+id;if(IMG[k])return IMG[k];
     /* d'abord les images sans texte (les plus belles en fond), puis fr/en */
     return IMG[k]=ivJson('https://api.themoviedb.org/3/'+mt+'/'+id+'/images?api_key='+TMDB+'&include_image_language=null,fr,en').then(function(d){
-      var b=((d&&d.backdrops)||[]).filter(function(x){return x.file_path;});b.sort(function(x,y){return (x.iso_639_1?1:0)-(y.iso_639_1?1:0)||(y.vote_average||0)-(x.vote_average||0);});
-      return b.slice(0,30).map(function(x){return 'https://image.tmdb.org/t/p/w780'+x.file_path;});}).catch(function(){delete IMG[k];return [];});}
+      var b=((d&&d.backdrops)||[]).filter(function(x){return x.file_path&&(x.width||0)>=1280;});b.sort(function(x,y){return (x.iso_639_1?1:0)-(y.iso_639_1?1:0)||(y.vote_average||0)-(x.vote_average||0);});
+      return b.slice(0,40).map(function(x){return 'https://image.tmdb.org/t/p/w1280'+x.file_path;});}).catch(function(){delete IMG[k];return [];});}
   function build(list,key){
     if(L&&L.dataset.k===key)return;if(L)L.remove();
     var el=document.createElement('div');el.className='bg54';el.dataset.k=key;el.setAttribute('aria-hidden','true');
@@ -28748,7 +28756,7 @@ if(LOOK38)(function(){
       var meta=[ep.airDate?new Date(ep.airDate+'T12:00').toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'}):'',ep.runtime?ep.runtime+' min':''].filter(Boolean).join(' · ');
       if(ep.synopsis)h=h.slice(0,end)+'<div class="ep-syn">'+(meta?'<small>'+meta+'</small>':'')+esc(ep.synopsis)+'</div>'+h.slice(end);});
     return h;};}catch(e){console.warn('ep56',e);}
-  document.addEventListener('click',function(e){var b=e.target.closest&&(e.target.closest('.ep-synb')||e.target.closest('.ep-row .ep-title'));if(!b)return;var r=b.closest('.ep-row');if(!r||!r.querySelector('.ep-syn'))return;e.stopPropagation();r.classList.toggle('syn56');},true);
+  document.addEventListener('click',function(e){var b=e.target.closest&&e.target.closest('.ep-synb');if(!b)return;var r=b.closest('.ep-row');if(!r||!r.querySelector('.ep-syn'))return;e.stopPropagation();r.classList.toggle('syn56');},true);
 
   /* ---------------- CINÉ-ARÈNE ---------------- */
   var AK='cineArena56';
@@ -28817,7 +28825,7 @@ if(LOOK38)(function(){
   var C=''
   /* épisodes */
   +'.ep-row{flex-wrap:wrap}.ep-mood{font-size:1rem;margin:0 2px;flex:none;cursor:default}.ep-synb{border:0;background:none;cursor:pointer;font-size:.9rem;padding:2px 4px;opacity:.65;flex:none}.ep-synb:hover{opacity:1}'
-  +'.ep-row .ep-title{cursor:pointer}.ep-syn{display:none;flex:1 0 100%;order:99;margin:6px 0 2px;padding:10px 12px;border-radius:12px;background:var(--input-bg);color:var(--ink);font-size:.82rem;line-height:1.45;box-shadow:inset 0 0 0 1px var(--border)}.ep-syn small{display:block;color:var(--muted);font-size:.7rem;margin-bottom:4px}'
+  +'.ep-syn{display:none;flex:1 0 100%;order:99;margin:6px 0 2px;padding:10px 12px;border-radius:12px;background:var(--input-bg);color:var(--ink);font-size:.82rem;line-height:1.45;box-shadow:inset 0 0 0 1px var(--border)}.ep-syn small{display:block;color:var(--muted);font-size:.7rem;margin-bottom:4px}'
   +'.ep-row.syn56 .ep-syn{display:block;animation:syn56 .25s ease}@keyframes syn56{from{opacity:0;transform:translateY(-4px)}}'
   /* arène */
   +'.ar56{max-width:1000px;margin:0 auto;padding:6px 0 30px;color:var(--ink)}'
@@ -28918,6 +28926,39 @@ if(LOOK38)(function(){
   try{var oCP=connectPanelHtml;connectPanelHtml=function(){return boxHtml()+oCP.apply(this,arguments);};
     var oBC=bindConnectPanel;bindConnectPanel=function(el){var r=oBC.apply(this,arguments);try{bindBox(el);}catch(e){console.warn('nt57',e);}return r;};}catch(e){console.warn('nt57',e);}
   var st=document.createElement('style');st.textContent='.nt57 .cn-on.off{background:var(--input-bg);color:var(--muted)}.nt57 .cn-opts label{display:block}';document.head.appendChild(st);
+})();
+
+
+/* ====== V58 — murs des actrices / acteurs sans recherches « au nom » (images hors sujet), et ⏪ PRÉCÉDEMMENT DANS…
+   (avant de reprendre une série : le résumé des derniers épisodes que tu as vus) ====== */
+(function(){
+  /* plus de recherches au nom (Openverse, Wikimedia Commons, GIF) : elles ramenaient des images sans rapport */
+  try{if(typeof v31Open==='function')v31Open=function(){return Promise.resolve([]);};}catch(_){}
+  try{if(typeof v29MurFCommons==='function')v29MurFCommons=function(){return Promise.resolve([]);};}catch(_){}
+  try{if(typeof v29MurKey==='function')v29MurKey=function(){return '';};}catch(_){}
+  /* Wikipédia : seulement les vraies photos assez grandes */
+  try{var oWL=v29MurWikiList;v29MurWikiList=function(d,name){var P=(d&&d.query&&d.query.pages)||{},ok={};Object.keys(P).forEach(function(k){var ii=P[k].imageinfo&&P[k].imageinfo[0];if(ii&&(ii.width||0)>=800&&/^image\/jpe?g/.test(ii.mime||''))ok[ii.thumburl]=1;});
+    return oWL.apply(this,arguments).filter(function(x){return ok[x.u];});};}catch(_){}
+
+  /* ---------------- ⏪ PRÉCÉDEMMENT DANS… ---------------- */
+  function lastSeen(it){var E=episodes[it.id]||{},L=[];Object.keys(E).map(Number).sort(function(a,b){return a-b;}).forEach(function(s){(E[s]||[]).forEach(function(ep,i){L.push({s:s,i:i,ep:ep});});});
+    var last=-1;L.forEach(function(x,n){if(x.ep&&x.ep.seen)last=n;});return {L:L,last:last};}
+  function inject(it){
+    var mc=document.getElementById('modal-content');if(!mc||mc.querySelector('.po58'))return;var ref=mc.querySelector('.modal-synopsis');if(!ref)return;
+    var r=lastSeen(it);if(r.last<0)return;var prev=r.L.slice(Math.max(0,r.last-2),r.last+1).filter(function(x){return x.ep.synopsis;});if(!prev.length)return;
+    var nx=r.L[r.last+1];
+    var box=document.createElement('details');box.className='po58';
+    box.innerHTML='<summary><span>⏪ Précédemment dans <b>'+esc(it.title)+'</b>…</span><small>'+(nx?'Tu reprends à S'+nx.s+'É'+String(nx.i+1).padStart(2,'0')+(nx.ep.title?' — '+esc(nx.ep.title):''):'Tu as tout vu 🎉')+'</small></summary>'
+      +'<div class="po58-l">'+prev.map(function(x){return '<div class="po58-e">'+(x.ep.still?'<img src="'+esc(String(x.ep.still).replace('/w780/','/w300/'))+'" alt="" loading="lazy">':'')+'<div><b>S'+x.s+'É'+String(x.i+1).padStart(2,'0')+(x.ep.title?' · '+esc(x.ep.title):'')+'</b><p>'+esc(x.ep.synopsis)+'</p></div></div>';}).join('')+'</div>';
+    ref.insertAdjacentElement('afterend',box);
+  }
+  try{var oOM=openModal;openModal=function(id){var r=oOM.apply(this,arguments);try{var it=items.find(function(x){return x.id===id;});if(it&&it.type==='serie'&&it.status!=='termine'){setTimeout(function(){inject(it);},300);setTimeout(function(){inject(it);},1000);}}catch(_){}return r;};}catch(e){console.warn('po58',e);}
+  var st=document.createElement('style');st.textContent=''
+    +'.po58{margin:12px 0;border-radius:18px;background:linear-gradient(135deg,rgba(255,77,141,.12),rgba(139,92,246,.12));box-shadow:inset 0 0 0 1px var(--border);overflow:hidden}'
+    +'.po58 summary{list-style:none;cursor:pointer;padding:12px 16px;display:flex;flex-direction:column;gap:2px}.po58 summary::-webkit-details-marker{display:none}.po58 summary span{font:700 1rem Fredoka,sans-serif}.po58 summary small{color:var(--muted);font-size:.75rem}'
+    +'.po58-l{display:grid;gap:10px;padding:0 14px 14px}.po58-e{display:grid;grid-template-columns:120px 1fr;gap:12px;align-items:start}.po58-e img{width:120px;aspect-ratio:16/9;object-fit:cover;border-radius:10px}.po58-e b{font-size:.82rem}.po58-e p{margin:4px 0 0;font-size:.8rem;line-height:1.45;color:var(--ink)}'
+    +'@media(max-width:520px){.po58-e{grid-template-columns:1fr}.po58-e img{width:100%}}';
+  document.head.appendChild(st);
 })();
 
 /* ==V29-END== */
