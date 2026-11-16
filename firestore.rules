@@ -76,6 +76,17 @@ service cloud.firestore {
       allow delete: if resource.data.uid == request.auth.uid || isAdmin();
     }
 
+    // ---------- images ajoutées sur le Mur par les joueurs (visibles par tous) ----------
+    match /murimg/{id} {
+      allow read: if signedIn();
+      allow create: if approved()
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.k is string
+        && (!('img' in request.resource.data) || request.resource.data.img.size() < 1000000);
+      allow update: if isAdmin();
+      allow delete: if isAdmin() || (signedIn() && resource.data.uid == request.auth.uid);
+    }
+
     // ---------- défis / quiz / tier lists à deux ----------
     match /battles/{id} {
       allow read: if approved()

@@ -28037,7 +28037,6 @@ if(LOOK38)(function(){
       return Promise.all(T.map(function(t){return ivJson('https://'+t[0]+'.wikipedia.org/w/api.php?action=query&generator=images&titles='+encodeURIComponent(t[1])+'&gimlimit=50&prop=imageinfo&iiprop=url|size|mime&iiurlwidth=900&format=json&origin=*').then(function(d){return v29MurWikiList(d,name);}).catch(function(){return [];});})).then(function(a){return [].concat.apply([],a);});});}).catch(function(){return [];});}
   /* affiches de chaque saison */
   function fSeasons(id,name){return ivJson('https://api.themoviedb.org/3/tv/'+id+'?api_key='+TMDB+'&language=fr-FR').then(function(d){return ((d&&d.seasons)||[]).filter(function(x){return x.poster_path;}).map(function(x){return {u:img(x.poster_path,'w780'),th:img(x.poster_path,'w342'),ar:.667,a:name,c:x.name||('Saison '+x.season_number)};});});}
-  function mineInto(k,name){var M=V29.M,gen=M.gen;mineItems(k,name).then(function(l){if(gen!==M.gen||!l.length)return;l.forEach(function(x){x.s='mine';M.items.unshift(x);});M.src.mine=(M.src.mine||0)+l.length;M._lk='';M.shown=0;var g=document.getElementById('mur-grid');if(g)g.innerHTML='';v29MurTick();});}
   function titleJobs(mt,id,name){var J=[['img',function(){return fImages(mt,id,name);}],['shoot',function(){return fShoot(mt,id,name);}],['vid',function(){return fVids(mt,id,name);}],['wp',function(){return fWiki(mt,id,name);}]];
     if(mt==='tv'){J.push(['still',function(){return fStills(id,name);}]);J.push(['tvm',function(){return fTvmaze(id,name);}]);J.push(['img',function(){return fSeasons(id,name);},'sea']);}return J;}
   try{var oML=v29MurLoad;v29MurLoad=function(){
@@ -28045,11 +28044,11 @@ if(LOOK38)(function(){
     if(sel&&sel.type==='title'){
       M.gen++;M.items=[];M.seen={};M.src={};M.shown=0;M.target=30;M.loading=0;M.filter='';M.ext={};M.locked=false;M.sig='';
       var g=document.getElementById('mur-grid');if(g)g.innerHTML='';
-      loadInto(sel,titleJobs(sel.mt,sel.id,sel.name));mineInto(sel.k,sel.name);v29MurTick();return;}
+      loadInto(sel,titleJobs(sel.mt,sel.id,sel.name));v29MurTick();return;}
     /* série du mois : pas de GIF cherchés au nom */
     var okey=v29MurKey;v29MurKey=function(){return '';};var r;try{r=oML.apply(this,arguments);}finally{v29MurKey=okey;}
     /* la série du mois : encore plus d'images */
-    try{if(sel&&sel.type==='series'&&sel.r&&sel.r.tv&&!M.locked){sel.k=sel.k||('tv_'+sel.r.tv);loadInto(sel,titleJobs('tv',sel.r.tv,sel.r.name));}if(sel&&sel.type==='series'&&sel.r&&sel.r.tv)mineInto('tv_'+sel.r.tv,sel.r.name);}catch(_){}
+    try{if(sel&&sel.type==='series'&&sel.r&&sel.r.tv&&!M.locked){sel.k=sel.k||('tv_'+sel.r.tv);loadInto(sel,titleJobs('tv',sel.r.tv,sel.r.name));}}catch(_){}
     return r;};}catch(_){}
   /* puces des titres choisis, à côté de la série du mois et des acteurs */
   try{var oMW=v29MurWho;v29MurWho=function(){var r=oMW.apply(this,arguments);var el=document.getElementById('mur-who');if(!el)return r;
@@ -28075,58 +28074,112 @@ if(LOOK38)(function(){
       c.closest('.mp47-i').classList.toggle('on',c.checked);wrap.querySelector('.mp47-tg b').textContent=P.length;try{v29MurWho();}catch(_){}});
   }
   window.__mp47x=panel;
-    /* ===== tes propres images (gardées sur cet appareil) ===== */
+  /* ===== IMAGES AJOUTÉES PAR LES JOUEURS : partagées avec tout le monde (Firebase), mélangées au mur, avec les actrices identifiées ===== */
   var DB54=null;
   function idb(){if(DB54)return DB54;DB54=new Promise(function(res,rej){try{var r=indexedDB.open('cineMur54',1);r.onupgradeneeded=function(){var d=r.result;if(!d.objectStoreNames.contains('img')){var st=d.createObjectStore('img',{keyPath:'id',autoIncrement:true});st.createIndex('k','k');}};r.onsuccess=function(){res(r.result);};r.onerror=function(){rej(r.error);};}catch(e){rej(e);}});return DB54;}
   function myList(k){return idb().then(function(d){return new Promise(function(res){var out=[];var q=d.transaction('img').objectStore('img').index('k').openCursor(IDBKeyRange.only(k));q.onsuccess=function(){var c=q.result;if(!c)return res(out);out.push(c.value);c.continue();};q.onerror=function(){res(out);};});}).catch(function(){return [];});}
   function myAdd(o){return idb().then(function(d){return new Promise(function(res,rej){var t=d.transaction('img','readwrite');t.objectStore('img').add(o);t.oncomplete=function(){res();};t.onerror=function(){rej(t.error);};});});}
   function myDel(id){return idb().then(function(d){return new Promise(function(res){var t=d.transaction('img','readwrite');t.objectStore('img').delete(id);t.oncomplete=res;t.onerror=res;});});}
   var URLS={};
-  function urlOf(o){if(o.url)return o.url;if(!URLS[o.id])URLS[o.id]=URL.createObjectURL(o.blob);return URLS[o.id];}
-  function mineItems(k,name){return myList(k).then(function(l){return l.map(function(o){var u=urlOf(o);return {u:u,th:u,ar:o.ar||0,a:name,c:'Ajoutée par toi',gif:o.gif?1:0,my54:o.id};});});}
-  /* réduit les grosses photos pour ne pas remplir l'appareil (les GIF restent animés) */
+  function urlOf(o){if(o.url)return o.url;if(o.img)return o.img;if(!URLS[o.id])URLS[o.id]=URL.createObjectURL(o.blob);return URLS[o.id];}
+  /* ---- le serveur (Firebase) : collection « murimg », lisible par tous les joueurs connectés ---- */
+  function fdb(){try{if(window.firebase&&firebase.apps&&firebase.apps.length&&firebase.auth().currentUser)return firebase.firestore();}catch(_){}return null;}
+  function meUid(){try{return firebase.auth().currentUser.uid;}catch(_){return '';}}
+  function amAdmin(){try{return !!(window.CineConfig&&CineConfig.isAdmin());}catch(_){return false;}}
+  var CL={};
+  function cloudBy(field,val){var db=fdb();if(!db)return Promise.resolve([]);var ck=field+':'+val;if(CL[ck]&&Date.now()-CL[ck].t<6e4)return CL[ck].p;
+    var q=field==='pid'?db.collection('murimg').where('pids','array-contains',val):db.collection('murimg').where('k','==',val);
+    var p=q.get().then(function(qs){var l=[];qs.forEach(function(d){l.push(Object.assign({cid:d.id},d.data()));});return l.sort(function(a,b){return (a.ts||0)-(b.ts||0);});}).catch(function(e){console.warn('murimg',e&&e.code);return [];});
+    CL[ck]={t:Date.now(),p:p};return p;}
+  function cloudAdd(o){var db=fdb();if(!db)return Promise.reject('local');var who='';try{who=(window.CineSocial&&CineSocial.name())||'';}catch(_){}
+    return db.collection('murimg').add(Object.assign({uid:meUid(),by:who,ts:Date.now()},o)).then(function(){CL={};});}
+  function cloudDel(id){var db=fdb();if(!db)return Promise.resolve();return db.collection('murimg').doc(id).delete().then(function(){CL={};});}
+  /* toutes les images ajoutées pour une série/un film (serveur + celles restées sur l'appareil) */
+  function addedFor(k){return Promise.all([cloudBy('k',k),myList(k)]).then(function(a){return a[0].concat(a[1]);});}
+  window.__murShared=function(k){return addedFor(k).then(function(l){return l.map(urlOf);});};
+  function toItem(o,name){var u=urlOf(o);return {u:u,th:u,ar:o.ar||0,a:(o.pn&&o.pn.length?o.pn.join(', '):name),c:o.by?'Ajoutée par '+o.by:'Ajoutée par toi',gif:o.gif?1:0,add55:o.cid||('l'+o.id)};}
+  /* compression : une photo tient dans un document du serveur (< 850 Ko) */
+  function readData(file){return new Promise(function(res){var fr=new FileReader();fr.onload=function(){res(fr.result);};fr.onerror=function(){res(null);};fr.readAsDataURL(file);});}
   function shrink(file){return new Promise(function(res){
-    if(/gif$/i.test(file.type)||file.size<350000){var u=URL.createObjectURL(file),im=new Image();im.onload=function(){res({blob:file,ar:im.naturalWidth/im.naturalHeight||0,gif:/gif$/i.test(file.type)});URL.revokeObjectURL(u);};im.onerror=function(){res(null);};im.src=u;return;}
-    var u2=URL.createObjectURL(file),im2=new Image();im2.onload=function(){var W=im2.naturalWidth,H=im2.naturalHeight,sc=Math.min(1,1800/Math.max(W,H)),c=document.createElement('canvas');c.width=Math.round(W*sc);c.height=Math.round(H*sc);c.getContext('2d').drawImage(im2,0,0,c.width,c.height);URL.revokeObjectURL(u2);
-      c.toBlob(function(b){res(b?{blob:b,ar:W/H}:null);},'image/jpeg',.86);};im2.onerror=function(){res(null);};im2.src=u2;});}
-  function curSel(){var M=V29.M,sel=M&&M.sel;if(!sel)return null;if(sel.type==='title')return {k:sel.k,name:sel.name,mt:sel.mt};if(sel.type==='series'&&sel.r&&sel.r.tv)return {k:'tv_'+sel.r.tv,name:sel.r.name,mt:'tv'};return null;}
+    if(/gif$/i.test(file.type)){if(file.size>800000){toast('⚠️ GIF trop lourd (800 Ko max)');return res(null);}var u=URL.createObjectURL(file),im=new Image();im.onload=function(){URL.revokeObjectURL(u);readData(file).then(function(d){res(d?{img:d,ar:im.naturalWidth/im.naturalHeight||0,gif:1}:null);});};im.onerror=function(){res(null);};im.src=u;return;}
+    var u2=URL.createObjectURL(file),im2=new Image();im2.onload=function(){URL.revokeObjectURL(u2);var W=im2.naturalWidth,H=im2.naturalHeight,max=1500,q=.84,d='';
+      for(var n=0;n<8;n++){var sc=Math.min(1,max/Math.max(W,H)),c=document.createElement('canvas');c.width=Math.round(W*sc);c.height=Math.round(H*sc);c.getContext('2d').drawImage(im2,0,0,c.width,c.height);d=c.toDataURL('image/jpeg',q);if(d.length<850000)break;if(q>.6)q-=.1;else max=Math.round(max*.8);}
+      res(d.length<1000000?{img:d,ar:W/H}:null);};im2.onerror=function(){res(null);};im2.src=u2;});}
+  function curSel(){var M=V29.M,sel=M&&M.sel;if(!sel)return null;if(sel.type==='title')return {k:sel.k,name:sel.name,mt:sel.mt,id:sel.id};if(sel.type==='series'&&sel.r&&sel.r.tv)return {k:'tv_'+sel.r.tv,name:sel.r.name,mt:'tv',id:sel.r.tv,cast:sel.r.cast};return null;}
+  var TAG={k:'',p:{}};
+  function tagged(){var ids=[],names=[];Object.keys(TAG.p).forEach(function(id){ids.push(+id);names.push(TAG.p[id]);});return {pids:ids,pn:names};}
+  function save(c,o){var t=tagged();o=Object.assign({k:c.k,name:c.name,pids:t.pids,pn:t.pn},o);
+    return cloudAdd(o).then(function(){return 'cloud';},function(e){if(e!=='local')console.warn('murimg add',e&&e.code);
+      if(o.img){var bin=atob(o.img.split(',')[1]),arr=new Uint8Array(bin.length);for(var i=0;i<bin.length;i++)arr[i]=bin.charCodeAt(i);o.blob=new Blob([arr],{type:o.gif?'image/gif':'image/jpeg'});delete o.img;}
+      return myAdd(o).then(function(){return 'local';});});}
+  function done(where,c,n){toast(where==='cloud'?'✅ '+(n>1?n+' images ajoutées':'Image ajoutée')+' au mur de '+c.name+' pour tout le monde':'✅ Ajouté sur cet appareil (connecte-toi pour le partager)');v29MurLoad();try{window.__roll54&&window.__roll54(true);}catch(_){}}
   function addFiles(files){var c=curSel();if(!c)return;var L=[].slice.call(files||[]).filter(function(f){return /^image\//.test(f.type);});if(!L.length){toast('Choisis des images 🖼️');return;}
-    toast('📥 Import de '+L.length+' image'+(L.length>1?'s':'')+'…');
-    Promise.all(L.map(function(f){return shrink(f).then(function(r){return r?myAdd({k:c.k,blob:r.blob,ar:r.ar,gif:r.gif?1:0,ts:Date.now()}):null;});})).then(function(){toast('✅ Ajouté sur le mur de '+c.name);v29MurLoad();}).catch(function(){toast('⚠️ Plus de place sur l\'appareil');});}
+    toast('📥 Envoi de '+L.length+' image'+(L.length>1?'s':'')+'…');var where='cloud';
+    L.reduce(function(p,f){return p.then(function(){return shrink(f).then(function(r){return r?save(c,r).then(function(w){if(w==='local')where='local';}):null;});});},Promise.resolve()).then(function(){done(where,c,L.length);}).catch(function(){toast('⚠️ Envoi impossible');});}
   function addUrl(u){var c=curSel();u=String(u||'').trim();if(!c||!/^https?:\/\//i.test(u)){toast('Colle un lien d\'image qui commence par http');return;}
-    var im=new Image();im.onload=function(){myAdd({k:c.k,url:u,ar:im.naturalWidth/im.naturalHeight||0,gif:/\.gif(\?|$)/i.test(u)?1:0,ts:Date.now()}).then(function(){toast('✅ Image ajoutée');v29MurLoad();});};
+    var im=new Image();im.onload=function(){save(c,{url:u,ar:im.naturalWidth/im.naturalHeight||0,gif:/\.gif(\?|$)/i.test(u)?1:0}).then(function(w){done(w,c,1);});};
     im.onerror=function(){toast('⚠️ Ce lien n\'est pas une image (clic droit sur l\'image → « Copier l\'adresse de l\'image »)');};im.src=u;}
+  /* casting proposé pour identifier qui est sur la photo */
+  var CAST={};
+  function castOf(c){if(c.cast&&c.cast.length)return Promise.resolve(c.cast.slice(0,16).map(function(a){return {id:a.id,name:a.name,p:a.profile_path||a.photo||''};}));if(CAST[c.k])return CAST[c.k];
+    return CAST[c.k]=ivJson('https://api.themoviedb.org/3/'+c.mt+'/'+c.id+'/'+(c.mt==='tv'?'aggregate_credits':'credits')+'?api_key='+TMDB+'&language=fr-FR').then(function(d){return ((d&&d.cast)||[]).slice(0,16).map(function(a){return {id:a.id,name:a.name,p:a.profile_path||''};});}).catch(function(){delete CAST[c.k];return [];});}
+  function openOn(){try{return localStorage.getItem('cineMi55Open')==='1';}catch(_){return false;}}
   function bar(v){
     var c=curSel(),b=v.querySelector('.mi54');
     if(!c){if(b)b.remove();return;}
-    if(!b){var ref=v.querySelector('.mp47')||v.querySelector('.v29-m-sr');if(!ref)return;b=document.createElement('div');b.className='mi54';ref.insertAdjacentElement('afterend',b);
-      b.innerHTML='<b class="mi54-t"></b><label class="mi54-b">📥 Importer mes images<input type="file" accept="image/*" multiple hidden></label><button type="button" class="mi54-b" data-a="url">🔗 Coller un lien</button><a class="mi54-b" data-a="g" target="_blank" rel="noopener">🔎 Chercher sur Google Images</a><button type="button" class="mi54-b" data-a="mine">🗂️ Mes ajouts</button>'
-        +'<div class="mi54-u"><input class="v29-in" placeholder="https://… lien de l\'image"><button type="button" class="mi54-b" data-a="ok">Ajouter</button></div><div class="mi54-m"></div><small class="mi54-h">Astuce : tu peux aussi glisser des images ici ou faire Ctrl+V. Tes images restent sur cet appareil.</small>';
+    if(!b){var ref=v.querySelector('.mp47')||v.querySelector('.v29-m-sr');if(!ref)return;b=document.createElement('div');b.className='mi54'+(openOn()?' op':'');ref.insertAdjacentElement('afterend',b);
+      b.innerHTML='<button type="button" class="mi54-tg" data-a="tg"><span>➕ Ajouter des images</span><b class="mi54-t"></b><i>▾</i></button>'
+        +'<div class="mi54-body"><div class="mi54-who"><small>👤 Qui est sur la photo ? <em>(elle ira aussi sur son mur)</em></small><div class="mi54-cast"></div></div>'
+        +'<div class="mi54-row"><label class="mi54-b">📥 Importer<input type="file" accept="image/*" multiple hidden></label><button type="button" class="mi54-b" data-a="url">🔗 Coller un lien</button><a class="mi54-b" data-a="g" target="_blank" rel="noopener">🔎 Google Images</a><button type="button" class="mi54-b" data-a="mine">🗂️ Ajouts</button></div>'
+        +'<div class="mi54-u"><input class="v29-in" placeholder="https://… lien de l\'image"><button type="button" class="mi54-b" data-a="ok">Ajouter</button></div><div class="mi54-m"></div><small class="mi54-h">Tes images sont visibles par tout le monde, mélangées au mur et dans le fond qui défile. Tu peux aussi glisser des images ici ou faire Ctrl+V.</small></div>';
       b.querySelector('input[type=file]').onchange=function(e){addFiles(e.target.files);e.target.value='';};
-      b.addEventListener('click',function(e){var a=e.target.closest('[data-a]');if(!a)return;var w=a.dataset.a;
+      b.addEventListener('click',function(e){var a=e.target.closest('[data-a]');if(a){var w=a.dataset.a;
+        if(w==='tg'){var on=!b.classList.contains('op');b.classList.toggle('op',on);try{localStorage.setItem('cineMi55Open',on?'1':'0');}catch(_){}return;}
         if(w==='url'){b.classList.toggle('su');var i=b.querySelector('.mi54-u input');if(b.classList.contains('su'))i.focus();}
         if(w==='ok'){var i2=b.querySelector('.mi54-u input');addUrl(i2.value);i2.value='';}
-        if(w==='mine'){var m=b.querySelector('.mi54-m'),on=!b.classList.contains('sm');b.classList.toggle('sm',on);if(!on)return;var c2=curSel();
-          myList(c2.k).then(function(l){m.innerHTML=l.length?l.map(function(o){return '<span><img src="'+esc(urlOf(o))+'" alt=""><button type="button" data-del="'+o.id+'" title="Retirer">✕</button></span>';}).join(''):'<em>Tu n\'as encore rien ajouté pour '+esc(c2.name)+'.</em>';});}
+        if(w==='mine'){var on2=!b.classList.contains('sm');b.classList.toggle('sm',on2);if(on2)drawMine(b);}return;}
+        var p=e.target.closest('[data-pid]');if(p){var id=p.dataset.pid;if(TAG.p[id])delete TAG.p[id];else TAG.p[id]=p.dataset.pn;p.classList.toggle('on',!!TAG.p[id]);}
       });
-      b.querySelector('.mi54-m').addEventListener('click',function(e){var d=e.target.closest('[data-del]');if(!d)return;myDel(+d.dataset.del).then(function(){d.parentNode.remove();v29MurLoad();toast('🗑️ Image retirée');});});
+      b.querySelector('.mi54-m').addEventListener('click',function(e){var d=e.target.closest('[data-del]');if(!d)return;var id=d.dataset.del;(id.charAt(0)==='l'?myDel(+id.slice(1)):cloudDel(id)).then(function(){d.parentNode.remove();v29MurLoad();toast('🗑️ Image retirée');try{window.__roll54&&window.__roll54(true);}catch(_){}}).catch(function(){toast('⚠️ Suppression refusée');});});
       b.querySelector('.mi54-u input').addEventListener('keydown',function(e){if(e.key==='Enter'){addUrl(e.target.value);e.target.value='';}});
       if(!v.dataset.dz54){v.dataset.dz54='1';
         ['dragover','dragenter'].forEach(function(t){v.addEventListener(t,function(e){if(!curSel())return;e.preventDefault();v.classList.add('dz54');});});
         v.addEventListener('dragleave',function(e){if(e.target===v)v.classList.remove('dz54');});
         v.addEventListener('drop',function(e){v.classList.remove('dz54');if(!curSel())return;e.preventDefault();var dt=e.dataTransfer;if(dt.files&&dt.files.length)addFiles(dt.files);else{var u=dt.getData('text/uri-list')||dt.getData('text/plain');if(u)addUrl(u.split('\n')[0]);}});}
     }
-    if(b.dataset.k!==c.k){b.dataset.k=c.k;b.classList.remove('sm','su');b.querySelector('.mi54-t').textContent='🖼️ '+c.name;
-      b.querySelector('[data-a=g]').href='https://www.google.com/search?tbm=isch&q='+encodeURIComponent('"'+c.name+'" '+(c.mt==='tv'?'série':'film'));}
+    if(b.dataset.k!==c.k){b.dataset.k=c.k;b.classList.remove('sm','su');b.querySelector('.mi54-t').textContent=c.name;TAG={k:c.k,p:{}};
+      b.querySelector('[data-a=g]').href='https://www.google.com/search?tbm=isch&q='+encodeURIComponent('"'+c.name+'" '+(c.mt==='tv'?'série':'film'));
+      var box=b.querySelector('.mi54-cast');box.innerHTML='<em>…</em>';castOf(c).then(function(L){if(b.dataset.k!==c.k)return;box.innerHTML=L.map(function(a){return '<button type="button" class="mi54-p" data-pid="'+a.id+'" data-pn="'+esc(a.name)+'">'+(a.p?'<img src="https://image.tmdb.org/t/p/w92'+esc(a.p)+'" alt="">':'<i>👤</i>')+esc(a.name)+'</button>';}).join('')||'<em>Casting introuvable</em>';});}
   }
+  function drawMine(b){var m=b.querySelector('.mi54-m'),c=curSel(),me=meUid(),adm=amAdmin();m.innerHTML='<em>…</em>';
+    addedFor(c.k).then(function(l){m.innerHTML=l.length?l.map(function(o){var mine=!o.cid||o.uid===me||adm;return '<span><img src="'+esc(urlOf(o))+'" alt="" title="'+esc((o.pn||[]).join(', ')+(o.by?' · ajoutée par '+o.by:''))+'">'+(mine?'<button type="button" data-del="'+(o.cid||('l'+o.id))+'" title="Retirer">✕</button>':'')+'</span>';}).join(''):'<em>Personne n\'a encore ajouté d\'image pour '+esc(c.name)+'.</em>';});}
   document.addEventListener('paste',function(e){var v=document.getElementById('view-mur');if(!v||v.offsetHeight===0||!curSel())return;var t=e.target;if(t&&(t.tagName==='INPUT'||t.tagName==='TEXTAREA'))return;
     var f=[].slice.call((e.clipboardData&&e.clipboardData.files)||[]);if(f.length){e.preventDefault();addFiles(f);return;}var u=e.clipboardData&&e.clipboardData.getData('text');if(u&&/^https?:\/\/\S+$/.test(u.trim())){e.preventDefault();addUrl(u);}});
   setInterval(function(){if(document.hidden)return;var v=document.getElementById('view-mur');if(v&&v.offsetHeight>0)bar(v);},700);
+  /* ajouts chargés sur le mur ouvert : série / film (par sa clé) ou actrice / acteur (par les photos où on l'a identifié) */
+  function addedInto(sel){var M=V29.M,gen=M.gen;if(!sel)return;var c=curSel(),p;
+    if(c)p=addedFor(c.k).then(function(l){return l.map(function(o){return toItem(o,c.name);});});
+    else if(sel.type==='person'&&sel.id)p=cloudBy('pid',+sel.id).then(function(l){return l.map(function(o){return toItem(o,o.name||sel.name);});});
+    else return;
+    p.then(function(l){if(gen!==M.gen||!l.length)return;var n=0;l.forEach(function(x){var k=String(x.u).slice(0,200);if(M.seen['a55'+k])return;M.seen['a55'+k]=1;x.s='mine';M.items.push(x);n++;});if(!n)return;
+      M.src.mine=(M.src.mine||0)+n;M._lk='';if(M.shown){M.shown=0;var g=document.getElementById('mur-grid');if(g)g.innerHTML='';}v29MurTick();});}
+  /* les ajouts sont MÉLANGÉS au mur (pas entassés au début), toujours à la même place pour une même image */
+  function hsh(s){var h=2166136261;s=String(s);for(var i=0;i<s.length;i+=7){h^=s.charCodeAt(i);h=Math.imul(h,16777619);}return h>>>0;}
+  try{var oLst=v29MurList;v29MurList=function(){var L=oLst.apply(this,arguments),M=V29.M;if(M.filter||!L||!L.length)return L;if(L._mx55)return L._mx55;
+    var add=L.filter(function(x){return x.s==='mine';});if(!add.length)return L;var out=L.filter(function(x){return x.s!=='mine';});
+    add.forEach(function(x){var span=Math.max(2,Math.min(out.length,24+out.length/2));out.splice(1+hsh(x.add55||x.u)%span,0,x);});
+    try{Object.defineProperty(L,'_mx55',{value:out,enumerable:false});}catch(_){}return out;};}catch(e){console.warn('mix55',e);}
+  try{var oML2=v29MurLoad;v29MurLoad=function(){var r=oML2.apply(this,arguments);try{addedInto(V29.M.sel);}catch(e){console.warn('add55',e);}return r;};}catch(_){}
+  try{V29_MS.mine='💖 Ajouts';}catch(_){}
 
   try{var oMR=v29MurRender;v29MurRender=function(v){var r=oMR.apply(this,arguments);try{panel(v);}catch(e){console.warn('mur47',e);}return r;};}catch(_){}
 
   var css=''
-  +'.mi54{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:10px 0;padding:10px 12px;border-radius:16px;background:var(--card-bg);box-shadow:inset 0 0 0 1px var(--border)}.mi54-t{flex:1 0 100%;font:700 .95rem Fredoka,sans-serif}'
+  +'.mi54{margin:10px 0;border-radius:16px;background:var(--card-bg);box-shadow:inset 0 0 0 1px var(--border);overflow:hidden}'
+  +'.mi54-tg{display:flex;align-items:center;gap:8px;width:100%;border:0;background:none;color:var(--ink);padding:10px 14px;cursor:pointer;font:700 .9rem Fredoka,sans-serif;text-align:left}.mi54-t{flex:1;color:var(--muted);font-weight:600;font-size:.8rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.mi54-tg i{font-style:normal;transition:transform .25s}.mi54.op .mi54-tg i{transform:rotate(180deg)}'
+  +'.mi54-body{display:none;flex-wrap:wrap;gap:8px;padding:0 12px 12px}.mi54.op .mi54-body{display:flex}.mi54-row{display:flex;flex-wrap:wrap;gap:8px}'
+  +'.mi54-who{flex:1 0 100%}.mi54-who small{color:var(--muted);font-size:.75rem}.mi54-who em{font-style:normal;opacity:.8}.mi54-cast{display:flex;gap:6px;overflow-x:auto;padding:6px 0;scrollbar-width:thin}'
+  +'.mi54-p{flex:none;display:inline-flex;align-items:center;gap:6px;border:0;border-radius:99px;padding:3px 10px 3px 3px;background:var(--input-bg);color:var(--ink);font:600 .75rem Nunito,sans-serif;cursor:pointer;box-shadow:inset 0 0 0 1px var(--border)}.mi54-p img,.mi54-p i{width:26px;height:26px;border-radius:50%;object-fit:cover;display:grid;place-items:center;font-style:normal}.mi54-p.on{background:var(--p1,#ff4d8d);color:#fff}'
   +'.mi54-b{display:inline-flex;align-items:center;gap:4px;border:0;border-radius:99px;padding:8px 12px;font:700 .8rem Nunito,sans-serif;cursor:pointer;background:var(--input-bg);color:var(--ink);text-decoration:none;box-shadow:inset 0 0 0 1px var(--border)}.mi54-b:hover{background:var(--p1,#ff4d8d);color:#fff}'
   +'.mi54-u,.mi54-m{display:none;flex:1 0 100%;gap:8px}.mi54.su .mi54-u{display:flex}.mi54-u input{flex:1}.mi54.sm .mi54-m{display:flex;flex-wrap:wrap}'
   +'.mi54-m span{position:relative}.mi54-m img{height:80px;border-radius:8px;display:block}.mi54-m button{position:absolute;top:3px;right:3px;border:0;border-radius:50%;width:22px;height:22px;background:#000a;color:#fff;cursor:pointer}.mi54-m em{color:var(--muted);font-size:.8rem}'
@@ -28590,7 +28643,7 @@ if(LOOK38)(function(){
   function build(list,key){
     if(L&&L.dataset.k===key)return;if(L)L.remove();
     var el=document.createElement('div');el.className='bg54';el.dataset.k=key;el.setAttribute('aria-hidden','true');
-    var rows='';for(var r=0;r<3;r++){var part=[];for(var i=0;i<9;i++)part.push(list[(r*7+i*1)%list.length]);var h=part.map(function(u){return '<img src="'+esc(u)+'" alt="" decoding="async" loading="lazy">';}).join('');
+    var rows='';for(var r=0;r<3;r++){var part=[];var per=Math.ceil(list.length/3);for(var i=0;i<per;i++)part.push(list[(r*per+i)%list.length]);var h=part.map(function(u){return '<img src="'+esc(u)+'" alt="" decoding="async" loading="lazy">';}).join('');
       rows+='<div class="bg54-r'+(r%2?' rev':'')+'" style="animation-duration:'+(100+r*30)+'s;animation-delay:-'+(r*17)+'s">'+h+h+'</div>';}
     el.innerHTML=rows;L=el;place(true);setTimeout(function(){el.classList.add('on');},60);
   }
@@ -28602,10 +28655,15 @@ if(LOOK38)(function(){
     target().then(function(t){
       if(!t){want='';if(L){L.remove();L=null;}busy=0;return;}
       var key=t[0]+t[1];want=key;
-      return images(t[0],t[1]).then(function(list){busy=0;if(want!==key)return;if(!list.length){if(L){L.remove();L=null;}return;}build(list,key);});
+      var sk=(t[0]==='tv'?'tv_':'movie_')+t[1];
+      return Promise.all([images(t[0],t[1]),window.__murShared?window.__murShared(sk).catch(function(){return [];}):Promise.resolve([])]).then(function(a){busy=0;if(want!==key)return;
+        /* les images ajoutées par les joueurs sont réparties dans les bandes (chacune une fois) */
+        var base=a[0],add=a[1].slice(0,24),list=[];for(var i=0;i<36&&base.length;i++)list.push(base[i%base.length]);add.forEach(function(u,j){list.splice(Math.round((j+1)*list.length/(add.length+1)),0,u);});
+        if(!list.length){if(L){L.remove();L=null;}return;}build(list,key+'|'+add.length);});
     }).catch(function(){busy=0;});
   }
-  window.__roll54=sync;
+  window.__roll54=function(force){if(force&&L)L.dataset.k='';sync();};
+  window.addEventListener('cine-social-ready',function(){setTimeout(sync,1500);});
   var lastT=null;
   setInterval(function(){if(document.hidden)return;var t=theme()+'|'+rollOn();if(t!==lastT){lastT=t;sync();}place(false);},700);
   /* le thème change aussi quand la série du mois change : on revérifie de temps en temps */
