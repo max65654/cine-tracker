@@ -29164,7 +29164,7 @@ if(LOOK38)(function(){
   var Q={};
   function later(name,f,ctx,args){if(Q[name])return;Q[name]=1;var done=false;function run(){if(done)return;done=true;Q[name]=0;try{f.apply(ctx,args);}catch(e){console.warn('nd62',name,e);}}
     try{requestAnimationFrame(function(){setTimeout(run,0);});}catch(_){}setTimeout(run,90);}
-  ['initPlanning','renderPass','renderBadges','renderTopCustom','renderTierList','renderCalendar','renderGamesHub','renderSagas','renderToku','renderMarathons','initAlerts','renderUpcomingEpisodes','initCatalog','renderPassport','renderJournal','renderWishGrid','renderSubsRow','renderPlatformChips','renderAvailBox','renderTrending','renderForYou'].forEach(function(n){
+  ['initPlanning','renderPass','renderBadges','renderTopCustom','renderTierList','renderCalendar','renderGamesHub','renderSagas','renderToku','renderMarathons','initAlerts','renderUpcomingEpisodes','initCatalog','renderPassport','renderJournal','renderWishGrid','renderSubsRow','renderPlatformChips','renderAvailBox','renderTrending','renderForYou','renderShowcase','renderReleaseAlert','renderStatusNotifs','renderEpisodeNotifs','renderCountdownStrip'].forEach(function(n){
     try{var f=eval(n);if(typeof f!=='function')return;var w=function(){if(ND)return later(n,f,this,arguments);return f.apply(this,arguments);};eval(n+'=w');}catch(_){}});
 })();
 
@@ -29509,6 +29509,17 @@ if(LOOK38)(function(){
   +'.ba64-pr{display:none;width:min(360px,86vw);height:6px;margin:6px auto;border-radius:99px;background:var(--input-bg);overflow:hidden}.ba64-pr.on{display:block}.ba64-pr i{display:block;height:100%;width:0;background:linear-gradient(90deg,#ff4d8d,#f5c518)}'
   +'.ba64-out{text-align:center;font-size:.9rem}.ba64-s{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:14px}.ba64-s span{background:var(--card-bg);border-radius:99px;padding:7px 12px;font-size:.82rem;box-shadow:inset 0 0 0 1px var(--border)}.ba64-e{text-align:center;color:var(--muted);padding:30px}';
   var st=document.createElement('style');st.textContent=C;document.head.appendChild(st);
+})();
+
+
+/* ====== V65 — corrections trouvées pendant le grand test :
+   • l'onglet Épisodes se redessinait ~17 fois par seconde quand la date VF d'une série était introuvable (boucle infinie) :
+     une recherche ratée est maintenant mémorisée et retentée au bout d'une heure ====== */
+(function(){
+  try{if(typeof frvfEnsure==='function'&&typeof FRV!=='undefined'){var oFE=frvfEnsure;
+    var miss=function(id){var k=String(id);if(!FRV.c[k])FRV.c[k]={t:Date.now()-3*864e5+36e5,miss:1};};
+    frvfEnsure=function(id){var r;try{r=oFE.apply(this,arguments);}catch(e){miss(id);return Promise.resolve(false);}
+      return Promise.resolve(r).then(function(v){miss(id);return v;},function(){miss(id);return false;});};}}catch(e){console.warn('fix65',e);}
 })();
 
 /* ==V29-END== */
