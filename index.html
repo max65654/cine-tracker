@@ -29588,22 +29588,8 @@ if(LOOK38)(function(){
   try{var oTR=trRender;trRender=function(v){var r=oTR.apply(this,arguments);try{mount();}catch(e){console.warn('mk66',e);}return r;};}catch(_){}
   try{var oTT=trTab;trTab=function(t){var r=oTT.apply(this,arguments);try{mount();}catch(_){}return r;};}catch(_){}
 
-  /* ---------------- 🔒 ESPACE PRIVÉ (tracker 2) : admin seulement ---------------- */
-  var SEC_URL='https://max65654.github.io/scene-tracker/';
-  function adm(){try{return !!(window.CineConfig&&CineConfig.isAdmin&&CineConfig.isAdmin());}catch(_){return false;}}
-  function secClose(){var o=document.getElementById('sec26');if(o)o.remove();document.documentElement.classList.remove('sec26-on');}
-  function secOpen(){if(!adm()||document.getElementById('sec26'))return;var o=document.createElement('div');o.id='sec26';o.className='sec26';o.setAttribute('role','dialog');o.setAttribute('aria-label','Espace privé');
-    o.innerHTML='<div class="sec26-bar"><span>🔒 Espace privé</span><button type="button" id="sec26-x">✕ Fermer</button></div><iframe title="Tracker 2" src="'+SEC_URL+'?inct=1" allow="fullscreen; autoplay; clipboard-write; encrypted-media; picture-in-picture" allowfullscreen></iframe>';
-    document.body.appendChild(o);document.documentElement.classList.add('sec26-on');o.querySelector('#sec26-x').onclick=secClose;}
-  function put(){var a=adm(),b=document.getElementById('sec26-btn');
-    if(a&&!b){var host=document.getElementById('dark-toggle');if(host&&host.parentNode){b=document.createElement('button');b.id='sec26-btn';b.type='button';b.className=host.className;b.title='Espace privé';b.textContent='🔒';b.onclick=secOpen;host.parentNode.insertBefore(b,host.nextSibling);}}
-    else if(!a&&b){b.remove();secClose();}
-    if(!a){var m=document.getElementById('ms-sec26');if(m)m.remove();}}
-  setTimeout(put,1500);setInterval(put,3000);
-  function sheet(){var sh=document.getElementById('m-sheet');if(!sh||!sh.classList.contains('open')||!adm())return;var l=sh.querySelector('.ms-list');if(!l||l.querySelector('#ms-sec26'))return;
-    var x=document.createElement('button');x.className='ms-li';x.id='ms-sec26';x.type='button';x.textContent='🔒 Mon espace privé';x.onclick=function(){sh.classList.remove('open');secOpen();};l.appendChild(x);}
-  (function watch(){var sh=document.getElementById('m-sheet');if(!sh)return setTimeout(watch,1500);new MutationObserver(sheet).observe(sh,{attributes:true,attributeFilter:['class']});})();
-  document.addEventListener('keydown',function(e){if(e.key==='Escape'&&document.getElementById('sec26'))secClose();});
+  /* l'espace privé a été retiré : le Scène Tracker est maintenant une appli totalement séparée */
+  (function(){var b=document.getElementById('sec26-btn');if(b)b.remove();})();
 
   var C=''
   /* les animations d'apparition (tampons, cartes qui montent) ne doivent jamais faire dézoomer la page sur téléphone */
