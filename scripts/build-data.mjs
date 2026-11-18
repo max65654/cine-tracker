@@ -117,7 +117,38 @@ async function buildNews() {
     delete x.hor;
     x.k = k; delete x.l;
   }
-  return { updated: new Date().toISOString(), items: all, tr, yt: await youtube() };
+  return { updated: new Date().toISOString(), items: all, tr, yt: await youtube(), ytx: await ytExtras() };
+}
+
+/* ======================= 🎮 LES ACTEURS S'AMUSENT / INTERVIEWS / MAKING-OF (recherche YouTube sur les séries du moment) ======================= */
+function ytSearchParse(html) {
+  const m = html && html.match(/var ytInitialData = (\{[\s\S]*?\});<\/script>/); if (!m) return [];
+  let d; try { d = JSON.parse(m[1]); } catch (_) { return []; }
+  const out = [];
+  (function walk(o) { if (!o || typeof o !== 'object') return; if (o.videoRenderer) { const v = o.videoRenderer; out.push({ vid: v.videoId, t: ((v.title && v.title.runs) || []).map(r => r.text).join(''), ch: ((v.ownerText && v.ownerText.runs) || [])[0]?.text || '', ago: (v.publishedTimeText && v.publishedTimeText.simpleText) || '', len: (v.lengthText && v.lengthText.simpleText) || '' }); return; }
+    for (const k in o) walk(o[k]); })(d);
+  return out.filter(v => v.vid && v.t);
+}
+async function ytExtras() {
+  let tops = null; try { tops = JSON.parse(await readFile('tops.json', 'utf8')); } catch (_) {}
+  const names = new Set();
+  const fromList = l => (l || []).slice(0, 5).forEach(x => { if (x && x.t) names.add(x.t); });
+  if (tops) { fromList(tops.nfday && tops.nfday.tv); fromList(tops.netflix && tops.netflix.tv); Object.values(tops.prov || {}).forEach(p => fromList((p && p.tv || []).slice(0, 2))); }
+  const KIND = [['jeu', 'cast plays game', /\b(plays?|game|quiz|test|challenge|lie detector|who('s| is) most likely|guess|trivia|vs\.?|battle|jeu|jouent|défi|teste)\b/i],
+                ['itw', 'cast interview', /\b(interview|entretien|talks?|junket|q&a|conversation|discuss|reveal|parle|rencontre)\b/i],
+                ['bts', 'behind the scenes making of', /\b(behind the scenes|making of|bts|coulisses|tournage|featurette|vfx|set visit)\b/i]];
+  const n = s => String(s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, ' ').trim();
+  const out = [], seen = new Set();
+  for (const name of [...names].slice(0, 14)) {
+    const key = n(name).split(' ').filter(w => w.length > 2).slice(0, 3).join(' ') || n(name); if (!key) continue;
+    for (const [kind, q, rx] of KIND) {
+      const html = await get('https://www.youtube.com/results?hl=fr&gl=FR&search_query=' + encodeURIComponent('"' + name + '" ' + q) + '&sp=EgIQAQ%253D%253D'); await sleep(400);
+      const L = ytSearchParse(html).filter(v => n(v.t).includes(key) && rx.test(v.t) && !/(full episode|episode complet|streaming|gratuit|free|reaction|réaction|review|recap|résumé|explained|expliqu)/i.test(v.t)).slice(0, 4);
+      for (const v of L) { if (seen.has(v.vid)) continue; seen.add(v.vid); out.push({ q: name, kind, ...v }); }
+    }
+  }
+  console.log(`🎮 YouTube coulisses/interviews/jeux : ${out.length} vidéos sur ${names.size} séries`);
+  return out;
 }
 
 /* ======================= CHAÎNES YOUTUBE (lues ici car les relais publics du navigateur ne marchent plus) ======================= */
