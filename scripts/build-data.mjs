@@ -143,7 +143,8 @@ async function ytExtras() {
     const key = n(name).split(' ').filter(w => w.length > 2).slice(0, 3).join(' ') || n(name); if (!key) continue;
     for (const [kind, q, rx] of KIND) {
       const html = await get('https://www.youtube.com/results?hl=fr&gl=FR&search_query=' + encodeURIComponent('"' + name + '" ' + q) + '&sp=EgIQAQ%253D%253D'); await sleep(400);
-      const L = ytSearchParse(html).filter(v => n(v.t).includes(key) && rx.test(v.t) && !/(full episode|episode complet|streaming|gratuit|free|reaction|réaction|review|recap|résumé|explained|expliqu)/i.test(v.t)).slice(0, 4);
+      const full = n(name), CTX = /(cast|casting|netflix|series|serie|série|season|saison|episode|épisode|actors?|actrices?|acteurs?|showrunner|tudum)/i, OFF = /(netflix|prime video|disney|hbo|max|canal|apple tv|paramount|allocin|konbini|vanity fair|wired|buzzfeed|glamour|gq|vogue|variety|hollywood reporter|entertainment weekly|collider|ign)/i;
+      const L = ytSearchParse(html).filter(v => (' ' + n(v.t) + ' ').includes(' ' + full + ' ') && (CTX.test(v.t) || OFF.test(v.ch)) && rx.test(v.t) && !/(full episode|episode complet|streaming|gratuit|free|reaction|réaction|review|recap|résumé|explained|expliqu)/i.test(v.t)).slice(0, 4);
       for (const v of L) { if (seen.has(v.vid)) continue; seen.add(v.vid); out.push({ q: name, kind, ...v }); }
     }
   }
