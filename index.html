@@ -29524,8 +29524,7 @@ if(LOOK38)(function(){
 
 
 /* ====== V66 — 📌 ÉPINGLER un titre (il remonte en haut de ta Collection)
-   + 🎬 COULISSES, INTERVIEWS & JEUX DES ACTEURS dans Trailers → Sorties (TMDB pour tes titres + recherche YouTube du robot)
-   + 🔒 ESPACE PRIVÉ (tracker 2) : seulement pour l'admin, ouvert par-dessus, rien n'en sort ====== */
+   + 🎬 COULISSES, INTERVIEWS & JEUX DES ACTEURS dans Trailers → Sorties (TMDB pour tes titres + recherche YouTube du robot) ====== */
 (function(){
   /* ---------------- 📌 ÉPINGLER ---------------- */
   var PK='cinePins66';
@@ -29588,8 +29587,8 @@ if(LOOK38)(function(){
   try{var oTR=trRender;trRender=function(v){var r=oTR.apply(this,arguments);try{mount();}catch(e){console.warn('mk66',e);}return r;};}catch(_){}
   try{var oTT=trTab;trTab=function(t){var r=oTT.apply(this,arguments);try{mount();}catch(_){}return r;};}catch(_){}
 
-  /* l'espace privé a été retiré : le Scène Tracker est maintenant une appli totalement séparée */
-  (function(){var b=document.getElementById('sec26-btn');if(b)b.remove();})();
+  /* nettoyage : plus aucune trace d'un ancien second tracker sur cet appareil */
+  try{['sceneTrackerHere','st_tpdb_key'].forEach(function(k){localStorage.removeItem(k);});}catch(_){}
 
   var C=''
   /* les animations d'apparition (tampons, cartes qui montent) ne doivent jamais faire dézoomer la page sur téléphone */
@@ -29603,9 +29602,7 @@ if(LOOK38)(function(){
   +'.mk66-th{position:relative;display:block;border-radius:14px;overflow:hidden;aspect-ratio:16/9;background:#000;box-shadow:0 10px 20px -12px #000}.mk66-th img{width:100%;height:100%;object-fit:cover;transition:transform .3s}.mk66-c:hover .mk66-th img{transform:scale(1.06)}'
   +'.mk66-th i{position:absolute;inset:0;margin:auto;width:42px;height:42px;border-radius:50%;display:grid;place-items:center;font-style:normal;color:#fff;background:rgba(0,0,0,.55)}.mk66-c b{display:block;font-size:.8rem;line-height:1.25;margin-top:6px;max-height:2.5em;overflow:hidden}.mk66-c small{color:var(--muted);font-size:.68rem}'
   +'.mk66-pl{position:fixed;inset:0;z-index:100000;display:grid;place-items:center;padding:14px;background:rgba(5,3,10,.85)}.mk66-pb{width:min(960px,100%);background:#0d0a14;border-radius:18px;overflow:hidden;color:#fff;text-align:center;padding-bottom:10px}'
-  +'.mk66-pt{display:flex;justify-content:space-between;gap:10px;align-items:center;padding:10px 14px;text-align:left}.mk66-pt b{font-size:.9rem}.mk66-pt button{border:0;border-radius:10px;padding:6px 10px;background:#2c2340;color:#fff;cursor:pointer}.mk66-fr{aspect-ratio:16/9}.mk66-fr iframe{width:100%;height:100%;border:0}.mk66-pb a{color:#c9b8ff;font-size:.8rem}'
-  +'.sec26{position:fixed;inset:0;z-index:10090;background:#0b0712;display:flex;flex-direction:column}.sec26-bar{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:calc(6px + env(safe-area-inset-top,0px)) 12px 6px;background:#15101f;color:#fff;font:700 .85rem Inter,system-ui,sans-serif}'
-  +'.sec26-bar button{border:none;border-radius:10px;padding:8px 14px;background:#2c2340;color:#fff;font:700 .84rem Inter,system-ui,sans-serif;cursor:pointer}.sec26 iframe{flex:1;width:100%;border:0;background:#0b0712}html.sec26-on,html.sec26-on body{overflow:hidden!important}';
+  +'.mk66-pt{display:flex;justify-content:space-between;gap:10px;align-items:center;padding:10px 14px;text-align:left}.mk66-pt b{font-size:.9rem}.mk66-pt button{border:0;border-radius:10px;padding:6px 10px;background:#2c2340;color:#fff;cursor:pointer}.mk66-fr{aspect-ratio:16/9}.mk66-fr iframe{width:100%;height:100%;border:0}.mk66-pb a{color:#c9b8ff;font-size:.8rem}';
   var st=document.createElement('style');st.textContent=C;document.head.appendChild(st);
 })();
 
@@ -29866,7 +29863,7 @@ if(LOOK38)(function(){
     if(remote>last+5000){try{if(sessionStorage.getItem('cineCloudReloaded')!==String(remote)){sessionStorage.setItem('cineCloudReloaded',String(remote));pullAll(uid).then(function(){location.reload();});return;}}catch(_){}}
     if(!remote){for(var i=0;i<localStorage.length;i++){var rk=localStorage.key(i);var pre='u_'+uid+'__';if(rk&&rk.indexOf(pre)===0){dirty[rk.slice(pre.length)]=rget(rk);}}
       // données locales « d'avant » (profil principal sans compte) : proposées à l'import
-      if(!Object.keys(dirty).length&&rget('cineItems')&&!rget('sceneTrackerHere')&&!rget('st_tpdb_key')&&confirm('Importer dans ton compte la collection déjà présente sur cet appareil ?')){for(var j=0;j<localStorage.length;j++){var k2=localStorage.key(j);if(k2&&k2.indexOf('cine')===0&&k2.indexOf('cineCloud')!==0&&k2!=='cineAuthUid'&&k2!=='cineProfilesReg'){rset(pre+k2,rget(k2));dirty[k2]=rget(k2);}}flush(uid);setTimeout(function(){location.reload();},2500);return;}
+      if(!Object.keys(dirty).length&&rget('cineItems')&&confirm('Importer dans ton compte la collection déjà présente sur cet appareil ?')){for(var j=0;j<localStorage.length;j++){var k2=localStorage.key(j);if(k2&&k2.indexOf('cine')===0&&k2.indexOf('cineCloud')!==0&&k2!=='cineAuthUid'&&k2!=='cineProfilesReg'){rset(pre+k2,rget(k2));dirty[k2]=rget(k2);}}flush(uid);setTimeout(function(){location.reload();},2500);return;}
       flush(uid);}
   }
   /* --- Admin : demandes d'inscription --- */
