@@ -2140,7 +2140,34 @@ body.dark .subr-details summary{color:#C9A8FF;}
 .plan-days{margin:10px 0 14px;background:var(--card-bg);border-radius:14px;padding:10px 12px;box-shadow:0 3px 0 var(--shadow)}.pdy-h{font-weight:700;font-size:.86rem;margin-bottom:8px}.pdy-h small{font-weight:400;color:var(--muted)}.pdy-row{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px}.pdy{flex:0 0 58px;border:2px solid var(--border);background:var(--input-bg);color:inherit;border-radius:12px;padding:6px 2px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:1px;font-family:inherit;transition:transform .1s}.pdy:hover{transform:translateY(-2px)}.pdy span{font-size:.62rem;text-transform:uppercase;opacity:.75}.pdy b{font-size:1.05rem}.pdy small{font-size:.6rem;opacity:.8}.pdy.today{border-color:var(--raspberry)}.pdy.off{background:rgba(255,77,109,.18);border-color:rgba(255,77,109,.6);text-decoration:line-through}.pdy.rest{opacity:.55}.pdy.vac{box-shadow:inset 0 -3px 0 #ffd23f}
 .pa-det summary{cursor:pointer;list-style:none}.pa-det summary::-webkit-details-marker{display:none}.pa-det summary small{font-weight:400;color:var(--muted);margin-left:6px}.pa-det[open] summary{margin-bottom:8px}
 </style>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script>/* ====== V44 — fluide sur tous les appareils ======
+   1) Les ~50 petites tâches répétées de l'appli (vérifs, comptes à rebours, décos…) attendent la fin du défilement
+      au lieu de couper le scroll en plein milieu ; les tics manqués sont rejoués juste après (rien n'est perdu).
+   2) html2canvas (capture d'image, ~200 Ko) n'est plus chargé au démarrage : seulement au 1er clic sur « capture ».
+   3) Téléphones/tablettes modestes : flous d'arrière-plan coupés, fonds fixes retirés sur écran tactile. */
+(function(){
+  var de=document.documentElement,oi=window.setInterval,oc=window.clearInterval,busy=0,bt=0,L={};
+  function flush(){busy=0;de.classList.remove('busy44');for(var id in L){var t=L[id],n=Math.min(t.m,3);t.m=0;while(n-->0&&L[id]){try{t.f.apply(window,t.a);}catch(e){setTimeout(function(){throw e;});}}}}
+  function mark(){if(!busy){busy=1;de.classList.add('busy44');}clearTimeout(bt);bt=setTimeout(flush,200);}
+  window.addEventListener('scroll',mark,{passive:true,capture:true});
+  window.setInterval=function(fn,ms){
+    var p=+ms||0;if(typeof fn!=='function'||p<150)return oi.apply(window,arguments);
+    var t={f:fn,a:[].slice.call(arguments,2),m:0},id=oi.call(window,function(){if(busy){t.m++;return;}fn.apply(window,t.a);},p);
+    L[id]=t;return id;};
+  window.clearInterval=function(id){delete L[id];return oc.call(window,id);};
+  /* capture d'image : chargée à la demande */
+  var H2C='https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js',h2p=null;
+  window.html2canvas=function(){var a=arguments,shim=window.html2canvas;
+    h2p=h2p||new Promise(function(res,rej){var s=document.createElement('script');s.src=H2C;s.onload=res;s.onerror=function(){h2p=null;rej(new Error('html2canvas'));};document.head.appendChild(s);});
+    return h2p.then(function(){if(window.html2canvas===shim)throw new Error('html2canvas');return window.html2canvas.apply(window,a);});};
+  /* appareils modestes */
+  try{var n=navigator,c=n.connection,ios=/iP(hone|ad|od)/.test(n.userAgent)||(n.platform==='MacIntel'&&n.maxTouchPoints>1);
+    if((n.deviceMemory&&n.deviceMemory<=4)||(!ios&&n.hardwareConcurrency&&n.hardwareConcurrency<=4)||(c&&c.saveData))de.classList.add('lite44');}catch(_){}
+  var st=document.createElement('style');st.id='v44-css';
+  st.textContent='html.lite44 *,html.lite44 *::before,html.lite44 *::after{-webkit-backdrop-filter:none!important;backdrop-filter:none!important}'
+    +'@media (hover:none){html body{background-attachment:scroll!important}}';
+  document.head.appendChild(st);
+})();</script>
 </head>
 <body>
 <script>/* V39 : écran noir posé tout de suite si le générique va se lancer (on ne voit jamais l'appli « clignoter » avant lui) */(function(){try{if(sessionStorage.getItem('cineIntroSess')==='1')return;var u=localStorage.getItem('cineAuthUid'),ks=['u_'+(u||'none')+'__cineIntro','cineIntro'],p=null;for(var i=0;i<ks.length&&!p;i++){var v=localStorage.getItem(ks[i]);if(v)p=JSON.parse(v);}p=p||{};var t=new Date(),d=t.getFullYear()+'-'+String(t.getMonth()+1).padStart(2,'0')+'-'+String(t.getDate()).padStart(2,'0'),m=p.mode||'day';if(m==='off'||(m==='day'&&p.last===d))return;document.write('<div id="pre39" style="position:fixed;inset:0;z-index:2147482999;background:#06030b"></div>');setTimeout(function(){var e=document.getElementById('pre39');if(e)e.remove();},6000);}catch(e){}})();</script>
@@ -28740,6 +28767,18 @@ if(LOOK38)(function(){
       var st=d.status||'',nx=d.next_episode_to_air,last=d.last_air_date?Date.parse(d.last_air_date):0,ns=d.number_of_seasons||0;
       var nets=(d.networks||[]).map(function(n){return n.name;}).join(', ');
       if(st==='Canceled')return {v:'❌ Annulée',p:0,c:'#e03131',sub:'C\'est officiel : la chaîne ou la plateforme a arrêté la série.',R:[['📺','Diffusée sur '+(nets||'—')+' · '+ns+' saison'+(ns>1?'s':'')]]};
+      /* nouvelle saison déjà confirmée : elle est dans tes Attentes, TMDB l'annonce, ou on a reçu la notif « renouvelée » → très positif */
+      var lastAired=(d.last_episode_to_air&&d.last_episode_to_air.season_number)||0,todayS=new Date().toISOString().slice(0,10);
+      var wNext=(typeof wishlist!=='undefined'?wishlist:[]).filter(function(w){return w&&w.tmdbType==='tv'&&String(w.tmdbId)===String(it.tmdbId)&&(+w.season||0)>lastAired;}).sort(function(a,b){return (+a.season||0)-(+b.season||0);})[0];
+      var sNext=(d.seasons||[]).filter(function(x){return x.season_number>lastAired&&x.season_number>0&&(!x.air_date||x.air_date>todayS);}).sort(function(a,b){return a.season_number-b.season_number;})[0];
+      var nRen=lastAired&&(typeof statusNotifs!=='undefined'?statusNotifs:[]).some(function(n){return n&&n.kind==='renewed'&&(n.itemId===it.id||String(n.tmdbId)===String(it.tmdbId));});
+      if(wNext||(sNext&&lastAired)||nRen){
+        var sn=(wNext&&+wNext.season)||(sNext&&sNext.season_number)||lastAired+1,dt=(wNext&&wNext.releaseDate)||(sNext&&sNext.air_date)||'',CR=[];
+        if(wNext)CR.push(['⏳','La saison '+sn+' est dans tes Attentes']);
+        if(sNext)CR.push(['📺','TMDB annonce la saison '+sNext.season_number+(nets?' sur '+nets:'')]);
+        if(dt&&dt>todayS)CR.push(['📅','Sortie prévue le '+fmtD(dt)]);
+        if(ren)CR.push(['📰','« '+ren.t+' » — '+ren.s]);
+        return {v:'✅ Saison '+sn+' confirmée',p:99,c:'#2f9e44',sub:'Aucun risque d’annulation pour l’instant : la suite est officielle.',R:CR};}
       if(st==='Ended')return {v:'🏁 Terminée',p:100,c:'#868e96',sub:'La série est finie : l\'histoire est bouclée, pas de suite prévue.',R:[['📺',ns+' saison'+(ns>1?'s':'')+' sur '+(nets||'—')]]};
       if(nx&&nx.air_date)return {v:'✅ La suite arrive',p:100,c:'#2f9e44',sub:'Prochain épisode (S'+nx.season_number+'É'+nx.episode_number+') le '+fmtD(nx.air_date)+'.',R:[]};
       if(st==='In Production'||st==='Planned')return {v:'✅ Confirmée',p:96,c:'#2f9e44',sub:'Une nouvelle saison est officiellement en préparation.',R:ren?[['📰','« '+ren.t+' » — '+ren.s]]:[]};
