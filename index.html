@@ -26130,7 +26130,9 @@ if(LOOK36)(function(){
   /* ---------- 3) Collection compacte sur ordinateur ---------- */
   try{var ac=document.querySelector('#view-library .add-card'),sb=ac&&ac.querySelector('.search-box');
     if(ac&&sb){var more=document.createElement('button');more.type='button';more.className='x36-more';more.textContent='✍️ Saisie manuelle';sb.appendChild(more);
-      var expand=function(){ac.classList.remove('min36');},collapse=function(){if(typeof editingId!=='undefined'&&editingId)return;ac.classList.add('min36');};
+      /* ⚠️ on ne touche la classe QUE si elle change : retirer une classe absente déclenche quand même l'observateur ci-dessous
+         → il redépliait → nouvel appel… boucle infinie, la page se figeait quand on choisissait un titre à ajouter */
+      var expand=function(){if(ac.classList.contains('min36'))ac.classList.remove('min36');},collapse=function(){if(typeof editingId!=='undefined'&&editingId)return;if(!ac.classList.contains('min36'))ac.classList.add('min36');};
       collapse();more.onclick=expand;
       /* dès qu'un titre est choisi, qu'on modifie une fiche ou que le formulaire se remplit : on déplie */
       new MutationObserver(function(){var t=document.getElementById('form-title'),a=document.getElementById('aib');if((a&&a.classList.contains('show'))||(t&&!/^➕/.test(t.textContent||'')))expand();}).observe(ac,{subtree:true,attributes:true,attributeFilter:['class'],childList:true,characterData:true});
